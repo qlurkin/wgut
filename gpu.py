@@ -2,12 +2,12 @@ import wgpu
 from wgpu import TextureFormat, TextureUsage
 
 TEXTURE_FORMAT = TextureFormat.rgba8unorm
-ADAPTER = wgpu.gpu.request_adapter_sync(power_preference="high-performance")
+ADAPTER = wgpu.gpu.request_adapter_sync(power_preference="high-performance")  # type: ignore
 DEVICE = ADAPTER.request_device_sync()
 
 
 class Texture:
-    def __init__(self, size):
+    def __init__(self, size: tuple[int, int]):
         self.size = size
         self.texture = DEVICE.create_texture(
             size=size,
@@ -16,7 +16,7 @@ class Texture:
         )
         self.view = self.texture.create_view()
 
-    def get_memoryview(self):
+    def get_memoryview(self) -> memoryview:
         width, height = self.size
         buffer = DEVICE.queue.read_texture(
             source={
@@ -33,7 +33,7 @@ class Texture:
 
 
 class GraphicPipeline:
-    def __init__(self, shader_filename):
+    def __init__(self, shader_filename: str):
         with open(shader_filename) as file:
             shader_source = file.read()
 
@@ -64,7 +64,7 @@ class GraphicPipeline:
             },
         )
 
-    def render(self, texture):
+    def render(self, texture: Texture):
         command_encoder = DEVICE.create_command_encoder()
         render_pass = command_encoder.begin_render_pass(
             color_attachments=[

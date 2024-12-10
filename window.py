@@ -1,4 +1,5 @@
 import pygame
+from pygame import Surface
 from gpu import Texture
 
 pygame.init()
@@ -14,13 +15,24 @@ def surface_from_texture(texture: Texture):
     return surface
 
 
+class App:
+    def setup(self, size: tuple[int, int]):
+        pass
+
+    def update(self, delta_time: float):
+        pass
+
+    def render(self, screen: Surface):
+        pass
+
+
 class Window:
-    def __init__(self, size):
+    def __init__(self, size: tuple[int, int]):
         self.screen = pygame.display.set_mode(size)
 
-    def run(self, app):
+    def run(self, app: App):
         clock = pygame.time.Clock()
-        app.setup()
+        app.setup(self.screen.size)
         while not pygame.event.peek(pygame.QUIT):
             frame_time = clock.tick(60)
             app.update(frame_time)
