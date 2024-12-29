@@ -178,31 +178,6 @@ class GraphicPipeline:
     def __init__(self, params: dict):
         self.render_pipeline = DEVICE.create_render_pipeline(**params)
         # get_bind_group_layout(index: int)
-        self.vertex_buffer = None
-
-    def set_vertex_buffer(self, buffer: Buffer):
-        self.vertex_buffer = buffer
-
-    def render(self, texture: Texture):
-        if self.vertex_buffer is None:
-            return
-        command_encoder = DEVICE.create_command_encoder()
-        render_pass = command_encoder.begin_render_pass(
-            color_attachments=[
-                {
-                    "view": texture.view,
-                    "resolve_target": None,
-                    "clear_value": (0, 0, 0, 1),
-                    "load_op": wgpu.LoadOp.clear,
-                    "store_op": wgpu.StoreOp.store,
-                }
-            ]
-        )
-        render_pass.set_pipeline(self.render_pipeline)
-        render_pass.set_vertex_buffer(0, self.vertex_buffer.data)
-        render_pass.draw(3, 1, 0, 0)
-        render_pass.end()
-        DEVICE.queue.submit([command_encoder.finish()])
 
 
 class RenderPass:
