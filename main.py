@@ -1,6 +1,6 @@
 from wgpu import VertexFormat
 from gpu import Texture, GraphicPipelineBuilder, Buffer, RenderPass
-from window import Window, App, Surface, surface_from_texture
+from window import Window, App
 import numpy as np
 
 
@@ -18,7 +18,6 @@ class MyApp(App):
 
         self.vertex_buffer = Buffer(vertex_data)
 
-        self.texture = Texture(size)
         self.pipeline = (
             GraphicPipelineBuilder()
             .with_shader("shader.wgsl")
@@ -27,15 +26,11 @@ class MyApp(App):
             .with_attribute(VertexFormat.float32x3)
             .build()
         )
-        # self.pipeline.set_vertex_buffer(vertex_buffer)
 
-    def render(self, screen: Surface):
-        # self.pipeline.render(self.texture)
-        RenderPass(self.texture).with_pipeline(self.pipeline).with_vertex_buffer(
+    def render(self, screen: Texture):
+        RenderPass(screen).with_pipeline(self.pipeline).with_vertex_buffer(
             self.vertex_buffer
         ).draw(3).submit()
-        surface = surface_from_texture(self.texture)
-        screen.blit(surface)
 
 
 Window((800, 600)).run(MyApp())

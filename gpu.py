@@ -42,13 +42,18 @@ VERTEX_FORMAT_SIZE = {
 
 
 class Texture:
-    def __init__(self, size: tuple[int, int]):
+    def __init__(
+        self, size: tuple[int, int], raw_texture: wgpu.GPUTexture | None = None
+    ):
         self.size = size
-        self.texture = DEVICE.create_texture(
-            size=size,
-            format=TEXTURE_FORMAT,
-            usage=TextureUsage.RENDER_ATTACHMENT | TextureUsage.COPY_SRC,
-        )
+        if raw_texture is None:
+            self.texture = DEVICE.create_texture(
+                size=size,
+                format=TEXTURE_FORMAT,
+                usage=TextureUsage.RENDER_ATTACHMENT | TextureUsage.COPY_SRC,
+            )
+        else:
+            self.texture = raw_texture
         self.view = self.texture.create_view()
 
     def get_memoryview(self) -> memoryview:
@@ -157,7 +162,7 @@ class GraphicPipelineBuilder:
                 "entry_point": "fs_main",
                 "targets": [
                     {
-                        "format": TEXTURE_FORMAT,
+                        "format": TextureFormat.bgra8unorm,
                         "blend": {
                             "color": {},
                             "alpha": {},

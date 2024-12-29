@@ -1,18 +1,6 @@
-import pygame
-from pygame import Surface
-from gpu import Texture
-
-pygame.init()
-pygame.font.init()
-
-FONT = pygame.Font(None, 30)
-
-
-def surface_from_texture(texture: Texture):
-    surface = pygame.image.frombuffer(
-        texture.get_memoryview().tobytes(), texture.size, "RGBA"
-    )
-    return surface
+from wgpu.gui.glfw import WgpuCanvas, run
+import wgpu
+from gpu import DEVICE, Texture
 
 
 class App:
@@ -22,22 +10,32 @@ class App:
     def update(self, delta_time: float):
         pass
 
-    def render(self, screen: Surface):
+    def render(self, screen: Texture):
         pass
 
 
 class Window:
-    def __init__(self, size: tuple[int, int]):
-        self.screen = pygame.display.set_mode(size)
+    def __init__(
+        self,
+        size: tuple[int, int] = (800, 600),
+        title: str = "WGPU Window",
+        max_fps: int = 60,
+    ):
+        self.size = size
+        self.canvas = WgpuCanvas(title=title, size=size, max_fps=max_fps)
+        self.present_context = self.canvas.get_context("wgpu")
+        self.format = wgpu.TextureFormat.bgra8unorm
+        self.present_context.configure(device=DEVICE, format=self.format)
 
     def run(self, app: App):
-        clock = pygame.time.Clock()
-        app.setup(self.screen.size)
-        while not pygame.event.peek(pygame.QUIT):
-            frame_time = clock.tick(60)
+        def loop():
+            canvas_raw_texture = self.present_context.get_current_texture()
+            frame_time = 1 / 60
             app.update(frame_time)
-            app.render(self.screen)
-            self.screen.blit(
-                FONT.render(f"Frame Time: {frame_time:.5f} ms", False, (255, 255, 255))
-            )
-            pygame.display.flip()
+            app.render(Texture(self.size, canvas_raw_texture))
+            self.canvas.request_draw()
+
+        app.setup(self.size)
+
+        self.canvas.request_draw(loop)
+        run()
