@@ -205,6 +205,11 @@ class GraphicPipelineBuilder:
                 "entry_point": "vs_main",
                 "buffers": self.buffers,
             },
+            "primitive": {
+                "topology": wgpu.PrimitiveTopology.triangle_list,
+                "front_face": wgpu.FrontFace.ccw,
+                "cull_mode": wgpu.CullMode.back,
+            },
             "depth_stencil": None,
             "multisample": None,
             "fragment": {
