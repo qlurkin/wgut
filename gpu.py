@@ -1,81 +1,131 @@
+from __future__ import annotations
 import wgpu
-from wgpu import TextureFormat, TextureUsage, VertexFormat, VertexStepMode
-import numpy.typing as npt
 
-TEXTURE_FORMAT = TextureFormat.rgba8unorm
-ADAPTER = wgpu.gpu.request_adapter_sync(power_preference="high-performance")  # type: ignore
-DEVICE = ADAPTER.request_device_sync()
+import numpy.typing as npt
+from typing import Self
+
+_ADAPTER = None
+_DEVICE = None
 
 VERTEX_FORMAT_SIZE = {
-    VertexFormat.float16x2: 4,
-    VertexFormat.float16x4: 8,
-    VertexFormat.float32: 4,
-    VertexFormat.float32x2: 8,
-    VertexFormat.float32x3: 12,
-    VertexFormat.float32x4: 16,
-    VertexFormat.sint16x2: 4,
-    VertexFormat.sint16x4: 8,
-    VertexFormat.sint32: 4,
-    VertexFormat.sint32x2: 8,
-    VertexFormat.sint32x3: 12,
-    VertexFormat.sint32x4: 16,
-    VertexFormat.sint8x2: 2,
-    VertexFormat.sint8x4: 4,
-    VertexFormat.snorm16x2: 4,
-    VertexFormat.snorm16x4: 8,
-    VertexFormat.snorm8x2: 2,
-    VertexFormat.snorm8x4: 4,
-    VertexFormat.uint16x2: 4,
-    VertexFormat.uint16x4: 8,
-    VertexFormat.uint32: 4,
-    VertexFormat.uint32x2: 8,
-    VertexFormat.uint32x3: 12,
-    VertexFormat.uint32x4: 16,
-    VertexFormat.uint8x2: 2,
-    VertexFormat.uint8x4: 4,
-    VertexFormat.unorm10_10_10_2: 4,
-    VertexFormat.unorm16x2: 4,
-    VertexFormat.unorm16x4: 8,
-    VertexFormat.unorm8x2: 2,
-    VertexFormat.unorm8x4: 4,
+    wgpu.VertexFormat.float16x2: 4,
+    wgpu.VertexFormat.float16x4: 8,
+    wgpu.VertexFormat.float32: 4,
+    wgpu.VertexFormat.float32x2: 8,
+    wgpu.VertexFormat.float32x3: 12,
+    wgpu.VertexFormat.float32x4: 16,
+    wgpu.VertexFormat.sint16x2: 4,
+    wgpu.VertexFormat.sint16x4: 8,
+    wgpu.VertexFormat.sint32: 4,
+    wgpu.VertexFormat.sint32x2: 8,
+    wgpu.VertexFormat.sint32x3: 12,
+    wgpu.VertexFormat.sint32x4: 16,
+    wgpu.VertexFormat.sint8x2: 2,
+    wgpu.VertexFormat.sint8x4: 4,
+    wgpu.VertexFormat.snorm16x2: 4,
+    wgpu.VertexFormat.snorm16x4: 8,
+    wgpu.VertexFormat.snorm8x2: 2,
+    wgpu.VertexFormat.snorm8x4: 4,
+    wgpu.VertexFormat.uint16x2: 4,
+    wgpu.VertexFormat.uint16x4: 8,
+    wgpu.VertexFormat.uint32: 4,
+    wgpu.VertexFormat.uint32x2: 8,
+    wgpu.VertexFormat.uint32x3: 12,
+    wgpu.VertexFormat.uint32x4: 16,
+    wgpu.VertexFormat.uint8x2: 2,
+    wgpu.VertexFormat.uint8x4: 4,
+    wgpu.VertexFormat.unorm10_10_10_2: 4,
+    wgpu.VertexFormat.unorm16x2: 4,
+    wgpu.VertexFormat.unorm16x4: 8,
+    wgpu.VertexFormat.unorm8x2: 2,
+    wgpu.VertexFormat.unorm8x4: 4,
 }
 
 
-class Texture:
-    def __init__(
-        self, size: tuple[int, int], raw_texture: wgpu.GPUTexture | None = None
-    ):
+def get_adapter() -> wgpu.GPUAdapter:
+    global _ADAPTER
+    if _ADAPTER is None:
+        _ADAPTER = wgpu.gpu.request_adapter_sync(power_preference="high-performance")  # type: ignore
+    return _ADAPTER
+
+
+def get_device() -> wgpu.GPUDevice:
+    global _DEVICE
+    if _DEVICE is None:
+        _DEVICE = get_adapter().request_device_sync()
+    return _DEVICE
+
+
+class TextureBuilder:
+    def __init__(self):
+        self.size = None
+        self.format = None
+        self.usages = 0
+
+    def with_size(self, size: tuple[int, int]) -> Self:
         self.size = size
-        if raw_texture is None:
-            self.texture = DEVICE.create_texture(
-                size=size,
-                format=TEXTURE_FORMAT,
-                usage=TextureUsage.RENDER_ATTACHMENT | TextureUsage.COPY_SRC,
-            )
-        else:
-            self.texture = raw_texture
-        self.view = self.texture.create_view()
+        return self
 
-    def get_memoryview(self) -> memoryview:
-        width, height = self.size
-        buffer = DEVICE.queue.read_texture(
-            source={
-                "texture": self.texture,
-                "origin": (0, 0, 0),
-            },
-            data_layout={
-                "bytes_per_row": width * 4,
-                "rows_per_image": height,
-            },
-            size=(width, height, 1),
+    def with_format(self, format: wgpu.TextureFormat) -> Self:
+        self.format = format
+        return self
+
+    def with_usage(self, usage: int) -> Self:
+        self.usages |= usage  # type: ignore
+        return self
+
+    def build(self) -> wgpu.GPUTexture:
+        if self.format is None:
+            raise Exception("format must be set")
+
+        if self.usages == 0:
+            raise Exception("Usages must be set")
+
+        return get_device().create_texture(
+            size=self.size,
+            format=self.format,
+            usage=self.usages,  # type: ignore
         )
-        return buffer
 
 
-class Buffer:
-    def __init__(self, data: npt.NDArray):
-        self.data = DEVICE.create_buffer_with_data(
-            data=data, usage=wgpu.BufferUsage.VERTEX
+class BufferBuilder:
+    def __init__(self):
+        self.data = None
+        self.size = None
+        self.usages = 0
+
+    def from_data(self, data: npt.NDArray) -> Self:
+        self.with_size(data.size * data.itemsize)
+        self.data = data
+        return self
+
+    def with_size(self, size: int) -> Self:
+        if size < 0:
+            raise Exception("size must be positive")
+        if size % 4 != 0:
+            raise Exception("size must be divisible by 4")
+        self.size = size
+        return self
+
+    def with_usage(self, usage: int) -> Self:
+        self.usages |= usage  # type: ignore
+        return self
+
+    def build(self) -> wgpu.GPUBuffer:
+        if self.usages is None:
+            raise Exception("Usage must be set")
+
+        if self.data is not None:
+            return get_device().create_buffer_with_data(
+                data=self.data,
+                usage=self.usages,  # type: ignore
+            )
+        if self.size is None:
+            raise Exception("Size must be set")
+        return get_device().create_buffer(
+            size=self.size,
+            usage=self.usages,  # type: ignore
+            mapped_at_creation=False,
         )
 
 
@@ -85,15 +135,15 @@ class GraphicPipelineBuilder:
         self.buffers = []
         self.location = 0
 
-    def with_shader(self, filename):
+    def with_shader(self, filename) -> Self:
         with open(filename) as file:
             shader_source = file.read()
-        self.shader_module = DEVICE.create_shader_module(code=shader_source)
+        self.shader_module = get_device().create_shader_module(code=shader_source)
         return self
 
     def with_buffer(
-        self, step_mode: VertexStepMode | str, array_stride: int | None = None
-    ):
+        self, step_mode: wgpu.VertexStepMode | str, array_stride: int | None = None
+    ) -> Self:
         self.buffers.append(
             {
                 "array_stride": array_stride,
@@ -103,20 +153,20 @@ class GraphicPipelineBuilder:
         )
         return self
 
-    def with_vertex_buffer(self, array_stride: int | None = None):
-        self.with_buffer(VertexStepMode.vertex, array_stride)
+    def with_vertex_buffer(self, array_stride: int | None = None) -> Self:
+        self.with_buffer(wgpu.VertexStepMode.vertex, array_stride)
         return self
 
-    def with_instance_buffer(self, array_stride: int | None = None):
-        self.with_buffer(VertexStepMode.instance, array_stride)
+    def with_instance_buffer(self, array_stride: int | None = None) -> Self:
+        self.with_buffer(wgpu.VertexStepMode.instance, array_stride)
         return self
 
     def with_attribute(
         self,
-        format: VertexFormat | str,
+        format: wgpu.VertexFormat | str,
         offset: int | None = None,
         location: int | None = None,
-    ):
+    ) -> Self:
         if location is None:
             location = self.location
         self.location = location + 1
@@ -137,7 +187,7 @@ class GraphicPipelineBuilder:
         )
         return self
 
-    def build(self):
+    def build(self) -> wgpu.GPURenderPipeline:
         # pipeline_layout = DEVICE.create_pipeline_layout(bind_group_layouts=[])
 
         for buffer in self.buffers:
@@ -162,7 +212,7 @@ class GraphicPipelineBuilder:
                 "entry_point": "fs_main",
                 "targets": [
                     {
-                        "format": TextureFormat.bgra8unorm,
+                        "format": wgpu.TextureFormat.bgra8unorm,
                         "blend": {
                             "color": {},
                             "alpha": {},
@@ -171,43 +221,51 @@ class GraphicPipelineBuilder:
                 ],
             },
         }
-        return GraphicPipeline(params)
+        return get_device().create_render_pipeline(**params)
 
 
-class GraphicPipeline:
-    def __init__(self, params: dict):
-        self.render_pipeline = DEVICE.create_render_pipeline(**params)
-        # get_bind_group_layout(index: int)
+class CommandBufferBuilder:
+    def __init__(self):
+        self.command_encoder = get_device().create_command_encoder()
+
+    def begin_render_pass(self, texture: wgpu.GPUTexture) -> RenderPassBuilder:
+        return RenderPassBuilder(texture, self)
+
+    def submit(self):
+        get_device().queue.submit([self.command_encoder.finish()])
 
 
-class RenderPass:
-    def __init__(self, texture: Texture):
-        self.vertex_buffer_index = 0
-        self.command_encoder = DEVICE.create_command_encoder()
-        self.render_pass = self.command_encoder.begin_render_pass(
+class RenderPassBuilder:
+    def __init__(
+        self, texture: wgpu.GPUTexture, command_buffer_builder: CommandBufferBuilder
+    ):
+        self.command_buffer_builder = command_buffer_builder
+        self.texture = texture
+        self.clear_value = (0, 0, 0, 1)
+        self.load_op = wgpu.LoadOp.clear
+        self.store_op = wgpu.StoreOp.store
+
+    def with_clear_value(self, value: tuple) -> Self:
+        self.clear_value = value
+        return self
+
+    def with_load_op(self, load_op: wgpu.LoadOp) -> Self:
+        self.load_op = load_op
+        return self
+
+    def with_store_op(self, store_op: wgpu.StoreOp) -> Self:
+        self.store_op = store_op
+        return self
+
+    def build(self) -> wgpu.GPURenderPassEncoder:
+        return self.command_buffer_builder.command_encoder.begin_render_pass(
             color_attachments=[
                 {
-                    "view": texture.view,
+                    "view": self.texture.create_view(),
                     "resolve_target": None,
-                    "clear_value": (0, 0, 0, 1),
-                    "load_op": wgpu.LoadOp.clear,
-                    "store_op": wgpu.StoreOp.store,
+                    "clear_value": self.clear_value,
+                    "load_op": self.load_op,
+                    "store_op": self.store_op,
                 }
             ]
         )
-
-    def with_pipeline(self, pipeline: GraphicPipeline):
-        self.render_pass.set_pipeline(pipeline.render_pipeline)
-        return self
-
-    def with_vertex_buffer(self, buffer: Buffer):
-        self.render_pass.set_vertex_buffer(self.vertex_buffer_index, buffer.data)
-        return self
-
-    def draw(self, vertex_count, instance_count=1):
-        self.render_pass.draw(vertex_count, instance_count, 0, 0)
-        return self
-
-    def submit(self):
-        self.render_pass.end()
-        DEVICE.queue.submit([self.command_encoder.finish()])

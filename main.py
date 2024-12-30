@@ -1,5 +1,5 @@
-from wgpu import VertexFormat
-from gpu import Texture, GraphicPipelineBuilder, Buffer, RenderPass
+from wgpu import BufferUsage, GPUTexture, VertexFormat
+from gpu import GraphicPipelineBuilder, BufferBuilder, CommandBufferBuilder
 from window import Window, App
 import numpy as np
 
@@ -16,7 +16,12 @@ class MyApp(App):
             dtype=np.float32,
         )
 
-        self.vertex_buffer = Buffer(vertex_data)
+        self.vertex_buffer = (
+            BufferBuilder()
+            .from_data(vertex_data)
+            .with_usage(BufferUsage.VERTEX)
+            .build()
+        )
 
         self.pipeline = (
             GraphicPipelineBuilder()
@@ -27,10 +32,16 @@ class MyApp(App):
             .build()
         )
 
-    def render(self, screen: Texture):
-        RenderPass(screen).with_pipeline(self.pipeline).with_vertex_buffer(
-            self.vertex_buffer
-        ).draw(3).submit()
+    def render(self, screen: GPUTexture):
+        command_buffer_builder = CommandBufferBuilder()
+
+        render_pass = command_buffer_builder.begin_render_pass(screen).build()
+        render_pass.set_pipeline(self.pipeline)
+        render_pass.set_vertex_buffer(0, self.vertex_buffer)
+        render_pass.draw(3)
+        render_pass.end()
+
+        command_buffer_builder.submit()
 
 
 Window((800, 600)).run(MyApp())
