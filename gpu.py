@@ -60,7 +60,7 @@ class TextureBuilder:
     def __init__(self):
         self.size = None
         self.format = None
-        self.usages = 0
+        self.usages = None
 
     def with_size(self, size: tuple[int, int]) -> Self:
         self.size = size
@@ -70,15 +70,15 @@ class TextureBuilder:
         self.format = format
         return self
 
-    def with_usage(self, usage: int) -> Self:
-        self.usages |= usage  # type: ignore
+    def with_usage(self, usage: int | str) -> Self:
+        self.usages = usage
         return self
 
     def build(self) -> wgpu.GPUTexture:
         if self.format is None:
             raise Exception("format must be set")
 
-        if self.usages == 0:
+        if self.usages is None:
             raise Exception("Usages must be set")
 
         return get_device().create_texture(
@@ -92,7 +92,7 @@ class BufferBuilder:
     def __init__(self):
         self.data = None
         self.size = None
-        self.usages = 0
+        self.usages = None
 
     def from_data(self, data: npt.NDArray) -> Self:
         self.with_size(data.size * data.itemsize)
@@ -107,8 +107,8 @@ class BufferBuilder:
         self.size = size
         return self
 
-    def with_usage(self, usage: int) -> Self:
-        self.usages |= usage  # type: ignore
+    def with_usage(self, usage: int | str) -> Self:
+        self.usages = usage
         return self
 
     def build(self) -> wgpu.GPUBuffer:
