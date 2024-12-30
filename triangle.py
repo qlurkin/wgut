@@ -1,11 +1,13 @@
 from wgpu import BufferUsage, GPUTexture, VertexFormat
 from gpu import GraphicPipelineBuilder, BufferBuilder, CommandBufferBuilder
-from window import Window, App
+from window import Window
 import numpy as np
 
 
-class MyApp(App):
+class MyApp(Window):
     def setup(self, size: tuple[int, int]):
+        self.with_title("Hello Triangle")
+
         vertex_data = np.array(
             [
                 # x, y, r, g, b
@@ -44,4 +46,4 @@ class MyApp(App):
         command_buffer_builder.submit()
 
 
-Window().run(MyApp())
+MyApp().run()
