@@ -44,4 +44,4 @@ class MyApp(App):
         command_buffer_builder.submit()
 
 
-Window((800, 600)).run(MyApp())
+Window().run(MyApp())
