@@ -66,7 +66,7 @@ class TextureBuilder:
         self.size = size
         return self
 
-    def with_format(self, format: wgpu.TextureFormat) -> Self:
+    def with_format(self, format: str) -> Self:
         self.format = format
         return self
 
@@ -83,8 +83,18 @@ class TextureBuilder:
 
         return get_device().create_texture(
             size=self.size,
-            format=self.format,
+            format=self.format,  # type: ignore
             usage=self.usages,  # type: ignore
+        )
+
+    def build_depth(self, size: tuple[int, int]) -> wgpu.GPUTexture:
+        return (
+            self.with_format(wgpu.TextureFormat.depth32float)
+            .with_size(size)
+            .with_usage(
+                wgpu.TextureUsage.RENDER_ATTACHMENT | wgpu.TextureUsage.TEXTURE_BINDING
+            )
+            .build()
         )
 
 
@@ -134,6 +144,8 @@ class GraphicPipelineBuilder:
         self.shader_module = None
         self.buffers = []
         self.location = 0
+        self.output_format = wgpu.TextureFormat.bgra8unorm
+        self.depth_stencil_state = None
 
     def with_shader(self, filename) -> Self:
         with open(filename) as file:
@@ -187,6 +199,23 @@ class GraphicPipelineBuilder:
         )
         return self
 
+    def with_output_format(self, output_format: wgpu.TextureFormat) -> Self:
+        self.output_format = output_format
+        return self
+
+    def with_depth_stencil(
+        self,
+        depth_format: wgpu.TextureFormat = wgpu.TextureFormat.depth32float,  # type: ignore
+        depth_write_enabled: bool = True,
+        depth_compare: wgpu.CompareFunction = wgpu.CompareFunction.less,  # type: ignore
+    ) -> Self:
+        self.depth_stencil_state = {
+            "format": depth_format,
+            "depth_write_enabled": depth_write_enabled,
+            "depth_compare": depth_compare,
+        }
+        return self
+
     def build(self) -> wgpu.GPURenderPipeline:
         # pipeline_layout = DEVICE.create_pipeline_layout(bind_group_layouts=[])
 
@@ -210,14 +239,14 @@ class GraphicPipelineBuilder:
                 "front_face": wgpu.FrontFace.ccw,
                 "cull_mode": wgpu.CullMode.back,
             },
-            "depth_stencil": None,
+            "depth_stencil": self.depth_stencil_state,
             "multisample": None,
             "fragment": {
                 "module": self.shader_module,
                 "entry_point": "fs_main",
                 "targets": [
                     {
-                        "format": wgpu.TextureFormat.bgra8unorm,
+                        "format": self.output_format,
                         "blend": {
                             "color": {},
                             "alpha": {},
@@ -226,6 +255,7 @@ class GraphicPipelineBuilder:
                 ],
             },
         }
+
         return get_device().create_render_pipeline(**params)
 
 
@@ -249,6 +279,7 @@ class RenderPassBuilder:
         self.clear_value = (0, 0, 0, 1)
         self.load_op = wgpu.LoadOp.clear
         self.store_op = wgpu.StoreOp.store
+        self.depth_stencil_attachment = None
 
     def with_clear_value(self, value: tuple) -> Self:
         self.clear_value = value
@@ -262,6 +293,15 @@ class RenderPassBuilder:
         self.store_op = store_op
         return self
 
+    def with_depth_stencil(self, texture: wgpu.GPUTexture) -> Self:
+        self.depth_stencil_attachment = {
+            "view": texture.create_view(),
+            "depth_clear_value": 1.0,
+            "depth_load_op": wgpu.LoadOp.clear,
+            "depth_store_op": wgpu.StoreOp.store,
+        }
+        return self
+
     def build(self) -> wgpu.GPURenderPassEncoder:
         return self.command_buffer_builder.command_encoder.begin_render_pass(
             color_attachments=[
@@ -272,5 +312,6 @@ class RenderPassBuilder:
                     "load_op": self.load_op,
                     "store_op": self.store_op,
                 }
-            ]
+            ],
+            depth_stencil_attachment=self.depth_stencil_attachment,
         )

@@ -1,5 +1,10 @@
 from wgpu import BufferUsage, GPUTexture, VertexFormat
-from gpu import GraphicPipelineBuilder, BufferBuilder, CommandBufferBuilder
+from gpu import (
+    GraphicPipelineBuilder,
+    BufferBuilder,
+    CommandBufferBuilder,
+    TextureBuilder,
+)
 from window import Window
 import numpy as np
 
@@ -23,9 +28,12 @@ class MyApp(Window):
             .build()
         )
 
+        self.depth_texture = TextureBuilder().build_depth(size)
+
         self.pipeline = (
             GraphicPipelineBuilder()
             .with_shader("shader.wgsl")
+            .with_depth_stencil()
             .with_vertex_buffer()
             .with_attribute(VertexFormat.float32x2)
             .with_attribute(VertexFormat.float32x3)
@@ -35,7 +43,11 @@ class MyApp(Window):
     def render(self, screen: GPUTexture):
         command_buffer_builder = CommandBufferBuilder()
 
-        render_pass = command_buffer_builder.begin_render_pass(screen).build()
+        render_pass = (
+            command_buffer_builder.begin_render_pass(screen)
+            .with_depth_stencil(self.depth_texture)
+            .build()
+        )
         render_pass.set_pipeline(self.pipeline)
         render_pass.set_vertex_buffer(0, self.vertex_buffer)
         render_pass.draw(3)
@@ -44,4 +56,4 @@ class MyApp(Window):
         command_buffer_builder.submit()
 
 
-MyApp().with_title("Hello Triangle").run()
+MyApp().with_title("Hello Cube").run()

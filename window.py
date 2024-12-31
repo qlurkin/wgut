@@ -11,6 +11,9 @@ class Window:
         self.title = "WGPU Window"
         self.max_fps = 60
 
+    def get_texture_format(self) -> wgpu.TextureFormat:
+        return wgpu.TextureFormat.bgra8unorm  # type: ignore
+
     def with_size(self, size: tuple[int, int]) -> Self:
         self.size = size
         return self
@@ -24,12 +27,11 @@ class Window:
         return self
 
     def run(self):
-        self.setup(self.size)
         device = get_device()
         canvas = WgpuCanvas(title=self.title, size=self.size, max_fps=self.max_fps)
+        self.setup(canvas.get_physical_size())
         present_context = canvas.get_context("wgpu")
-        format = wgpu.TextureFormat.bgra8unorm
-        present_context.configure(device=device, format=format)
+        present_context.configure(device=device, format=self.get_texture_format())
         prev_time = None
 
         def loop():
