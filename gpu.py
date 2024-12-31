@@ -66,11 +66,11 @@ class TextureBuilder:
         self.size = size
         return self
 
-    def with_format(self, format: str) -> Self:
+    def with_format(self, format: wgpu.TextureFormat | str) -> Self:
         self.format = format
         return self
 
-    def with_usage(self, usage: int | str) -> Self:
+    def with_usage(self, usage: wgpu.TextureUsage | int | str) -> Self:
         self.usages = usage
         return self
 
@@ -117,7 +117,7 @@ class BufferBuilder:
         self.size = size
         return self
 
-    def with_usage(self, usage: int | str) -> Self:
+    def with_usage(self, usage: wgpu.BufferUsage | int | str) -> Self:
         self.usages = usage
         return self
 
