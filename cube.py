@@ -11,6 +11,8 @@ import numpy as np
 
 class MyApp(Window):
     def setup(self, size: tuple[int, int]):
+        self.with_title("Hello Cube")
+
         vertex_data = np.array(
             [
                 # x, y, r, g, b
@@ -56,4 +58,4 @@ class MyApp(Window):
         command_buffer_builder.submit()
 
 
-MyApp().with_title("Hello Cube").run()
+MyApp().run()
