@@ -46,7 +46,7 @@ def look_at(
     # fmt: on
 
 
-def perspective(fovy_deg, aspect, near, far) -> ntp.NDArray:
+def perspective(fovy_deg: float, aspect: float, near: float, far: float) -> ntp.NDArray:
     """
     Convert camera coordinates to wgpu clip coordinates where x and y goes from -1.0 to 1.0 and z goes from 0.0 to 1.0.
     """
@@ -62,6 +62,6 @@ def perspective(fovy_deg, aspect, near, far) -> ntp.NDArray:
     # fmt: off
     return np.array([[c0r0,    0,    0,    0],
                      [   0, c1r1,    0,    0],
-                     [   0,    0, c2r2, c3r2],
-                     [   0,    0,   -1,    0]], dtype=np.float32)
+                     [   0,    0, c2r2,   -1],
+                     [   0,    0, c3r2,    0]], dtype=np.float32)
     # fmt: on
