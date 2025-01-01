@@ -1,5 +1,6 @@
 from wgpu import BufferUsage, GPUTexture, IndexFormat, VertexFormat
 from gpu import (
+    BindGroupBuilder,
     GraphicPipelineBuilder,
     BufferBuilder,
     CommandBufferBuilder,
@@ -7,6 +8,7 @@ from gpu import (
 )
 from window import Window
 import numpy as np
+import cgmath as cm
 
 
 class MyApp(Window):
@@ -63,6 +65,11 @@ class MyApp(Window):
         )
         # fmt: on
 
+        view_matrix = cm.look_at([3, 2, 4], [0, 0, 0], [0, 1, 0])
+        proj_matrix = cm.perspective(45, 4 / 3, 0.1, 100)
+
+        camera_data = np.array([view_matrix, proj_matrix])
+
         self.vertex_buffer = (
             BufferBuilder()
             .from_data(vertex_data)
@@ -72,6 +79,13 @@ class MyApp(Window):
 
         self.index_buffer = (
             BufferBuilder().from_data(index_data).with_usage(BufferUsage.INDEX).build()
+        )
+
+        self.camera_buffer = (
+            BufferBuilder()
+            .from_data(camera_data)
+            .with_usage(BufferUsage.UNIFORM)
+            .build()
         )
 
         self.depth_texture = TextureBuilder().build_depth(size)
@@ -94,9 +108,17 @@ class MyApp(Window):
             .with_depth_stencil(self.depth_texture)
             .build()
         )
+
+        camera_bind_group = (
+            BindGroupBuilder(self.pipeline.get_bind_group_layout(0))
+            .with_buffer_binding(self.camera_buffer)
+            .build()
+        )
+
         render_pass.set_pipeline(self.pipeline)
         render_pass.set_vertex_buffer(0, self.vertex_buffer)
         render_pass.set_index_buffer(self.index_buffer, IndexFormat.uint32)  # type: ignore
+        render_pass.set_bind_group(0, camera_bind_group)
         render_pass.draw_indexed(36)
         render_pass.end()
 
