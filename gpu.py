@@ -315,3 +315,25 @@ class RenderPassBuilder:
             ],
             depth_stencil_attachment=self.depth_stencil_attachment,
         )
+
+
+class BindGroupBuilder:
+    def __init__(self, layout):
+        self.layout = layout
+        self.bindings = []
+
+    def with_buffer_binding(self, buffer: wgpu.GPUBuffer) -> Self:
+        self.bindings.append(
+            {
+                "binding": len(self.bindings),
+                "resource": {
+                    "buffer": buffer,
+                    "offset": 0,
+                    "size": buffer.size,
+                },
+            }
+        )
+        return self
+
+    def build(self) -> wgpu.GPUBindGroup:
+        return get_device().create_bind_group(layout=self.layout, entries=self.bindings)
