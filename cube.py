@@ -12,8 +12,26 @@ import cgmath as cm
 
 
 class MyApp(Window):
-    def setup(self, size: tuple[int, int]):
-        self.with_title("Hello Cube")
+    def on_resize(self):
+        canvas = self.get_canvas()
+        self.depth_texture = TextureBuilder().build_depth(canvas.get_physical_size())
+
+        width, height = canvas.get_logical_size()
+
+        view_matrix = cm.look_at([3, 2, 4], [0, 0, 0], [0, 1, 0])
+        proj_matrix = cm.perspective(45, width / height, 0.1, 100)
+
+        camera_data = np.array([view_matrix, proj_matrix])
+
+        self.camera_buffer = (
+            BufferBuilder()
+            .from_data(camera_data)
+            .with_usage(BufferUsage.UNIFORM)
+            .build()
+        )
+
+    def setup(self):
+        self.set_title("Hello Cube")
 
         # fmt: off
         vertex_data = np.array(
@@ -65,11 +83,6 @@ class MyApp(Window):
         )
         # fmt: on
 
-        view_matrix = cm.look_at([3, 2, 4], [0, 0, 0], [0, 1, 0])
-        proj_matrix = cm.perspective(45, 4 / 3, 0.1, 100)
-
-        camera_data = np.array([view_matrix, proj_matrix])
-
         self.vertex_buffer = (
             BufferBuilder()
             .from_data(vertex_data)
@@ -81,15 +94,6 @@ class MyApp(Window):
             BufferBuilder().from_data(index_data).with_usage(BufferUsage.INDEX).build()
         )
 
-        self.camera_buffer = (
-            BufferBuilder()
-            .from_data(camera_data)
-            .with_usage(BufferUsage.UNIFORM)
-            .build()
-        )
-
-        self.depth_texture = TextureBuilder().build_depth(size)
-
         self.pipeline = (
             GraphicPipelineBuilder()
             .with_shader("cube.wgsl")
@@ -99,6 +103,8 @@ class MyApp(Window):
             .with_attribute(VertexFormat.float32x3)
             .build()
         )
+
+        self.on_resize()
 
     def render(self, screen: GPUTexture):
         command_buffer_builder = CommandBufferBuilder()
@@ -123,6 +129,10 @@ class MyApp(Window):
         render_pass.end()
 
         command_buffer_builder.submit()
+
+    def process_event(self, event):
+        if event["event_type"] == "resize":
+            self.on_resize()
 
 
 MyApp().run()

@@ -5,7 +5,8 @@ import numpy as np
 
 
 class MyApp(Window):
-    def setup(self, size: tuple[int, int]):
+    def setup(self):
+        self.set_title("Hello Triangle")
         vertex_data = np.array(
             [
                 # x, y, r, g, b
@@ -44,4 +45,4 @@ class MyApp(Window):
         command_buffer_builder.submit()
 
 
-MyApp().with_title("Hello Triangle").run()
+MyApp().run()

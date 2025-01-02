@@ -2,37 +2,30 @@ from wgpu.gui.glfw import WgpuCanvas, run
 import wgpu
 from gpu import get_device
 import time
-from typing import Self
 
 
 class Window:
-    def __init__(self):
-        self.size = (800, 600)
-        self.title = "WGPU Window"
-        self.max_fps = 60
-        self.canvas = None
+    def __init__(self, size: tuple[int, int] = (800, 600), max_fps: int = 60):
+        self.size = size
+        self.canvas = WgpuCanvas(title="WGPU Window", size=self.size, max_fps=max_fps)
+
+        def event_handler(event):
+            self.process_event(event)
+
+        self.canvas.add_event_handler(event_handler, "*")
 
     def get_texture_format(self) -> wgpu.TextureFormat:
         return wgpu.TextureFormat.bgra8unorm  # type: ignore
 
-    def with_size(self, size: tuple[int, int]) -> Self:
-        self.size = size
-        return self
+    def set_title(self, title: str):
+        self.canvas.set_title(title)
 
-    def with_max_fps(self, max_fps: int) -> Self:
-        self.max_fps = max_fps
-        return self
-
-    def with_title(self, title: str) -> Self:
-        self.title = title
-        if self.canvas is not None:
-            self.canvas.set_title(title)
-        return self
+    def get_canvas(self) -> WgpuCanvas:
+        return self.canvas
 
     def run(self):
         device = get_device()
-        self.canvas = WgpuCanvas(title=self.title, size=self.size, max_fps=self.max_fps)
-        self.setup(self.canvas.get_physical_size())
+        self.setup()
         present_context = self.canvas.get_context("wgpu")
         present_context.configure(device=device, format=self.get_texture_format())
         prev_time = None
@@ -53,11 +46,14 @@ class Window:
         self.canvas.request_draw(loop)
         run()
 
-    def setup(self, size: tuple[int, int]):
+    def setup(self):
         pass
 
     def update(self, delta_time: float):
         pass
 
     def render(self, screen: wgpu.GPUTexture):
+        pass
+
+    def process_event(self, event):
         pass
