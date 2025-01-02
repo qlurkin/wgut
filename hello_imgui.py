@@ -1,3 +1,7 @@
+# imgui imports first
+from imgui_bundle import imgui
+from wgpu.utils.imgui import ImguiRenderer
+
 from wgpu import BufferUsage, GPUTexture, IndexFormat, VertexFormat
 from gpu import (
     BindGroupBuilder,
@@ -10,8 +14,6 @@ from gpu import (
 from window import Window
 import numpy as np
 import cgmath as cm
-from imgui_bundle import imgui
-from wgpu.utils.imgui import ImguiRenderer
 
 
 class MyApp(Window):
