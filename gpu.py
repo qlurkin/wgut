@@ -285,11 +285,11 @@ class RenderPassBuilder:
         self.clear_value = value
         return self
 
-    def with_load_op(self, load_op: wgpu.LoadOp) -> Self:
+    def with_load_op(self, load_op: wgpu.LoadOp | str) -> Self:
         self.load_op = load_op
         return self
 
-    def with_store_op(self, store_op: wgpu.StoreOp) -> Self:
+    def with_store_op(self, store_op: wgpu.StoreOp | str) -> Self:
         self.store_op = store_op
         return self
 
