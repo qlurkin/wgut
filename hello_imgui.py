@@ -157,7 +157,7 @@ class MyApp(Window):
     def gui(self):
         imgui.new_frame()
         imgui.begin("Hello Imgui", None)
-        imgui.text(f"Frame Time: {self.frame_time}")
+        imgui.text(f"Frame Time: {self.frame_time:.5f}s")
         imgui.end()
         imgui.end_frame()
         imgui.render()
