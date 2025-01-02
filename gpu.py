@@ -312,7 +312,7 @@ class RenderPassBuilder:
     ):
         self.command_buffer_builder = command_buffer_builder
         self.texture = texture
-        self.clear_value = (0, 0, 0, 1)
+        self.clear_value = (0.9, 0.9, 0.9, 1)
         self.load_op = wgpu.LoadOp.clear
         self.store_op = wgpu.StoreOp.store
         self.depth_stencil_attachment = None
