@@ -6,8 +6,12 @@ import time
 
 class Window:
     def __init__(self, size: tuple[int, int] = (800, 600), max_fps: int = 60):
-        self.size = size
-        self.canvas = WgpuCanvas(title="WGPU Window", size=self.size, max_fps=max_fps)
+        device = get_device()
+
+        self.canvas = WgpuCanvas(title="WGPU Window", size=size, max_fps=max_fps)
+        self.present_context = self.canvas.get_context("wgpu")
+        self.texture_format = self.present_context.get_preferred_format(device.adapter)
+        self.present_context.configure(device=device, format=self.texture_format)
 
         def event_handler(event):
             self.process_event(event)
@@ -15,7 +19,7 @@ class Window:
         self.canvas.add_event_handler(event_handler, "*")
 
     def get_texture_format(self) -> wgpu.TextureFormat:
-        return wgpu.TextureFormat.bgra8unorm  # type: ignore
+        return self.texture_format
 
     def set_title(self, title: str):
         self.canvas.set_title(title)
@@ -24,16 +28,13 @@ class Window:
         return self.canvas
 
     def run(self):
-        device = get_device()
         self.setup()
-        present_context = self.canvas.get_context("wgpu")
-        present_context.configure(device=device, format=self.get_texture_format())
         prev_time = None
 
         def loop():
             nonlocal prev_time
             current_time = time.perf_counter()
-            canvas_texture = present_context.get_current_texture()
+            canvas_texture = self.present_context.get_current_texture()
             if prev_time is None:
                 frame_time = 0
             else:

@@ -25,7 +25,7 @@ class MyApp(Window):
         )
 
         self.pipeline = (
-            GraphicPipelineBuilder()
+            GraphicPipelineBuilder(self.get_texture_format())
             .with_shader("shader.wgsl")
             .with_vertex_buffer()
             .with_attribute(VertexFormat.float32x2)

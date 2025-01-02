@@ -1,4 +1,4 @@
-from wgpu import BufferUsage, GPUTexture, IndexFormat, LoadOp, VertexFormat
+from wgpu import BufferUsage, GPUTexture, IndexFormat, VertexFormat
 from gpu import (
     BindGroupBuilder,
     GraphicPipelineBuilder,
@@ -10,8 +10,8 @@ from gpu import (
 from window import Window
 import numpy as np
 import cgmath as cm
-from imgui_bundle import ImVec2, imgui
-from wgpu.utils.imgui import ImguiWgpuBackend
+from imgui_bundle import imgui
+from wgpu.utils.imgui import ImguiRenderer
 
 
 class MyApp(Window):
@@ -19,7 +19,6 @@ class MyApp(Window):
         canvas = self.get_canvas()
         self.depth_texture = TextureBuilder().build_depth(canvas.get_physical_size())
         width, height = self.get_canvas().get_logical_size()
-        self.imgui_backend.io.display_size = ImVec2(width, height)
 
         view_matrix = cm.look_at([3, 2, 4], [0, 0, 0], [0, 1, 0])
         proj_matrix = cm.perspective(45, width / height, 0.1, 100)
@@ -98,7 +97,7 @@ class MyApp(Window):
         )
 
         self.pipeline = (
-            GraphicPipelineBuilder()
+            GraphicPipelineBuilder(self.get_texture_format())
             .with_shader("cube.wgsl")
             .with_depth_stencil()
             .with_vertex_buffer()
@@ -107,19 +106,18 @@ class MyApp(Window):
             .build()
         )
 
-        imgui.create_context()
-        self.imgui_backend = ImguiWgpuBackend(get_device(), self.get_texture_format())
+        self.on_resize()
 
-        pixel_ratio = self.get_canvas().get_pixel_ratio()
-
-        self.imgui_backend.io.display_framebuffer_scale = ImVec2(
-            pixel_ratio, pixel_ratio
+        self.imgui_renderer = ImguiRenderer(
+            get_device(), self.get_canvas(), self.get_texture_format()
         )
 
-        self.on_resize()
+        self.imgui_renderer.set_gui(self.gui)
+
         self.frame_time = 0
 
     def update(self, delta_time: float):
+        self.imgui_renderer.backend.io.delta_time = delta_time
         self.frame_time = delta_time
 
     def render(self, screen: GPUTexture):
@@ -143,18 +141,11 @@ class MyApp(Window):
         render_pass.draw_indexed(36)
         render_pass.end()
 
-        render_pass = (
-            command_buffer_builder.begin_render_pass(screen)
-            .with_load_op(LoadOp.load)
-            .build()
-        )
-        imgui_data = self.gui()
-        self.imgui_backend.render(imgui_data, render_pass)
-        render_pass.end()
-
         command_buffer_builder.submit()
 
-    def gui(self):
+        self.imgui_renderer.render()
+
+    def gui(self) -> imgui.ImDrawData:
         imgui.new_frame()
         imgui.begin("Hello Imgui", None)
         imgui.text(f"Frame Time: {self.frame_time:.5f}s")
@@ -166,14 +157,6 @@ class MyApp(Window):
     def process_event(self, event):
         if event["event_type"] == "resize":
             self.on_resize()
-
-        if event["event_type"] == "pointer_down" or event["event_type"] == "pointer_up":
-            event_type = event["event_type"]
-            down = event_type == "pointer_down"
-            self.imgui_backend.io.add_mouse_button_event(event["button"] - 1, down)
-
-        if event["event_type"] == "pointer_move":
-            self.imgui_backend.io.add_mouse_pos_event(event["x"], event["y"])
 
 
 MyApp().run()

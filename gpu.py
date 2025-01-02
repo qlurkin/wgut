@@ -4,6 +4,8 @@ import wgpu
 import numpy.typing as npt
 from typing import Self
 
+from wgpu.enums import TextureFormat
+
 _ADAPTER = None
 _DEVICE = None
 
@@ -140,11 +142,11 @@ class BufferBuilder:
 
 
 class GraphicPipelineBuilder:
-    def __init__(self):
+    def __init__(self, output_format: TextureFormat | str):
         self.shader_module = None
         self.buffers = []
         self.location = 0
-        self.output_format = wgpu.TextureFormat.bgra8unorm
+        self.output_format = output_format
         self.depth_stencil_state = None
 
     def with_shader(self, filename) -> Self:

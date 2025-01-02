@@ -95,7 +95,7 @@ class MyApp(Window):
         )
 
         self.pipeline = (
-            GraphicPipelineBuilder()
+            GraphicPipelineBuilder(self.get_texture_format())
             .with_shader("cube.wgsl")
             .with_depth_stencil()
             .with_vertex_buffer()
