@@ -78,16 +78,22 @@ class TextureBuilder:
         self.usages = usage
         return self
 
-    def from_file(self, filename: str) -> wgpu.GPUTexture:
+    def from_file(self, filename: str, srgb: bool = True) -> wgpu.GPUTexture:
         image = Image.open(filename)
-        data = np.array(image)
-        self.with_size(image.size)
-        format = TextureFormat.rgba8uint
-        self.with_format(format)
+        data = np.asarray(image)
         if image.mode == "RGB":
             data = np.dstack((data, np.full(data.shape[:-1], 255, dtype=np.uint8)))
-        self.with_usage(wgpu.TextureUsage.COPY_DST | wgpu.TextureUsage.TEXTURE_BINDING)
-        texture = self.build()
+        format = TextureFormat.rgba8unorm
+        if srgb:
+            format = TextureFormat.rgba8unorm_srgb
+
+        texture = (
+            self.with_size(image.size)
+            .with_format(format)
+            .with_usage(wgpu.TextureUsage.COPY_DST | wgpu.TextureUsage.TEXTURE_BINDING)
+            .build()
+        )
+
         get_device().queue.write_texture(
             {
                 "texture": texture,
@@ -101,6 +107,7 @@ class TextureBuilder:
             },
             image.size,
         )
+
         return texture
 
     def build(self) -> wgpu.GPUTexture:
@@ -360,6 +367,29 @@ class BindGroupBuilder:
                     "offset": 0,
                     "size": buffer.size,
                 },
+            }
+        )
+        return self
+
+    def with_texture_binding(self, texture: wgpu.GPUTexture) -> Self:
+        self.bindings.append(
+            {"binding": len(self.bindings), "resource": texture.create_view()}
+        )
+        return self
+
+    def with_sampler_binding(
+        self,
+        address_mode: wgpu.AddressMode | str = wgpu.AddressMode.repeat,
+        filter: wgpu.FilterMode | str = wgpu.FilterMode.nearest,
+    ) -> Self:
+        self.bindings.append(
+            {
+                "binding": len(self.bindings),
+                "resource": get_device().create_sampler(
+                    address_mode_u=address_mode,  # type: ignore
+                    address_mode_v=address_mode,  # type: ignore
+                    mag_filter=filter,  # type: ignore
+                ),
             }
         )
         return self
