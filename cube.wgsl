@@ -18,12 +18,12 @@ struct VertexOutput {
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.pos = camera.proj * camera.view * vec4<f32>(in.position, 1.0);
-    out.color = in.color;  // sRgb colors
+    out.color = in.color;
     return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let physical_color = pow(in.color, vec3<f32>(2.2));  // gamma correct
-    return vec4<f32>(in.color, 1.0);
+    return vec4<f32>(physical_color, 1.0);
 }

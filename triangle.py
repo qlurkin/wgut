@@ -26,7 +26,7 @@ class MyApp(Window):
 
         self.pipeline = (
             GraphicPipelineBuilder(self.get_texture_format())
-            .with_shader("shader.wgsl")
+            .with_shader("triangle.wgsl")
             .with_vertex_buffer()
             .with_attribute(VertexFormat.float32x2)
             .with_attribute(VertexFormat.float32x3)
