@@ -1,8 +1,10 @@
 from __future__ import annotations
 import wgpu
 
+import numpy as np
 import numpy.typing as npt
 from typing import Self
+from PIL import Image
 
 from wgpu.enums import TextureFormat
 
@@ -75,6 +77,31 @@ class TextureBuilder:
     def with_usage(self, usage: wgpu.TextureUsage | int | str) -> Self:
         self.usages = usage
         return self
+
+    def from_file(self, filename: str) -> wgpu.GPUTexture:
+        image = Image.open(filename)
+        data = np.array(image)
+        self.with_size(image.size)
+        format = TextureFormat.rgba8uint
+        self.with_format(format)
+        if image.mode == "RGB":
+            data = np.dstack((data, np.full(data.shape[:-1], 255, dtype=np.uint8)))
+        self.with_usage(wgpu.TextureUsage.COPY_DST | wgpu.TextureUsage.TEXTURE_BINDING)
+        texture = self.build()
+        get_device().queue.write_texture(
+            {
+                "texture": texture,
+                "mip_level": 0,
+                "origin": (0, 0, 0),
+            },
+            data,
+            {
+                "offset": 0,
+                "bytes_per_row": data.strides[0],
+            },
+            image.size,
+        )
+        return texture
 
     def build(self) -> wgpu.GPUTexture:
         if self.format is None:
