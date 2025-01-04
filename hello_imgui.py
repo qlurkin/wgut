@@ -3,7 +3,7 @@ from imgui_bundle import imgui
 from wgpu.utils.imgui import ImguiRenderer
 
 from wgpu import BufferUsage, GPUTexture, IndexFormat, VertexFormat
-from gpu import (
+from wgut.builders import (
     BindGroupBuilder,
     GraphicPipelineBuilder,
     BufferBuilder,
@@ -11,9 +11,9 @@ from gpu import (
     TextureBuilder,
     get_device,
 )
-from window import Window
+from wgut.window import Window
 import numpy as np
-import cgmath as cm
+import wgut.cgmath as cm
 
 
 class MyApp(Window):

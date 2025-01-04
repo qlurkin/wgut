@@ -1,14 +1,14 @@
 from wgpu import BufferUsage, GPUTexture, IndexFormat, VertexFormat
-from gpu import (
+from wgut.builders import (
     BindGroupBuilder,
     GraphicPipelineBuilder,
     BufferBuilder,
     CommandBufferBuilder,
     TextureBuilder,
 )
-from window import Window
+from wgut.window import Window
 import numpy as np
-import cgmath as cm
+import wgut.cgmath as cm
 
 
 class MyApp(Window):

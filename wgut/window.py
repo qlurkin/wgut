@@ -1,6 +1,6 @@
 from wgpu.gui.glfw import WgpuCanvas, run
 import wgpu
-from gpu import get_device
+from .builders import get_device
 import time
 
 
