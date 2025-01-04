@@ -12,6 +12,8 @@ examples = os.listdir("./examples")
 if name not in examples:
     raise Exception("Not an example")
 
+sys.path.append(os.path.abspath("./src"))
+
 os.chdir("./examples")
 
 with open(name) as file:
