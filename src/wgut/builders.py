@@ -69,6 +69,7 @@ def print_adapter_info():
     print(title("FEATURES"))
     for item in adapter.features:
         print(f" - {item}")
+    print()
 
 
 def get_device() -> wgpu.GPUDevice:
