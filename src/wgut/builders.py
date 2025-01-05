@@ -53,6 +53,24 @@ def get_adapter() -> wgpu.GPUAdapter:
     return _ADAPTER
 
 
+def print_adapter_info():
+    adapter = get_adapter()
+
+    def title(text):
+        return "\n" + text + ":\n" + "-" * (len(text) + 1)
+
+    print(title("INFO"))
+    for key, value in adapter.info.items():
+        print(f" - {key}: {value}")
+    print(f" - is_software: {adapter.is_fallback_adapter}")
+    print(title("LIMITS"))
+    for key, value in adapter.limits.items():
+        print(f" - {key}: {value}")
+    print(title("FEATURES"))
+    for item in adapter.features:
+        print(f" - {item}")
+
+
 def get_device() -> wgpu.GPUDevice:
     global _DEVICE
     if _DEVICE is None:

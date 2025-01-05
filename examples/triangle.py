@@ -1,4 +1,5 @@
 from wgpu import BufferUsage, GPUTexture, VertexFormat
+from src.wgut.builders import print_adapter_info
 from wgut.builders import GraphicPipelineBuilder, BufferBuilder, CommandBufferBuilder
 from wgut.window import Window
 import numpy as np
@@ -6,6 +7,7 @@ import numpy as np
 
 class MyApp(Window):
     def setup(self):
+        print_adapter_info()
         self.set_title("Hello Triangle")
         vertex_data = np.array(
             [
