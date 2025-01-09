@@ -11,6 +11,7 @@ class Timer:
 
     def __enter__(self):
         self.start = time.perf_counter()
+        return self.div
 
     def __exit__(self, exc_type, exc_value, traceback):
         print(f"{self.msg}:", (time.perf_counter() - self.start) / self.div)
@@ -18,7 +19,7 @@ class Timer:
 
 n = 25600000
 
-with Timer("create numpy array:"):
+with Timer("create numpy array"):
     numpy_data = np.full(n, 3, dtype=np.int32)
 
 
@@ -28,12 +29,9 @@ with Timer("for in range loop"):
         res.append(x * x)
 
 
-rep = 1000
-with Timer("numpy operation", rep):
-    i = 0
-    while i < rep:
+with Timer("numpy operation", 1000) as rep:
+    for _ in range(rep):
         res = numpy_data * numpy_data
-        i += 1
 
 workgroup_size = 512
 shader_source = """
@@ -52,18 +50,15 @@ fn main(@builtin(global_invocation_id) index: vec3<u32>) {
 """
 shader_source = shader_source.replace("WORKGROUP_SIZE", str(workgroup_size))
 
-rep = 100
 out = {}
-with Timer("compute_with_buffer", rep):
-    i = 0
-    while i < rep:
+with Timer("compute_with_buffer", 100) as rep:
+    for _ in range(rep):
         out = compute_with_buffers(
             {0: numpy_data},
             {1: numpy_data.nbytes},
             shader_source,
             n=n // workgroup_size,
         )
-        i += 1
 
 
 with Timer("Building np.array from memoryview"):
@@ -135,10 +130,8 @@ with Timer("Create Buffers and bind group"):
     bind_group = device.create_bind_group(layout=bind_group_layout, entries=bindings)
 
 
-rep = 1000
-with Timer("dispatch", rep):
-    i = 0
-    while i < rep:
+with Timer("dispatch", 1000) as rep:
+    for _ in range(rep):
         command_encoder = device.create_command_encoder()
         compute_pass = command_encoder.begin_compute_pass()
         compute_pass.set_pipeline(compute_pipeline)
@@ -146,6 +139,5 @@ with Timer("dispatch", rep):
         compute_pass.dispatch_workgroups(n // workgroup_size, 1, 1)  # x y z
         compute_pass.end()
         device.queue.submit([command_encoder.finish()])
-        i += 1
 
     out = device.queue.read_buffer(buffer2).cast("i")
