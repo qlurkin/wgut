@@ -194,19 +194,35 @@ class BufferBuilder:
         )
 
 
-class GraphicPipelineBuilder:
-    def __init__(self, output_format: TextureFormat | str):
+def read_buffer(buffer: wgpu.GPUBuffer) -> memoryview:
+    return get_device().queue.read_buffer(buffer)
+
+
+class PipelineBuilderBase:
+    def __init__(self):
         self.shader_module = None
+
+    def with_shader(self, filename: str, replace: None | dict[str, str] = None) -> Self:
+        if replace is None:
+            replace = {}
+        with open(filename) as file:
+            shader_source = file.read()
+        for k, v in replace.items():
+            shader_source = shader_source.replace(k, v)
+        return self.with_shader_source(shader_source)
+
+    def with_shader_source(self, source: str):
+        self.shader_module = get_device().create_shader_module(code=source)
+        return self
+
+
+class GraphicPipelineBuilder(PipelineBuilderBase):
+    def __init__(self, output_format: TextureFormat | str):
+        super().__init__()
         self.buffers = []
         self.location = 0
         self.output_format = output_format
         self.depth_stencil_state = None
-
-    def with_shader(self, filename) -> Self:
-        with open(filename) as file:
-            shader_source = file.read()
-        self.shader_module = get_device().create_shader_module(code=shader_source)
-        return self
 
     def with_buffer(
         self, step_mode: wgpu.VertexStepMode | str, array_stride: int | None = None
@@ -314,12 +330,26 @@ class GraphicPipelineBuilder:
         return get_device().create_render_pipeline(**params)
 
 
+class ComputePipelineBuilder(PipelineBuilderBase):
+    def __init__(self):
+        super().__init__()
+
+    def build(self) -> wgpu.GPURenderPipeline:
+        return get_device().create_compute_pipeline(
+            layout="auto",  # type: ignore
+            compute={"module": self.shader_module, "entry_point": "main"},
+        )
+
+
 class CommandBufferBuilder:
     def __init__(self):
         self.command_encoder = get_device().create_command_encoder()
 
     def begin_render_pass(self, texture: wgpu.GPUTexture) -> RenderPassBuilder:
         return RenderPassBuilder(texture, self)
+
+    def begin_compute_pass(self) -> ComputePassBuilder:
+        return ComputePassBuilder(self)
 
     def submit(self):
         get_device().queue.submit([self.command_encoder.finish()])
@@ -370,6 +400,14 @@ class RenderPassBuilder:
             ],
             depth_stencil_attachment=self.depth_stencil_attachment,
         )
+
+
+class ComputePassBuilder:
+    def __init__(self, command_buffer_builder: CommandBufferBuilder):
+        self.command_buffer_builder = command_buffer_builder
+
+    def build(self):
+        return self.command_buffer_builder.command_encoder.begin_compute_pass()
 
 
 class BindGroupBuilder:
