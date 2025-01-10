@@ -456,14 +456,14 @@ class BindGroupBuilder(BuilderBase):
         self.layout = layout
         self.bindings = []
 
-    def with_buffer_binding(self, buffer: wgpu.GPUBuffer) -> Self:
+    def with_buffer_binding(self, buffer: wgpu.GPUBuffer, offset=0) -> Self:
         self.bindings.append(
             {
                 "binding": len(self.bindings),
                 "resource": {
                     "buffer": buffer,
-                    "offset": 0,
-                    "size": buffer.size,
+                    "offset": offset,
+                    "size": buffer.size - offset,
                 },
             }
         )

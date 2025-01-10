@@ -8,6 +8,7 @@ from wgut.builders import (
     CommandBufferBuilder,
     read_buffer,
 )
+from wgut.computer import Computer
 
 
 class Timer:
@@ -91,3 +92,31 @@ with Timer("Building np.array from memoryview"):
 
 with Timer("Building a list from memoryview"):
     result = out.tolist()
+
+
+with open("compute.wgsl") as file:
+    source = file.read()
+computer = Computer(source, [4, 4])
+
+
+# n = 11000
+
+numpy_data = np.full(n, 3, dtype=np.int32)
+
+buffer1 = (
+    BufferBuilder().from_data(numpy_data).with_usage(wgpu.BufferUsage.STORAGE).build()
+)
+buffer2 = (
+    BufferBuilder()
+    .with_size(numpy_data.nbytes)
+    .with_usage(wgpu.BufferUsage.STORAGE | wgpu.BufferUsage.COPY_SRC)
+    .build()
+)
+
+
+with Timer("Computer", 1000) as rep:
+    for _ in range(rep):
+        computer.dispatch([buffer1, buffer2], n)
+    out = read_buffer(buffer2)
+
+print(all(x == 9 for x in out.cast("i").tolist()))
