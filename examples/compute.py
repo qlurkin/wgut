@@ -39,10 +39,9 @@ with Timer("numpy operation", 1000) as rep:
     for _ in range(rep):
         res = numpy_data * numpy_data
 
-workgroup_size = 512
-
 
 # The long version using the wgpu API
+workgroup_size = 512
 with Timer("Create Pipeline"):
     compute_pipeline = (
         ComputePipelineBuilder()
