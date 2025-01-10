@@ -34,6 +34,12 @@ class MyApp(Window):
             .build()
         )
 
+        self.camera_bind_group = (
+            BindGroupBuilder(self.pipeline.get_bind_group_layout(0))
+            .with_buffer_binding(self.camera_buffer)
+            .build()
+        )
+
     def setup(self):
         self.set_title("Hello Cube")
 
@@ -125,12 +131,6 @@ class MyApp(Window):
     def render(self, screen: GPUTexture):
         command_buffer_builder = CommandBufferBuilder()
 
-        camera_bind_group = (
-            BindGroupBuilder(self.pipeline.get_bind_group_layout(0))
-            .with_buffer_binding(self.camera_buffer)
-            .build()
-        )
-
         render_pass = (
             command_buffer_builder.begin_render_pass(screen)
             .with_depth_stencil(self.depth_texture)
@@ -139,7 +139,7 @@ class MyApp(Window):
         render_pass.set_pipeline(self.pipeline)
         render_pass.set_vertex_buffer(0, self.vertex_buffer)
         render_pass.set_index_buffer(self.index_buffer, IndexFormat.uint32)  # type: ignore
-        render_pass.set_bind_group(0, camera_bind_group)
+        render_pass.set_bind_group(0, self.camera_bind_group)
         render_pass.draw_indexed(36)
         render_pass.end()
 
