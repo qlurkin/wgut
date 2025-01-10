@@ -5,6 +5,7 @@ import numpy as np
 import numpy.typing as npt
 from typing import Self
 from PIL import Image
+import inspect
 
 from wgpu.enums import TextureFormat
 
@@ -79,8 +80,33 @@ def get_device() -> wgpu.GPUDevice:
     return _DEVICE
 
 
-class TextureBuilder:
+class BuilderBase:
     def __init__(self):
+        name = type(self).__name__
+        stack = inspect.stack()
+        module_name = "wgut."
+        module_path = "some_path"
+        line = -1
+        depth = 0
+        while module_name.startswith("wgut."):
+            parent_frame = stack[depth][0]
+            module_info = inspect.getmodule(parent_frame)
+            if module_info is None:
+                break
+            module_name = module_info.__name__
+            module_path = module_info.__file__
+            line = parent_frame.f_lineno
+            depth += 1
+        self.label = f"Made by {name} in {module_path} at line {line}"
+
+    def with_label(self, label):
+        self.label = label
+        return self
+
+
+class TextureBuilder(BuilderBase):
+    def __init__(self):
+        super().__init__()
         self.size = None
         self.format = None
         self.usages = None
@@ -137,6 +163,7 @@ class TextureBuilder:
             raise Exception("Usages must be set")
 
         return get_device().create_texture(
+            label=self.label,
             size=self.size,
             format=self.format,  # type: ignore
             usage=self.usages,  # type: ignore
@@ -153,8 +180,9 @@ class TextureBuilder:
         )
 
 
-class BufferBuilder:
+class BufferBuilder(BuilderBase):
     def __init__(self):
+        super().__init__()
         self.data = None
         self.size = None
         self.usages = None
@@ -188,6 +216,7 @@ class BufferBuilder:
         if self.size is None:
             raise Exception("Size must be set")
         return get_device().create_buffer(
+            label=self.label,
             size=self.size,
             usage=self.usages,  # type: ignore
             mapped_at_creation=False,
@@ -198,8 +227,9 @@ def read_buffer(buffer: wgpu.GPUBuffer) -> memoryview:
     return get_device().queue.read_buffer(buffer)
 
 
-class PipelineBuilderBase:
+class PipelineBuilderBase(BuilderBase):
     def __init__(self):
+        super().__init__()
         self.shader_module = None
 
     def with_shader(self, filename: str, replace: None | dict[str, str] = None) -> Self:
@@ -299,6 +329,7 @@ class GraphicPipelineBuilder(PipelineBuilderBase):
                 )
 
         params = {
+            "label": self.label,
             "layout": "auto",
             "vertex": {
                 "module": self.shader_module,
@@ -336,14 +367,18 @@ class ComputePipelineBuilder(PipelineBuilderBase):
 
     def build(self) -> wgpu.GPURenderPipeline:
         return get_device().create_compute_pipeline(
+            label=self.label,
             layout="auto",  # type: ignore
             compute={"module": self.shader_module, "entry_point": "main"},
         )
 
 
-class CommandBufferBuilder:
+class CommandBufferBuilder(BuilderBase):
     def __init__(self):
-        self.command_encoder = get_device().create_command_encoder()
+        super().__init__()
+        self.command_encoder = get_device().create_command_encoder(
+            label=self.label,
+        )
 
     def begin_render_pass(self, texture: wgpu.GPUTexture) -> RenderPassBuilder:
         return RenderPassBuilder(texture, self)
@@ -355,10 +390,11 @@ class CommandBufferBuilder:
         get_device().queue.submit([self.command_encoder.finish()])
 
 
-class RenderPassBuilder:
+class RenderPassBuilder(BuilderBase):
     def __init__(
         self, texture: wgpu.GPUTexture, command_buffer_builder: CommandBufferBuilder
     ):
+        super().__init__()
         self.command_buffer_builder = command_buffer_builder
         self.texture = texture
         self.clear_value = (0.9, 0.9, 0.9, 1)
@@ -389,6 +425,7 @@ class RenderPassBuilder:
 
     def build(self) -> wgpu.GPURenderPassEncoder:
         return self.command_buffer_builder.command_encoder.begin_render_pass(
+            label=self.label,
             color_attachments=[
                 {
                     "view": self.texture.create_view(),
@@ -402,16 +439,20 @@ class RenderPassBuilder:
         )
 
 
-class ComputePassBuilder:
+class ComputePassBuilder(BuilderBase):
     def __init__(self, command_buffer_builder: CommandBufferBuilder):
+        super().__init__()
         self.command_buffer_builder = command_buffer_builder
 
     def build(self):
-        return self.command_buffer_builder.command_encoder.begin_compute_pass()
+        return self.command_buffer_builder.command_encoder.begin_compute_pass(
+            label=self.label,
+        )
 
 
-class BindGroupBuilder:
+class BindGroupBuilder(BuilderBase):
     def __init__(self, layout):
+        super().__init__()
         self.layout = layout
         self.bindings = []
 
@@ -452,4 +493,6 @@ class BindGroupBuilder:
         return self
 
     def build(self) -> wgpu.GPUBindGroup:
-        return get_device().create_bind_group(layout=self.layout, entries=self.bindings)
+        return get_device().create_bind_group(
+            label=self.label, layout=self.layout, entries=self.bindings
+        )
