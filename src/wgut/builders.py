@@ -231,6 +231,7 @@ class PipelineBuilderBase(BuilderBase):
     def __init__(self):
         super().__init__()
         self.shader_module = None
+        self.shader_source = ""
 
     def with_shader(self, filename: str, replace: None | dict[str, str] = None) -> Self:
         if replace is None:
@@ -242,6 +243,7 @@ class PipelineBuilderBase(BuilderBase):
         return self.with_shader_source(shader_source)
 
     def with_shader_source(self, source: str):
+        self.shader_source = source
         self.shader_module = get_device().create_shader_module(code=source)
         return self
 
@@ -456,14 +458,19 @@ class BindGroupBuilder(BuilderBase):
         self.layout = layout
         self.bindings = []
 
-    def with_buffer_binding(self, buffer: wgpu.GPUBuffer, offset=0) -> Self:
+    def with_buffer_binding(self, buffer: wgpu.GPUBuffer, size=None, offset=0) -> Self:
+        if size is None:
+            size = buffer.size - offset
+        else:
+            size = min(size, buffer.size - offset)
+
         self.bindings.append(
             {
                 "binding": len(self.bindings),
                 "resource": {
                     "buffer": buffer,
                     "offset": offset,
-                    "size": buffer.size - offset,
+                    "size": size,
                 },
             }
         )

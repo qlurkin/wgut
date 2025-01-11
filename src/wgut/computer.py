@@ -28,27 +28,18 @@ def ppcm(lst):
 class Computer:
     def __init__(self, source, strides: list[int]):
         self.strides = strides
-        # self.workgroup_size = get_adapter().limits[
-        #     "max-compute-invocations-per-workgroup"
-        # ]
-        self.workgroup_size = 1024
-        # self.max_dispatch_size = get_adapter().limits[
-        #     "max-compute-workgroups-per-dimension"
-        # ]
-        # self.min_offset_alignment = ppcm(
-        #     [get_adapter().limits["min-storage-buffer-offset-alignment"]] + strides
-        # )
-        # self.dispatch_size = 8
-        #
-        # self.dispatch_total_alignement = self.min_offset_alignment // min(strides)
-        # self.dispatch_size_alignement = (
-        #     self.dispatch_total_alignement // self.workgroup_size
-        # )
-        # self.dispatch_size = (
-        #     self.max_dispatch_size // self.dispatch_size_alignement
-        # ) * self.dispatch_size_alignement
-
-        self.dispatch_size = 65535
+        self.workgroup_size = get_adapter().limits[
+            "max-compute-invocations-per-workgroup"
+        ]
+        max_dispatch_size = get_adapter().limits["max-compute-workgroups-per-dimension"]
+        min_offset_alignment = ppcm(
+            [get_adapter().limits["min-storage-buffer-offset-alignment"]] + strides
+        )
+        dispatch_total_alignement = min_offset_alignment // min(strides)
+        max_aligned_dispatch_total = (
+            (self.workgroup_size * max_dispatch_size) // dispatch_total_alignement
+        ) * dispatch_total_alignement
+        self.dispatch_size = max_aligned_dispatch_total // self.workgroup_size
 
         self.pipeline = (
             ComputePipelineBuilder()
@@ -68,16 +59,20 @@ class Computer:
         command_encoder = CommandBufferBuilder()
 
         def sub_dispatch(offset: int, dispatch_size: int):
-            # print(
-            #     f"offset: {offset}, size: {dispatch_size}, workgroup size: {self.workgroup_size}"
-            # )
+            print(
+                f"offset: {offset}, size: {dispatch_size}, workgroup size: {self.workgroup_size}"
+            )
 
             bind_group_builder = BindGroupBuilder(
                 self.pipeline.get_bind_group_layout(0)
             )
 
             for i, buffer in enumerate(bindings):
-                bind_group_builder.with_buffer_binding(buffer, offset * self.strides[i])
+                bind_group_builder.with_buffer_binding(
+                    buffer,
+                    size=dispatch_size * self.workgroup_size * self.strides[i],
+                    offset=offset * self.strides[i],
+                )
 
             bind_group = bind_group_builder.build()
 

@@ -2,10 +2,7 @@ import numpy as np
 import time
 import wgpu
 from wgut.builders import (
-    BindGroupBuilder,
     BufferBuilder,
-    ComputePipelineBuilder,
-    CommandBufferBuilder,
     read_buffer,
 )
 from wgut.computer import Computer
@@ -24,7 +21,7 @@ class Timer:
         print(f"{self.msg}:", (time.perf_counter() - self.start) / self.div)
 
 
-n = 25600000
+n = 300_000_000
 
 with Timer("create numpy array"):
     numpy_data = np.full(n, 3, dtype=np.int32)
@@ -36,21 +33,18 @@ with Timer("for in range loop"):
         res.append(x * x)
 
 
-with Timer("numpy operation", 1000) as rep:
+with Timer("numpy operation", 100) as rep:
     for _ in range(rep):
         res = numpy_data * numpy_data
 
 
-# The long version using the wgpu API
-workgroup_size = 512
-with Timer("Create Pipeline"):
-    compute_pipeline = (
-        ComputePipelineBuilder()
-        .with_shader("compute.wgsl", {"WORKGROUP_SIZE": str(workgroup_size)})
-        .build()
-    )
+with Timer("Setup Computer"):
+    with open("compute.wgsl") as file:
+        source = file.read()
+    computer = Computer(source, [4, 4])
 
-with Timer("Create Buffers and bind group"):
+
+with Timer("Create Buffers"):
     buffer1 = (
         BufferBuilder()
         .from_data(numpy_data)
@@ -64,59 +58,16 @@ with Timer("Create Buffers and bind group"):
         .build()
     )
 
-    bind_group = (
-        BindGroupBuilder(compute_pipeline.get_bind_group_layout(0))
-        .with_buffer_binding(buffer1)
-        .with_buffer_binding(buffer2)
-        .build()
-    )
 
-
-with Timer("dispatch", 1000) as rep:
-    for _ in range(rep):
-        command_encoder = CommandBufferBuilder()
-
-        compute_pass = command_encoder.begin_compute_pass().build()
-
-        compute_pass.set_pipeline(compute_pipeline)
-        compute_pass.set_bind_group(0, bind_group)
-        compute_pass.dispatch_workgroups(n // workgroup_size, 1, 1)  # x y z
-        compute_pass.end()
-
-        command_encoder.submit()
-
-    out = read_buffer(buffer2).cast("i")
-
-with Timer("Building np.array from memoryview"):
-    result = np.frombuffer(out, dtype=np.int32)
-
-with Timer("Building a list from memoryview"):
-    result = out.tolist()
-
-
-with open("compute.wgsl") as file:
-    source = file.read()
-computer = Computer(source, [4, 4])
-
-
-# n = 11000
-
-numpy_data = np.full(n, 3, dtype=np.int32)
-
-buffer1 = (
-    BufferBuilder().from_data(numpy_data).with_usage(wgpu.BufferUsage.STORAGE).build()
-)
-buffer2 = (
-    BufferBuilder()
-    .with_size(numpy_data.nbytes)
-    .with_usage(wgpu.BufferUsage.STORAGE | wgpu.BufferUsage.COPY_SRC)
-    .build()
-)
-
-
-with Timer("Computer", 1000) as rep:
+with Timer("Computer dispatch", 100) as rep:
     for _ in range(rep):
         computer.dispatch([buffer1, buffer2], n)
     out = read_buffer(buffer2)
 
-print(all(x == 9 for x in out.cast("i").tolist()))
+with Timer("Building np.array from memoryview"):
+    result = np.frombuffer(out.cast("i"), dtype=np.int32)
+
+with Timer("Building a list from memoryview"):
+    result = out.cast("i").tolist()
+
+print("Result is OK:", all(x == 9 for x in result))
