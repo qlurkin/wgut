@@ -7,7 +7,7 @@ var<storage,read_write> data2: array<i32>;
 @compute
 @workgroup_size(WORKGROUP_SIZE)
 fn main(@builtin(global_invocation_id) index: vec3<u32>) {
-    let i: u32 = index.x;
+    let i: u32 = index.x + index.y * Y_STRIDE;
     data2[i] = data1[i] * data1[i];
 }
 

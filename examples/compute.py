@@ -3,6 +3,7 @@ import time
 import wgpu
 from wgut.builders import (
     BufferBuilder,
+    get_adapter,
     read_buffer,
 )
 from wgut.computer import Computer
@@ -18,10 +19,23 @@ class Timer:
         return self.div
 
     def __exit__(self, exc_type, exc_value, traceback):
-        print(f"{self.msg}:", (time.perf_counter() - self.start) / self.div)
+        avg_txt = ""
+        if self.div > 1:
+            avg_txt = f" (avg on {self.div} times)"
+        print(
+            f"{self.msg}{avg_txt}:",
+            (time.perf_counter() - self.start) / self.div,
+        )
 
 
-n = 300_000_000
+workgroup_size = get_adapter().limits["max-compute-invocations-per-workgroup"]
+dispatch_size = get_adapter().limits["max-compute-workgroups-per-dimension"]
+
+
+mult = 1
+n = workgroup_size * dispatch_size * mult
+
+print("Array Size:", n)
 
 with Timer("create numpy array"):
     numpy_data = np.full(n, 3, dtype=np.int32)
@@ -39,9 +53,13 @@ with Timer("numpy operation", 100) as rep:
 
 
 with Timer("Setup Computer"):
-    with open("compute.wgsl") as file:
-        source = file.read()
-    computer = Computer(source, [4, 4])
+    computer = Computer(
+        "compute.wgsl",
+        {
+            "WORKGROUP_SIZE": str(workgroup_size),
+            "Y_STRIDE": str(workgroup_size * dispatch_size) + "u",
+        },
+    )
 
 
 with Timer("Create Buffers"):
@@ -59,9 +77,9 @@ with Timer("Create Buffers"):
     )
 
 
-with Timer("Computer dispatch", 100) as rep:
+with Timer("Computer dispatch", 1000) as rep:
     for _ in range(rep):
-        computer.dispatch([buffer1, buffer2], n)
+        computer.dispatch([buffer1, buffer2], n // (workgroup_size * mult), mult, 1)
     out = read_buffer(buffer2)
 
 with Timer("Building np.array from memoryview"):
@@ -70,4 +88,4 @@ with Timer("Building np.array from memoryview"):
 with Timer("Building a list from memoryview"):
     result = out.cast("i").tolist()
 
-print("Result is OK:", all(x == 9 for x in result))
+print("Result is OK:", all(x == 9 for x in result) and len(result) == n)
