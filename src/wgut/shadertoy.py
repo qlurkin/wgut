@@ -67,6 +67,7 @@ class ShaderToy(Window):
     def with_shader(self, filename: str) -> Self:
         with open(filename) as file:
             source = file.read()
+
         self.with_shader_source(source)
         return self
 
