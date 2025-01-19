@@ -59,7 +59,7 @@ fn _map(p: vec3<f32>, iter: i32) -> f32 {
     var freq = SEA_FREQ;
     var amp = SEA_HEIGHT;
     var choppy = SEA_CHOPPY;
-    let sea_time = 1.0 + iTime * SEA_SPEED;
+    let sea_time = 1.0 + i_time * SEA_SPEED;
     var uv = p.xz;
     uv.x *= 0.75;
     var d = 0.0;
@@ -133,18 +133,18 @@ fn heightMapTracing(ori: vec3<f32>, dir: vec3<f32>) -> vec3<f32> {
 }
 
 fn getPixel(coord: vec2<f32>, time: f32) -> vec3<f32> {
-    var uv = coord / iResolution.xy;
+    var uv = coord / i_resolution.xy;
     uv = uv * 2.0 - 1.0;
-    uv.x *= iResolution.x / iResolution.y;
-        // ray
+    uv.x *= i_resolution.x / i_resolution.y;
+    // ray
     let ori = vec3<f32>(0.0, 3.5, time * 5.0);
     let dir = normalize(vec3<f32>(uv.xy, -2.0));
-        // tracing
+    // tracing
     var p = heightMapTracing(ori, dir);
     let dist = p - ori;
-    let n = getNormal(p, dot(dist, dist) * (0.1 / iResolution.x));
+    let n = getNormal(p, dot(dist, dist) * (0.1 / i_resolution.x));
     let light = normalize(vec3<f32>(0.0, 1.0, 0.8));
-        // color
+    // color
     return mix(
         getSkyColor(dir),
         getSeaColor(p, n, light, dir, dist),
@@ -152,8 +152,8 @@ fn getPixel(coord: vec2<f32>, time: f32) -> vec3<f32> {
     );
 }
 
-fn mainImage(frag_coord: vec2<f32>) -> vec4<f32> {
-    let time = iTime * 0.3;
+fn main_image(frag_coord: vec2<f32>) -> vec4<f32> {
+    let time = i_time * 0.3;
     let color = getPixel(frag_coord, time);
     return vec4<f32>(pow(color, vec3<f32>(0.65)), 1.0);
 }

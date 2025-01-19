@@ -12,11 +12,11 @@ from datetime import datetime
 from typing import Self
 
 shader_header = """
-@group(0) @binding(0) var<uniform> iResolution: vec3<f32>;
-@group(0) @binding(1) var<uniform> iTime: f32;
-@group(0) @binding(2) var<uniform> iTimeDelta: f32;
-@group(0) @binding(3) var<uniform> iDate: vec4<f32>;
-@group(0) @binding(4) var<uniform> iMouse: vec4<f32>;
+@group(0) @binding(0) var<uniform> i_resolution: vec3<f32>;
+@group(0) @binding(1) var<uniform> i_time: f32;
+@group(0) @binding(2) var<uniform> i_time_delta: f32;
+@group(0) @binding(3) var<uniform> i_date: vec4<f32>;
+@group(0) @binding(4) var<uniform> i_mouse: vec4<f32>;
 
 struct VertexInput {
     @builtin(vertex_index) vertex_index : u32,
@@ -24,7 +24,7 @@ struct VertexInput {
 
 struct VertexOutput {
     @builtin(position) pos: vec4<f32>,
-    @location(0) fragCoord: vec2<f32>,
+    @location(0) frag_coord: vec2<f32>,
 };
 
 @vertex
@@ -37,14 +37,14 @@ fn vs_main(in: VertexInput) -> VertexOutput {
         vec2<f32>(-1.0, -1.0),
         vec2<f32>(1.0, -1.0),
     );
-    let time = iTime;
-    let time_delta = iTimeDelta;
-    let date = iDate;
-    let mouse = iMouse;
+    let time = i_time;
+    let time_delta = i_time_delta;
+    let date = i_date;
+    let mouse = i_mouse;
     let index = i32(in.vertex_index);
     var out: VertexOutput;
     out.pos = vec4<f32>(positions[index], 0.0, 1.0);
-    out.fragCoord = ((positions[index] + 1.0) / 2.0) * iResolution.xy;
+    out.frag_coord = ((positions[index] + 1.0) / 2.0) * i_resolution.xy;
     return out;
 }
 
@@ -53,7 +53,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 shader_footer = """
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return mainImage(in.fragCoord);
+    return main_image(in.frag_coord);
 }
 """
 
