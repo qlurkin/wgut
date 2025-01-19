@@ -227,6 +227,10 @@ def read_buffer(buffer: wgpu.GPUBuffer) -> memoryview:
     return get_device().queue.read_buffer(buffer)
 
 
+def write_buffer(buffer: wgpu.GPUBuffer, data: npt.NDArray):
+    return get_device().queue.write_buffer(buffer=buffer, data=data, buffer_offset=0)
+
+
 class PipelineBuilderBase(BuilderBase):
     def __init__(self):
         super().__init__()
