@@ -1,9 +1,11 @@
-from wgpu import BufferUsage, GPUTexture, VertexFormat
+from wgpu import BufferUsage, GPUTexture, ShaderStage, VertexFormat
 from wgut.builders import (
     BindGroupBuilder,
+    BingGroupLayoutBuilder,
     GraphicPipelineBuilder,
     BufferBuilder,
     CommandBufferBuilder,
+    PipelineLayoutBuilder,
     TextureBuilder,
 )
 from wgut.window import Window
@@ -30,8 +32,18 @@ class MyApp(Window):
             .build()
         )
 
+        bg_layout = (
+            BingGroupLayoutBuilder()
+            .with_texture(ShaderStage.FRAGMENT)
+            .with_sampler(ShaderStage.FRAGMENT)
+            .build()
+        )
+
+        p_layout = PipelineLayoutBuilder().with_bind_group_layout(bg_layout).build()
+
         self.pipeline = (
             GraphicPipelineBuilder(self.get_texture_format())
+            .with_layout(p_layout)
             .with_shader("texture.wgsl")
             .with_vertex_buffer()
             .with_attribute(VertexFormat.float32x2)
@@ -42,9 +54,9 @@ class MyApp(Window):
         diffuse_texture = TextureBuilder().from_file("wood.jpg")
 
         self.bind_group = (
-            BindGroupBuilder(self.pipeline.get_bind_group_layout(0))
-            .with_texture_binding(diffuse_texture)
-            .with_sampler_binding()
+            BindGroupBuilder(bg_layout)
+            .with_texture(diffuse_texture)
+            .with_sampler()
             .build()
         )
 

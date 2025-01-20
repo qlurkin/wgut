@@ -2,6 +2,8 @@ import numpy as np
 import time
 import wgpu
 from wgut.builders import (
+    BindGroupBuilder,
+    BingGroupLayoutBuilder,
     BufferBuilder,
     get_adapter,
     read_buffer,
@@ -53,9 +55,16 @@ with Timer("numpy operation", 100) as rep:
 
 
 with Timer("Setup Computer"):
+    bg_layout = (
+        BingGroupLayoutBuilder()
+        .with_buffer(wgpu.ShaderStage.COMPUTE, "read-only-storage")
+        .with_buffer(wgpu.ShaderStage.COMPUTE, "storage")
+        .build()
+    )
     computer = Computer(
         "compute.wgsl",
-        {
+        bind_group_layouts=[bg_layout],
+        replace={
             "WORKGROUP_SIZE": str(workgroup_size),
             "Y_STRIDE": str(workgroup_size * dispatch_size) + "u",
         },
@@ -75,11 +84,12 @@ with Timer("Create Buffers"):
         .with_usage(wgpu.BufferUsage.STORAGE | wgpu.BufferUsage.COPY_SRC)
         .build()
     )
+    bg = BindGroupBuilder(bg_layout).with_buffer(buffer1).with_buffer(buffer2).build()
 
 
 with Timer("Computer dispatch", 1000) as rep:
     for _ in range(rep):
-        computer.dispatch([buffer1, buffer2], n // (workgroup_size * mult), mult, 1)
+        computer.dispatch([bg], n // (workgroup_size * mult), mult, 1)
     out = read_buffer(buffer2)
 
 with Timer("Building np.array from memoryview"):

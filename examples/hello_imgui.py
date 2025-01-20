@@ -2,14 +2,17 @@
 from imgui_bundle import imgui
 from wgpu.utils.imgui import ImguiRenderer
 
-from wgpu import BufferUsage, GPUTexture, IndexFormat, VertexFormat
+from wgpu import BufferUsage, GPUTexture, IndexFormat, ShaderStage, VertexFormat
 from wgut.builders import (
     BindGroupBuilder,
+    BingGroupLayoutBuilder,
     GraphicPipelineBuilder,
     BufferBuilder,
     CommandBufferBuilder,
+    PipelineLayoutBuilder,
     TextureBuilder,
     get_device,
+    write_buffer,
 )
 from wgut.window import Window
 import numpy as np
@@ -27,18 +30,7 @@ class MyApp(Window):
 
         camera_data = np.array([view_matrix, proj_matrix])
 
-        self.camera_buffer = (
-            BufferBuilder()
-            .from_data(camera_data)
-            .with_usage(BufferUsage.UNIFORM)
-            .build()
-        )
-
-        self.camera_bind_group = (
-            BindGroupBuilder(self.pipeline.get_bind_group_layout(0))
-            .with_buffer_binding(self.camera_buffer)
-            .build()
-        )
+        write_buffer(self.camera_buffer, camera_data)
 
     def setup(self):
         self.set_title("Hello Cube")
@@ -104,8 +96,23 @@ class MyApp(Window):
             BufferBuilder().from_data(index_data).with_usage(BufferUsage.INDEX).build()
         )
 
+        bg_layout = BingGroupLayoutBuilder().with_buffer(ShaderStage.VERTEX).build()
+        p_layout = PipelineLayoutBuilder().with_bind_group_layout(bg_layout).build()
+
+        self.camera_buffer = (
+            BufferBuilder()
+            .with_size(2 * 4 * 4 * 4)
+            .with_usage(BufferUsage.UNIFORM | BufferUsage.COPY_DST)
+            .build()
+        )
+
+        self.camera_bind_group = (
+            BindGroupBuilder(bg_layout).with_buffer(self.camera_buffer).build()
+        )
+
         self.pipeline = (
             GraphicPipelineBuilder(self.get_texture_format())
+            .with_layout(p_layout)
             .with_shader("cube.wgsl")
             .with_depth_stencil()
             .with_vertex_buffer()
