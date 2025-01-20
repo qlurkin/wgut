@@ -6,6 +6,7 @@ import numpy.typing as npt
 from typing import Self
 from PIL import Image
 import inspect
+import subprocess as sp
 
 from wgpu.enums import TextureFormat
 
@@ -78,6 +79,14 @@ def get_device() -> wgpu.GPUDevice:
     if _DEVICE is None:
         _DEVICE = get_adapter().request_device_sync()
     return _DEVICE
+
+
+def compile_slang(filename: str) -> str:
+    res = sp.run(["slangc", filename, "-target", "wgsl"], capture_output=True)
+    if res.returncode != 0 or len(res.stderr) > 0:
+        raise Exception(f"Slang compilation error: {res.stderr}")
+    source = res.stdout
+    return source.decode(encoding="utf8")
 
 
 class BuilderBase:
@@ -236,6 +245,11 @@ class PipelineBuilderBase(BuilderBase):
         super().__init__()
         self.shader_module = None
         self.shader_source = ""
+        self.layout = "auto"
+
+    def with_layout(self, layout: wgpu.GPUPipelineLayout) -> Self:
+        self.layout = layout
+        return self
 
     def with_shader(self, filename: str, replace: None | dict[str, str] = None) -> Self:
         if replace is None:
@@ -246,10 +260,82 @@ class PipelineBuilderBase(BuilderBase):
             shader_source = shader_source.replace(k, v)
         return self.with_shader_source(shader_source)
 
-    def with_shader_source(self, source: str):
+    def with_shader_source(self, source: str) -> Self:
         self.shader_source = source
         self.shader_module = get_device().create_shader_module(code=source)
         return self
+
+    def with_slangc(self, filename) -> Self:
+        source = compile_slang(filename)
+        self.with_shader_source(source)
+        return self
+
+
+class BingGroupLayoutBuilder(BuilderBase):
+    def __init__(self):
+        super().__init__()
+        self.entries = []
+
+    def with_buffer(
+        self,
+        visibility: wgpu.ShaderStage | int,
+        type: wgpu.BufferBindingType | str = "uniform",
+    ) -> Self:
+        self.entries.append(
+            {
+                "binding": len(self.entries),
+                "visibility": visibility,
+                "buffer": {"type": type},
+            }
+        )
+        return self
+
+    def with_sampler(
+        self,
+        visibility: wgpu.ShaderStage | int,
+    ) -> Self:
+        self.entries.append(
+            {
+                "binding": len(self.entries),
+                "visibility": visibility,
+                "sampler": {},
+            }
+        )
+        return self
+
+    def with_texture(self, visibility: wgpu.ShaderStage | int) -> Self:
+        self.entries.append(
+            {
+                "binding": len(self.entries),
+                "visibility": visibility,
+                "texture": {},
+            }
+        )
+        return self
+
+    def build(self) -> wgpu.GPUBindGroupLayout:
+        return get_device().create_bind_group_layout(
+            label=self.label, entries=self.entries
+        )
+
+
+class PipelineLayoutBuilder(BuilderBase):
+    def __init__(self):
+        super().__init__()
+        self.layouts = []
+
+    def with_bind_group_layout(
+        self, layouts: wgpu.GPUBindGroupLayout | list[wgpu.GPUBindGroupLayout]
+    ) -> Self:
+        if not isinstance(layouts, list):
+            layouts = [layouts]
+        self.layouts += layouts
+        return self
+
+    def build(self) -> wgpu.GPUPipelineLayout:
+        return get_device().create_pipeline_layout(
+            label=self.label, bind_group_layouts=self.layouts
+        )
 
 
 class GraphicPipelineBuilder(PipelineBuilderBase):
@@ -334,22 +420,22 @@ class GraphicPipelineBuilder(PipelineBuilderBase):
                     + VERTEX_FORMAT_SIZE[last_attribute["format"]]
                 )
 
-        params = {
-            "label": self.label,
-            "layout": "auto",
-            "vertex": {
+        return get_device().create_render_pipeline(
+            label=self.label,
+            layout=self.layout,  # type: ignore
+            vertex={
                 "module": self.shader_module,
                 "entry_point": "vs_main",
                 "buffers": self.buffers,
             },
-            "primitive": {
+            primitive={
                 "topology": wgpu.PrimitiveTopology.triangle_list,
                 "front_face": wgpu.FrontFace.ccw,
                 "cull_mode": wgpu.CullMode.back,
             },
-            "depth_stencil": self.depth_stencil_state,
-            "multisample": None,
-            "fragment": {
+            depth_stencil=self.depth_stencil_state,
+            multisample=None,
+            fragment={
                 "module": self.shader_module,
                 "entry_point": "fs_main",
                 "targets": [
@@ -362,9 +448,7 @@ class GraphicPipelineBuilder(PipelineBuilderBase):
                     },
                 ],
             },
-        }
-
-        return get_device().create_render_pipeline(**params)
+        )
 
 
 class ComputePipelineBuilder(PipelineBuilderBase):
@@ -374,7 +458,7 @@ class ComputePipelineBuilder(PipelineBuilderBase):
     def build(self) -> wgpu.GPURenderPipeline:
         return get_device().create_compute_pipeline(
             label=self.label,
-            layout="auto",  # type: ignore
+            layout=self.layout,  # type: ignore
             compute={"module": self.shader_module, "entry_point": "main"},
         )
 
@@ -391,6 +475,10 @@ class CommandBufferBuilder(BuilderBase):
 
     def begin_compute_pass(self) -> ComputePassBuilder:
         return ComputePassBuilder(self)
+
+    def build(self) -> Self:
+        """NOOP -> Call Submit()"""
+        return self
 
     def submit(self):
         get_device().queue.submit([self.command_encoder.finish()])
@@ -462,7 +550,7 @@ class BindGroupBuilder(BuilderBase):
         self.layout = layout
         self.bindings = []
 
-    def with_buffer_binding(self, buffer: wgpu.GPUBuffer, size=None, offset=0) -> Self:
+    def with_buffer(self, buffer: wgpu.GPUBuffer, size=None, offset=0) -> Self:
         if size is None:
             size = buffer.size - offset
         else:
@@ -480,13 +568,13 @@ class BindGroupBuilder(BuilderBase):
         )
         return self
 
-    def with_texture_binding(self, texture: wgpu.GPUTexture) -> Self:
+    def with_texture(self, texture: wgpu.GPUTexture) -> Self:
         self.bindings.append(
             {"binding": len(self.bindings), "resource": texture.create_view()}
         )
         return self
 
-    def with_sampler_binding(
+    def with_sampler(
         self,
         address_mode: wgpu.AddressMode | str = wgpu.AddressMode.repeat,
         filter: wgpu.FilterMode | str = wgpu.FilterMode.nearest,
