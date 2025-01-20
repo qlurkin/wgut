@@ -1,7 +1,9 @@
 from wgut.builders import (
     BindGroupBuilder,
+    BingGroupLayoutBuilder,
     BufferBuilder,
     CommandBufferBuilder,
+    PipelineLayoutBuilder,
     write_buffer,
     GraphicPipelineBuilder,
 )
@@ -37,10 +39,6 @@ fn vs_main(in: VertexInput) -> VertexOutput {
         vec2<f32>(-1.0, -1.0),
         vec2<f32>(1.0, -1.0),
     );
-    let time = i_time;
-    let time_delta = i_time_delta;
-    let date = i_date;
-    let mouse = i_mouse;
     let index = i32(in.vertex_index);
     var out: VertexOutput;
     out.pos = vec4<f32>(positions[index], 0.0, 1.0);
@@ -145,19 +143,32 @@ class ShaderToy(Window):
             .build()
         )
 
+        bg_layout = (
+            BingGroupLayoutBuilder()
+            .with_buffer(wgpu.ShaderStage.VERTEX | wgpu.ShaderStage.FRAGMENT)
+            .with_buffer(wgpu.ShaderStage.VERTEX | wgpu.ShaderStage.FRAGMENT)
+            .with_buffer(wgpu.ShaderStage.VERTEX | wgpu.ShaderStage.FRAGMENT)
+            .with_buffer(wgpu.ShaderStage.VERTEX | wgpu.ShaderStage.FRAGMENT)
+            .with_buffer(wgpu.ShaderStage.VERTEX | wgpu.ShaderStage.FRAGMENT)
+            .build()
+        )
+
+        p_layout = PipelineLayoutBuilder().with_bind_group_layout(bg_layout).build()
+
         self.pipeline = (
             GraphicPipelineBuilder(self.get_texture_format())
+            .with_layout(p_layout)
             .with_shader_source(self.shader)
             .build()
         )
 
         self.bind_group = (
-            BindGroupBuilder(self.pipeline.get_bind_group_layout(0))
-            .with_buffer_binding(self.iResolutionBuffer)
-            .with_buffer_binding(self.iTimeBuffer)
-            .with_buffer_binding(self.iTimeDeltaBuffer)
-            .with_buffer_binding(self.iDateBuffer)
-            .with_buffer_binding(self.iMouseBuffer)
+            BindGroupBuilder(bg_layout)
+            .with_buffer(self.iResolutionBuffer)
+            .with_buffer(self.iTimeBuffer)
+            .with_buffer(self.iTimeDeltaBuffer)
+            .with_buffer(self.iDateBuffer)
+            .with_buffer(self.iMouseBuffer)
             .build()
         )
 
