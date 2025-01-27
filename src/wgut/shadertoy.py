@@ -1,3 +1,6 @@
+from imgui_bundle import imgui
+from wgpu.utils.imgui import ImguiRenderer
+
 from wgut.builders import (
     BindGroupBuilder,
     BingGroupLayoutBuilder,
@@ -5,6 +8,7 @@ from wgut.builders import (
     CommandBufferBuilder,
     PipelineLayoutBuilder,
     write_buffer,
+    get_device,
     GraphicPipelineBuilder,
 )
 from wgut.window import Window
@@ -17,7 +21,7 @@ shader_header = """
 @group(0) @binding(0) var<uniform> i_resolution: vec3<f32>;
 @group(0) @binding(1) var<uniform> i_time: f32;
 @group(0) @binding(2) var<uniform> i_time_delta: f32;
-@group(0) @binding(3) var<uniform> i_date: vec4<f32>;
+@group(0)@binding(3) var<uniform> i_date: vec4<f32>;
 @group(0) @binding(4) var<uniform> i_mouse: vec4<f32>;
 
 struct VertexInput {
@@ -106,6 +110,7 @@ class ShaderToy(Window):
         return np.array([resolution[0], resolution[1], 0.0], dtype=np.float32)
 
     def setup(self):
+        self.set_title("ShaderToy")
         self.time = 0.0
         self.last_mouse_down = (0, 0)
         self.last_mouse_click = (0, 0)
@@ -172,6 +177,14 @@ class ShaderToy(Window):
             .build()
         )
 
+        self.imgui_renderer = ImguiRenderer(
+            get_device(), self.get_canvas(), self.get_texture_format()
+        )
+
+        self.imgui_renderer.set_gui(self.gui)
+
+        self.frame_time = 0
+
     def process_event(self, event):
         if event["event_type"] == "pointer_move":
             if self.is_mouse_down:
@@ -187,6 +200,7 @@ class ShaderToy(Window):
             write_buffer(self.iResolutionBuffer, self.getIResolution())
 
     def update(self, delta_time: float):
+        self.frame_time = delta_time
         self.time += delta_time
         write_buffer(self.iTimeDeltaBuffer, self.getITimeDelta(delta_time))
         write_buffer(self.iTimeBuffer, self.getITime())
@@ -204,4 +218,20 @@ class ShaderToy(Window):
         render_pass.end()
 
         command_encoder.submit()
+
+        self.imgui_renderer.render()
+
         self.is_mouse_up_in_this_frame = False
+
+    def gui(self) -> imgui.ImDrawData:
+        imgui.new_frame()
+        imgui.begin("Info", None)
+        if self.frame_time != 0:
+            imgui.text(f"FPS: {1.0 / self.frame_time:.5f}")
+        else:
+            imgui.text("FPS: NaN")
+        imgui.text(f"i_delta_time: {self.frame_time:.5f}s")
+        imgui.end()
+        imgui.end_frame()
+        imgui.render()
+        return imgui.get_draw_data()
