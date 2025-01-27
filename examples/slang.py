@@ -3,20 +3,16 @@ import wgpu
 from wgut.builders import (
     BindGroupBuilder,
     BufferBuilder,
-    BingGroupLayoutBuilder,
+    compile_slang,
     read_buffer,
 )
 from wgut.computer import Computer
+from wgut.reflection import Reflection
 
-bg_layout = (
-    BingGroupLayoutBuilder()
-    .with_buffer(wgpu.ShaderStage.COMPUTE, wgpu.BufferBindingType.read_only_storage)
-    .with_buffer(wgpu.ShaderStage.COMPUTE, wgpu.BufferBindingType.read_only_storage)
-    .with_buffer(wgpu.ShaderStage.COMPUTE, wgpu.BufferBindingType.storage)
-    .build()
-)
 
-computer = Computer("./compute.slang", [bg_layout])
+reflection = Reflection(compile_slang("./compute.slang"))
+
+computer = Computer(reflection.source, [reflection.get_bind_group_layout(0)])
 
 print(computer.source)
 
@@ -43,7 +39,7 @@ buffer_res = (
 )
 
 bg = (
-    BindGroupBuilder(bg_layout)
+    BindGroupBuilder(reflection.get_bind_group_layout(0))
     .with_buffer(buffer1)
     .with_buffer(buffer2)
     .with_buffer(buffer_res)

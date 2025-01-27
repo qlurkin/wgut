@@ -209,6 +209,35 @@ wheels = [
 ]
 
 [[package]]
+name = "tree-sitter"
+version = "0.24.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a7/a2/698b9d31d08ad5558f8bfbfe3a0781bd4b1f284e89bde3ad18e05101a892/tree-sitter-0.24.0.tar.gz", hash = "sha256:abd95af65ca2f4f7eca356343391ed669e764f37748b5352946f00f7fc78e734", size = 168304 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/61/cd/2348339c85803330ce38cee1c6cbbfa78a656b34ff58606ebaf5c9e83bd0/tree_sitter-0.24.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:0d4a6416ed421c4210f0ca405a4834d5ccfbb8ad6692d4d74f7773ef68f92071", size = 140781 },
+    { url = "https://files.pythonhosted.org/packages/8b/a3/1ea9d8b64e8dcfcc0051028a9c84a630301290995cd6e947bf88267ef7b1/tree_sitter-0.24.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:e0992d483677e71d5c5d37f30dfb2e3afec2f932a9c53eec4fca13869b788c6c", size = 133928 },
+    { url = "https://files.pythonhosted.org/packages/fe/ae/55c1055609c9428a4aedf4b164400ab9adb0b1bf1538b51f4b3748a6c983/tree_sitter-0.24.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:57277a12fbcefb1c8b206186068d456c600dbfbc3fd6c76968ee22614c5cd5ad", size = 564497 },
+    { url = "https://files.pythonhosted.org/packages/ce/d0/f2ffcd04882c5aa28d205a787353130cbf84b2b8a977fd211bdc3b399ae3/tree_sitter-0.24.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d25fa22766d63f73716c6fec1a31ee5cf904aa429484256bd5fdf5259051ed74", size = 578917 },
+    { url = "https://files.pythonhosted.org/packages/af/82/aebe78ea23a2b3a79324993d4915f3093ad1af43d7c2208ee90be9273273/tree_sitter-0.24.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:7d5d9537507e1c8c5fa9935b34f320bfec4114d675e028f3ad94f11cf9db37b9", size = 581148 },
+    { url = "https://files.pythonhosted.org/packages/a1/b4/6b0291a590c2b0417cfdb64ccb8ea242f270a46ed429c641fbc2bfab77e0/tree_sitter-0.24.0-cp313-cp313-win_amd64.whl", hash = "sha256:f58bb4956917715ec4d5a28681829a8dad5c342cafd4aea269f9132a83ca9b34", size = 120207 },
+    { url = "https://files.pythonhosted.org/packages/a8/18/542fd844b75272630229c9939b03f7db232c71a9d82aadc59c596319ea6a/tree_sitter-0.24.0-cp313-cp313-win_arm64.whl", hash = "sha256:23641bd25dcd4bb0b6fa91b8fb3f46cc9f1c9f475efe4d536d3f1f688d1b84c8", size = 108232 },
+]
+
+[[package]]
+name = "tree-sitter-wgsl-bevy"
+version = "0.1.3"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b5/b8/f768a1d10ec81e1a9e51c9ba12aedf3de96177583558e0430dd28a54999f/tree_sitter_wgsl_bevy-0.1.3-cp38-abi3-macosx_10_9_x86_64.whl", hash = "sha256:d6d9a22ffa18f5f9ff41e3a69ee3ff00192b7f65e6e2b964542a68d9f518050b", size = 25451 },
+    { url = "https://files.pythonhosted.org/packages/69/66/619e2e91ae8f3fe1926664bff731e189b45fe2d62a88130bf57088364c51/tree_sitter_wgsl_bevy-0.1.3-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:e7fd11de3080ffd0e295618045318eca731d90f0f666f15887ea04446abc2a8b", size = 25942 },
+    { url = "https://files.pythonhosted.org/packages/17/ed/36c58dde0c2ad02114fd310490d467df59483bb19f19bdafbc1a708cfdc4/tree_sitter_wgsl_bevy-0.1.3-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:be13aaf41577eb79f965bde1e5fcc2afe8ee170ef9ef3eb7e31b5df8361a180a", size = 49029 },
+    { url = "https://files.pythonhosted.org/packages/2c/75/f84b3cabb055507a85819e305e5838ce4efe08fe463cb67149eb02857af5/tree_sitter_wgsl_bevy-0.1.3-cp38-abi3-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:645bfbce34110f166360cf14e51f5121ee119512511fc8c3e4c5ed38b8601a3a", size = 46890 },
+    { url = "https://files.pythonhosted.org/packages/50/57/045e96881755172a8f8a010944fc290bf96b31a598ff713f8ca8930c9824/tree_sitter_wgsl_bevy-0.1.3-cp38-abi3-musllinux_1_1_aarch64.whl", hash = "sha256:1fdd00d9bc9eff181b29ec3e190163ac214178addefbf6851fd45b6c3da79040", size = 51227 },
+    { url = "https://files.pythonhosted.org/packages/e3/5f/1952f1e96525a205aa486d9ed0acf3a8cdf0878d1f26db1518449890f76b/tree_sitter_wgsl_bevy-0.1.3-cp38-abi3-musllinux_1_1_x86_64.whl", hash = "sha256:692aab423c341efb5410acc9436d6f9f8a4de46a1a58bfe20ddf4ad9063a174e", size = 49533 },
+    { url = "https://files.pythonhosted.org/packages/21/cf/dd9d7c30fbcf6894aa9592fd0e61ff0a67634e4c2c3db1bf7d395372c0e7/tree_sitter_wgsl_bevy-0.1.3-cp38-abi3-win_amd64.whl", hash = "sha256:cccbdf8ee09e21d8b1bb130880b8c129d7ad224f078e7c6c8f5b3659974154ed", size = 28130 },
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.12.2"
 source = { registry = "https://pypi.org/simple" }
@@ -246,6 +275,8 @@ dependencies = [
     { name = "imgui-bundle" },
     { name = "numpy" },
     { name = "pillow" },
+    { name = "tree-sitter" },
+    { name = "tree-sitter-wgsl-bevy" },
     { name = "wgpu" },
 ]
 
@@ -255,5 +286,7 @@ requires-dist = [
     { name = "imgui-bundle", specifier = ">=1.6.2" },
     { name = "numpy", specifier = ">=2.2.1" },
     { name = "pillow", specifier = ">=11.1.0" },
+    { name = "tree-sitter", specifier = ">=0.24.0" },
+    { name = "tree-sitter-wgsl-bevy", specifier = ">=0.1.3" },
     { name = "wgpu", specifier = ">=0.19.3" },
 ]
