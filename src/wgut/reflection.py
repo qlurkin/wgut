@@ -1,33 +1,18 @@
-import importlib
-
 import wgpu
 
 from wgut.builders import BingGroupLayoutBuilder, PipelineLayoutBuilder
-
-tswgsl = importlib.import_module("tree_sitter_wgsl_bevy")
-ts = importlib.import_module("tree_sitter")
-
-WGSL_LANGUAGE = ts.Language(tswgsl.language())
-parser = ts.Parser(WGSL_LANGUAGE)
+from wgut.syntaxtree import SyntaxTree
 
 
 class Reflection:
     def __init__(self, source):
-        self.source = source
-        self.groups = {}
-        self.pipeline_layout = None
-        self._parse()
+        self.__groups = {}
+        self.__pipeline_layout = None
+        self.__tree = SyntaxTree(source)
+        self.__parse()
 
-    def query(self, query_str):
-        query = WGSL_LANGUAGE.query(query_str)
-        return query.matches(self.root)
-
-    def _parse(self):
-        tree = parser.parse(self.source.encode())
-        self.root = tree.root_node
-        # print(self.root)
-
-        matches = self.query(
+    def __parse(self):
+        matches = self.__tree.query(
             "(global_variable_declaration (attribute (identifier) @attr.type (int_literal) @attr.id)* (variable_declaration (variable_qualifier (address_space) @space (access_mode)? @access)? (variable_identifier_declaration name: (identifier) @id type: (type_declaration) @type)))"
         )
 
@@ -44,16 +29,16 @@ class Reflection:
             if "space" in match:
                 space = match["space"][0].text.decode()
             if "group" in attributes:
-                if attributes["group"] not in self.groups:
-                    self.groups[attributes["group"]] = {}
-                self.groups[attributes["group"]][attributes["binding"]] = {
+                if attributes["group"] not in self.__groups:
+                    self.__groups[attributes["group"]] = {}
+                self.__groups[attributes["group"]][attributes["binding"]] = {
                     "name": match["id"][0].text.decode(),
                     "type": match["type"][0].text.decode(),
                     "access": access,
                     "space": space,
                 }
 
-        matches = self.query(
+        matches = self.__tree.query(
             "(function_declaration (attribute)* @attributes name: (identifier) @name parameters: (parameter_list) body: (compound_statement) @body)"
         )
         functions = []
@@ -70,8 +55,6 @@ class Reflection:
                         values.append(int(child.text.decode()))
                 attributes[typ] = values
 
-            # for ty, id in zip(match["attr.type"], match["attr.id"]):
-            # attributes[ty.text.decode()] = int(id.text.decode())
             functions.append(
                 {
                     "name": match["name"][0].text.decode(),
@@ -93,24 +76,24 @@ class Reflection:
                     size.append(1)
                 self.workgroup_size[fun["name"]] = size
 
-        for group in self.groups.values():
+        for group in self.__groups.values():
             for binding in group.values():
-                visibility = self._find_visibility(binding["name"], functions)
+                visibility = self.__find_visibility(binding["name"], functions)
                 binding["visibility"] = visibility
 
-        for index in self.groups:
-            self.groups[index]["layout"] = self._create_bind_group_layout(index)
+        for index in self.__groups:
+            self.__groups[index]["layout"] = self.__create_bind_group_layout(index)
 
-        self.pipeline_layout = self._create_pipeline_layout()
+        self.__pipeline_layout = self.__create_pipeline_layout()
 
-    def entry_point_status(self, name):
+    def __entry_point_status(self, name):
         res = set()
         for entry in self.entry_points:
             if name in self.entry_points[entry]:
                 res.add(entry)
         return res
 
-    def _find_visibility(self, name, all_functions):
+    def __find_visibility(self, name, all_functions):
         names = set([name])
         done = set()
         res = set()
@@ -119,11 +102,12 @@ class Reflection:
             name = names.pop()
             done.add(name)
             for fun in all_functions:
-                q = WGSL_LANGUAGE.query(f'((identifier) @name (#eq? @name "{name}"))')
-                matches = q.matches(fun["body_tree"])
+                matches = self.__tree.query(
+                    f'((identifier) @name (#eq? @name "{name}"))', fun["body_tree"]
+                )
                 if len(matches) > 0:
                     functions.add(fun["name"])
-                    status = self.entry_point_status(fun["name"])
+                    status = self.__entry_point_status(fun["name"])
                     if len(status) > 0:
                         res = set(list(res) + list(status))
                     else:
@@ -131,15 +115,15 @@ class Reflection:
                             names.add(fun["name"])
         return res
 
-    def _create_bind_group_layout(self, index):
+    def __create_bind_group_layout(self, index):
         VISIBILITIES = {
             "fragment": wgpu.ShaderStage.FRAGMENT,
             "vertex": wgpu.ShaderStage.VERTEX,
             "compute": wgpu.ShaderStage.COMPUTE,
         }
         builder = BingGroupLayoutBuilder()
-        for binding_index in sorted(list(self.groups[index].keys())):
-            binding = self.groups[index][binding_index]
+        for binding_index in sorted(list(self.__groups[index].keys())):
+            binding = self.__groups[index][binding_index]
             visibility = 0
             for v in binding["visibility"]:
                 visibility = visibility | VISIBILITIES[v]
@@ -157,11 +141,17 @@ class Reflection:
                 builder.with_buffer(visibility, bufferType, binding_index)
         return builder.build()
 
-    def _create_pipeline_layout(self):
+    def __create_pipeline_layout(self):
         builder = PipelineLayoutBuilder()
-        for index in sorted(list(self.groups.keys())):
-            builder.with_bind_group_layout(self.groups[index]["layout"])
+        for index in sorted(list(self.__groups.keys())):
+            builder.with_bind_group_layout(self.__groups[index]["layout"])
         return builder.build()
 
     def get_bind_group_layout(self, index):
-        return self.groups[index]["layout"]
+        return self.__groups[index]["layout"]
+
+    def get_pipeline_layout(self):
+        return self.__pipeline_layout
+
+    def get_source(self):
+        return self.__tree.get_source()

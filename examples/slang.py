@@ -12,7 +12,7 @@ from wgut.reflection import Reflection
 
 reflection = Reflection(compile_slang("./compute.slang"))
 
-computer = Computer(reflection.source, [reflection.get_bind_group_layout(0)])
+computer = Computer(reflection.get_source(), [reflection.get_bind_group_layout(0)])
 
 print(computer.source)
 
