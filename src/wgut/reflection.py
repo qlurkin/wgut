@@ -7,7 +7,6 @@ from wgut.syntaxtree import SyntaxTree
 class Reflection:
     def __init__(self, source):
         self.__groups = {}
-        self.__pipeline_layout = None
         self.__tree = SyntaxTree(source)
         self.__parse()
 
@@ -85,6 +84,14 @@ class Reflection:
             self.__groups[index]["layout"] = self.__create_bind_group_layout(index)
 
         self.__pipeline_layout = self.__create_pipeline_layout()
+
+    def get_bind_group_ids(self) -> list[int]:
+        return list(self.__groups.keys())
+
+    def get_binding_ids(self, group_id) -> list[int]:
+        res = list(self.__groups[group_id].keys())
+        res.remove("layout")
+        return res
 
     def __entry_point_status(self, name):
         res = set()

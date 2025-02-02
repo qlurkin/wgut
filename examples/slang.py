@@ -1,20 +1,13 @@
 import numpy as np
 import wgpu
+from wgut.auto_compute_pipeline import AutoComputePipeline
 from wgut.builders import (
-    BindGroupBuilder,
     BufferBuilder,
-    compile_slang,
     read_buffer,
 )
-from wgut.computer import Computer
-from wgut.reflection import Reflection
 
 
-reflection = Reflection(compile_slang("./compute.slang"))
-
-computer = Computer(reflection.get_source(), [reflection.get_bind_group_layout(0)])
-
-print(computer.source)
+computer = AutoComputePipeline("./compute.slang")
 
 rng = np.random.default_rng()
 
@@ -24,11 +17,15 @@ buffer1 = (
     BufferBuilder().from_data(numpy_data).with_usage(wgpu.BufferUsage.STORAGE).build()
 )
 
+computer.set_binding(0, 0, buffer1)
+
 numpy_data = rng.random(size=12800, dtype=np.float32)
 print(numpy_data)
 buffer2 = (
     BufferBuilder().from_data(numpy_data).with_usage(wgpu.BufferUsage.STORAGE).build()
 )
+
+computer.set_binding(0, 1, buffer2)
 
 
 buffer_res = (
@@ -38,15 +35,9 @@ buffer_res = (
     .build()
 )
 
-bg = (
-    BindGroupBuilder(reflection.get_bind_group_layout(0))
-    .with_buffer(buffer1)
-    .with_buffer(buffer2)
-    .with_buffer(buffer_res)
-    .build()
-)
+computer.set_binding(0, 2, buffer_res)
 
-computer.dispatch([bg], 12800 // 64)
+computer.dispatch(12800 // 64)
 
 out = read_buffer(buffer_res)
 

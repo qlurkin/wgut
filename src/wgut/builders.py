@@ -565,16 +565,22 @@ class BindGroupBuilder(BuilderBase):
         super().__init__()
         self.layout = layout
         self.bindings = []
+        self.index = 0
 
-    def with_buffer(self, buffer: wgpu.GPUBuffer, size=None, offset=0) -> Self:
+    def with_buffer(
+        self, buffer: wgpu.GPUBuffer, size=None, offset=0, index=None
+    ) -> Self:
         if size is None:
             size = buffer.size - offset
         else:
             size = min(size, buffer.size - offset)
 
+        if index is None:
+            index = self.index
+
         self.bindings.append(
             {
-                "binding": len(self.bindings),
+                "binding": index,
                 "resource": {
                     "buffer": buffer,
                     "offset": offset,
@@ -582,22 +588,29 @@ class BindGroupBuilder(BuilderBase):
                 },
             }
         )
+
+        index += 1
+
         return self
 
-    def with_texture(self, texture: wgpu.GPUTexture) -> Self:
-        self.bindings.append(
-            {"binding": len(self.bindings), "resource": texture.create_view()}
-        )
+    def with_texture(self, texture: wgpu.GPUTexture, index=None) -> Self:
+        if index is None:
+            index = self.index
+        self.bindings.append({"binding": index, "resource": texture.create_view()})
+        index += 1
         return self
 
     def with_sampler(
         self,
         address_mode: wgpu.AddressMode | str = wgpu.AddressMode.repeat,
         filter: wgpu.FilterMode | str = wgpu.FilterMode.nearest,
+        index=None,
     ) -> Self:
+        if index is None:
+            index = self.index
         self.bindings.append(
             {
-                "binding": len(self.bindings),
+                "binding": index,
                 "resource": get_device().create_sampler(
                     address_mode_u=address_mode,  # type: ignore
                     address_mode_v=address_mode,  # type: ignore
@@ -605,6 +618,7 @@ class BindGroupBuilder(BuilderBase):
                 ),
             }
         )
+        index += 1
         return self
 
     def build(self) -> wgpu.GPUBindGroup:
