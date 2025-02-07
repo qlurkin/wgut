@@ -1,10 +1,7 @@
 import numpy as np
 import wgpu
 from wgut.auto_compute_pipeline import AutoComputePipeline
-from wgut.builders import (
-    BufferBuilder,
-    read_buffer,
-)
+from wgut.builders import read_buffer
 
 
 computer = AutoComputePipeline("./compute.slang")
@@ -13,29 +10,17 @@ rng = np.random.default_rng()
 
 numpy_data = rng.random(size=12800, dtype=np.float32)
 print(numpy_data)
-buffer1 = (
-    BufferBuilder().from_data(numpy_data).with_usage(wgpu.BufferUsage.STORAGE).build()
-)
-
-computer.set_binding(0, 0, buffer1)
+computer.set_array(0, 0, numpy_data)
 
 numpy_data = rng.random(size=12800, dtype=np.float32)
 print(numpy_data)
-buffer2 = (
-    BufferBuilder().from_data(numpy_data).with_usage(wgpu.BufferUsage.STORAGE).build()
+computer.set_array(0, 1, numpy_data)
+
+
+buffer_res = computer.set_array(
+    0, 2, np.zeros(12800, dtype=np.float32), wgpu.BufferUsage.COPY_SRC
 )
 
-computer.set_binding(0, 1, buffer2)
-
-
-buffer_res = (
-    BufferBuilder()
-    .with_size(numpy_data.nbytes)
-    .with_usage(wgpu.BufferUsage.STORAGE | wgpu.BufferUsage.COPY_SRC)
-    .build()
-)
-
-computer.set_binding(0, 2, buffer_res)
 
 computer.dispatch(12800 // 64)
 

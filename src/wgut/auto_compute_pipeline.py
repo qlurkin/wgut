@@ -7,7 +7,7 @@ from wgut.builders import (
     ComputePipelineBuilder,
 )
 import numpy.typing as npt
-from wgpu import GPUBuffer
+from wgpu import BufferUsage, GPUBuffer
 
 
 class AutoComputePipeline:
@@ -33,11 +33,24 @@ class AutoComputePipeline:
             .build()
         )
 
-    def set_binding(
-        self, group: int, binding: int, buffer: npt.NDArray | GPUBuffer
+    def set_array(
+        self,
+        group: int,
+        binding: int,
+        array: npt.NDArray,
+        additional_usages: BufferUsage | int | str = 0,
     ) -> GPUBuffer:
-        if not isinstance(buffer, GPUBuffer):
-            buffer = BufferBuilder().from_data(buffer).build()
+        builder = BufferBuilder().from_data(array)
+        if self.reflection.get_binding_space(group, binding) == "uniform":
+            builder.with_usage(BufferUsage.UNIFORM | additional_usages)  # type: ignore
+        else:
+            builder.with_usage(BufferUsage.STORAGE | additional_usages)  # type: ignore
+
+        buffer = builder.build()
+        self.set_buffer(group, binding, buffer)
+        return buffer
+
+    def set_buffer(self, group: int, binding: int, buffer: GPUBuffer) -> GPUBuffer:
         self.bind_groups[group] = None
         self.bindings[group][binding] = buffer
         return buffer

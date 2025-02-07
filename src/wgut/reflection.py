@@ -93,6 +93,9 @@ class Reflection:
         res.remove("layout")
         return res
 
+    def get_binding_space(self, group_id, binding_id):
+        return self.__groups[group_id][binding_id]["space"]
+
     def __entry_point_status(self, name):
         res = set()
         for entry in self.entry_points:
