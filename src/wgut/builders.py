@@ -589,7 +589,7 @@ class BindGroupBuilder(BuilderBase):
             }
         )
 
-        index += 1
+        self.index = index + 1
 
         return self
 
@@ -597,7 +597,7 @@ class BindGroupBuilder(BuilderBase):
         if index is None:
             index = self.index
         self.bindings.append({"binding": index, "resource": texture.create_view()})
-        index += 1
+        self.index = index + 1
         return self
 
     def with_sampler(
@@ -618,7 +618,7 @@ class BindGroupBuilder(BuilderBase):
                 ),
             }
         )
-        index += 1
+        self.index = index + 1
         return self
 
     def build(self) -> wgpu.GPUBindGroup:
