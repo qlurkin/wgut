@@ -1,12 +1,7 @@
-from wgpu import BufferUsage, GPUTexture, ShaderStage, VertexFormat
+from wgpu import GPUTexture, VertexFormat
+from wgut.auto_render_pipeline import AutoRenderPipeline
 from wgut.builders import (
-    BindGroupBuilder,
-    BingGroupLayoutBuilder,
     VertexBufferDescriptorsBuilder,
-    RenderPipelineBuilder,
-    BufferBuilder,
-    CommandBufferBuilder,
-    PipelineLayoutBuilder,
     TextureBuilder,
 )
 from wgut.window import Window
@@ -26,22 +21,6 @@ class MyApp(Window):
             dtype=np.float32,
         )
 
-        self.vertex_buffer = (
-            BufferBuilder()
-            .from_data(vertex_data)
-            .with_usage(BufferUsage.VERTEX)
-            .build()
-        )
-
-        bg_layout = (
-            BingGroupLayoutBuilder()
-            .with_texture(ShaderStage.FRAGMENT)
-            .with_sampler(ShaderStage.FRAGMENT)
-            .build()
-        )
-
-        p_layout = PipelineLayoutBuilder().with_bind_group_layout(bg_layout).build()
-
         vertex_buffer_descriptors = (
             VertexBufferDescriptorsBuilder()
             .with_vertex_buffer()
@@ -50,33 +29,17 @@ class MyApp(Window):
             .build()
         )
 
-        self.pipeline = (
-            RenderPipelineBuilder(self.get_texture_format(), vertex_buffer_descriptors)
-            .with_layout(p_layout)
-            .with_shader("texture.wgsl")
-            .build()
-        )
+        self.pipeline = AutoRenderPipeline("./texture.wgsl", vertex_buffer_descriptors)
+
+        self.pipeline.set_vertex_array(0, vertex_data)
 
         diffuse_texture = TextureBuilder().from_file("wood.jpg")
 
-        self.bind_group = (
-            BindGroupBuilder(bg_layout)
-            .with_texture(diffuse_texture)
-            .with_sampler()
-            .build()
-        )
+        self.pipeline.set_binding_texture(0, 0, diffuse_texture)
+        self.pipeline.set_binding_sampler(0, 1)
 
     def render(self, screen: GPUTexture):
-        command_buffer_builder = CommandBufferBuilder()
-
-        render_pass = command_buffer_builder.begin_render_pass(screen).build()
-        render_pass.set_pipeline(self.pipeline)
-        render_pass.set_vertex_buffer(0, self.vertex_buffer)
-        render_pass.set_bind_group(0, self.bind_group)
-        render_pass.draw(3)
-        render_pass.end()
-
-        command_buffer_builder.submit()
+        self.pipeline.render(screen, 3)
 
 
 MyApp().run()
