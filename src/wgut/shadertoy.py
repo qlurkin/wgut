@@ -161,7 +161,7 @@ class ShaderToy(Window):
         p_layout = PipelineLayoutBuilder().with_bind_group_layout(bg_layout).build()
 
         self.pipeline = (
-            RenderPipelineBuilder(self.get_texture_format(), [])
+            RenderPipelineBuilder(self.get_texture_format())
             .with_layout(p_layout)
             .with_shader_source(self.shader)
             .build()

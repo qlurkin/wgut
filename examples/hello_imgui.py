@@ -120,7 +120,8 @@ class MyApp(Window):
         )
 
         self.pipeline = (
-            RenderPipelineBuilder(self.get_texture_format(), vertex_buffer_descriptors)
+            RenderPipelineBuilder(self.get_texture_format())
+            .with_vertex_buffer_descriptors(vertex_buffer_descriptors)
             .with_layout(p_layout)
             .with_shader("cube.wgsl")
             .with_depth_stencil()

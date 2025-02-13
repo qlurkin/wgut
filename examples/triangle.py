@@ -31,7 +31,7 @@ class MyApp(Window):
             .build()
         )
 
-        buffer_descriptors = (
+        vertex_buffer_descriptors = (
             VertexBufferDescriptorsBuilder()
             .with_vertex_buffer()
             .with_attribute(VertexFormat.float32x2)
@@ -40,7 +40,8 @@ class MyApp(Window):
         )
 
         self.pipeline = (
-            RenderPipelineBuilder(self.get_texture_format(), buffer_descriptors)
+            RenderPipelineBuilder(self.get_texture_format())
+            .with_vertex_buffer_descriptors(vertex_buffer_descriptors)
             .with_shader("triangle.wgsl")
             .build()
         )

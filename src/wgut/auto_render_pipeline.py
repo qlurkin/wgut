@@ -150,9 +150,8 @@ class AutoRenderPipeline:
 
         if self.pipeline is None:
             pipeline_builder = (
-                RenderPipelineBuilder(
-                    self.output_format, self.vertex_buffer_descriptors
-                )
+                RenderPipelineBuilder(self.output_format)
+                .with_vertex_buffer_descriptors(self.vertex_buffer_descriptors)
                 .with_layout(self.reflection.get_pipeline_layout())
                 .with_shader_source(self.wgsl_source)
             )
