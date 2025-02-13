@@ -11,6 +11,7 @@ from wgut.builders import (
     CommandBufferBuilder,
     PipelineLayoutBuilder,
     TextureBuilder,
+    VertexBufferDescriptorsBuilder,
     get_device,
     write_buffer,
 )
@@ -110,14 +111,19 @@ class MyApp(Window):
             BindGroupBuilder(bg_layout).with_buffer(self.camera_buffer).build()
         )
 
-        self.pipeline = (
-            RenderPipelineBuilder(self.get_texture_format())
-            .with_layout(p_layout)
-            .with_shader("cube.wgsl")
-            .with_depth_stencil()
+        vertex_buffer_descriptors = (
+            VertexBufferDescriptorsBuilder()
             .with_vertex_buffer()
             .with_attribute(VertexFormat.float32x3)
             .with_attribute(VertexFormat.float32x3)
+            .build()
+        )
+
+        self.pipeline = (
+            RenderPipelineBuilder(self.get_texture_format(), vertex_buffer_descriptors)
+            .with_layout(p_layout)
+            .with_shader("cube.wgsl")
+            .with_depth_stencil()
             .build()
         )
 

@@ -354,13 +354,10 @@ class PipelineLayoutBuilder(BuilderBase):
         )
 
 
-class RenderPipelineBuilder(PipelineBuilderBase):
-    def __init__(self, output_format: TextureFormat | str):
-        super().__init__()
+class VertexBufferDescriptorsBuilder:
+    def __init__(self):
         self.buffers = []
         self.location = 0
-        self.output_format = output_format
-        self.depth_stencil_state = None
 
     def with_buffer(
         self, step_mode: wgpu.VertexStepMode | str, array_stride: int | None = None
@@ -408,9 +405,19 @@ class RenderPipelineBuilder(PipelineBuilderBase):
         )
         return self
 
-    def with_output_format(self, output_format: wgpu.TextureFormat) -> Self:
+    def build(self):
+        return self.buffers
+
+
+class RenderPipelineBuilder(PipelineBuilderBase):
+    def __init__(
+        self, output_format: TextureFormat | str, vertex_buffer_descriptors: list
+    ):
+        super().__init__()
+        self.buffers = vertex_buffer_descriptors
+        self.location = 0
         self.output_format = output_format
-        return self
+        self.depth_stencil_state = None
 
     def with_depth_stencil(
         self,

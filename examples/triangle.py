@@ -1,6 +1,7 @@
 from wgpu import BufferUsage, GPUTexture, VertexFormat
 from wgut.builders import (
     RenderPipelineBuilder,
+    VertexBufferDescriptorsBuilder,
     BufferBuilder,
     CommandBufferBuilder,
     print_adapter_info,
@@ -30,12 +31,17 @@ class MyApp(Window):
             .build()
         )
 
-        self.pipeline = (
-            RenderPipelineBuilder(self.get_texture_format())
-            .with_shader("triangle.wgsl")
+        buffer_descriptors = (
+            VertexBufferDescriptorsBuilder()
             .with_vertex_buffer()
             .with_attribute(VertexFormat.float32x2)
             .with_attribute(VertexFormat.float32x3)
+            .build()
+        )
+
+        self.pipeline = (
+            RenderPipelineBuilder(self.get_texture_format(), buffer_descriptors)
+            .with_shader("triangle.wgsl")
             .build()
         )
 

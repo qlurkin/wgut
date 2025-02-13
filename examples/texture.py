@@ -2,6 +2,7 @@ from wgpu import BufferUsage, GPUTexture, ShaderStage, VertexFormat
 from wgut.builders import (
     BindGroupBuilder,
     BingGroupLayoutBuilder,
+    VertexBufferDescriptorsBuilder,
     RenderPipelineBuilder,
     BufferBuilder,
     CommandBufferBuilder,
@@ -41,13 +42,18 @@ class MyApp(Window):
 
         p_layout = PipelineLayoutBuilder().with_bind_group_layout(bg_layout).build()
 
-        self.pipeline = (
-            RenderPipelineBuilder(self.get_texture_format())
-            .with_layout(p_layout)
-            .with_shader("texture.wgsl")
+        vertex_buffer_descriptors = (
+            VertexBufferDescriptorsBuilder()
             .with_vertex_buffer()
             .with_attribute(VertexFormat.float32x2)
             .with_attribute(VertexFormat.float32x2)
+            .build()
+        )
+
+        self.pipeline = (
+            RenderPipelineBuilder(self.get_texture_format(), vertex_buffer_descriptors)
+            .with_layout(p_layout)
+            .with_shader("texture.wgsl")
             .build()
         )
 
