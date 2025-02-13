@@ -1,5 +1,5 @@
 from wgpu import BufferUsage, GPUTexture, IndexFormat, ShaderStage, VertexFormat
-from wgut.builders import (
+from wgut import (
     BindGroupBuilder,
     BingGroupLayoutBuilder,
     RenderPipelineBuilder,
@@ -9,8 +9,8 @@ from wgut.builders import (
     PipelineLayoutBuilder,
     TextureBuilder,
     write_buffer,
+    Window,
 )
-from wgut.window import Window
 import numpy as np
 import wgut.cgmath as cm
 

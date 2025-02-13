@@ -1,14 +1,14 @@
 import numpy as np
 import time
 import wgpu
-from wgut.builders import (
+from wgut import (
     BindGroupBuilder,
     BingGroupLayoutBuilder,
     BufferBuilder,
     get_adapter,
     read_buffer,
+    Computer,
 )
-from wgut.computer import Computer
 
 
 class Timer:

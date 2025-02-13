@@ -1,7 +1,6 @@
 import numpy as np
 import wgpu
-from wgut.auto_compute_pipeline import AutoComputePipeline
-from wgut.builders import read_buffer
+from wgut import AutoComputePipeline, read_buffer
 
 
 computer = AutoComputePipeline("./compute.slang")

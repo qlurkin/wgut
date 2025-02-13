@@ -1,9 +1,5 @@
 from wgpu import GPUTexture, VertexFormat
-from wgut.auto_render_pipeline import AutoRenderPipeline
-from wgut.builders import (
-    TextureBuilder,
-)
-from wgut.window import Window
+from wgut import TextureBuilder, AutoRenderPipeline, Window
 import numpy as np
 
 

@@ -1,6 +1,5 @@
 from wgpu import GPUTexture, VertexFormat
-from wgut.auto_render_pipeline import AutoRenderPipeline
-from wgut.window import Window
+from wgut import AutoRenderPipeline, Window
 import numpy as np
 import wgut.cgmath as cm
 

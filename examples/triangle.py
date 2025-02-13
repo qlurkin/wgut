@@ -1,12 +1,12 @@
 from wgpu import BufferUsage, GPUTexture, VertexFormat
-from wgut.builders import (
+from wgut import (
     RenderPipelineBuilder,
     VertexBufferDescriptorsBuilder,
     BufferBuilder,
     CommandBufferBuilder,
     print_adapter_info,
+    Window,
 )
-from wgut.window import Window
 import numpy as np
 
 

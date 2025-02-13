@@ -3,7 +3,7 @@ from imgui_bundle import imgui
 from wgpu.utils.imgui import ImguiRenderer
 
 from wgpu import BufferUsage, GPUTexture, IndexFormat, ShaderStage, VertexFormat
-from wgut.builders import (
+from wgut import (
     BindGroupBuilder,
     BingGroupLayoutBuilder,
     RenderPipelineBuilder,
@@ -14,8 +14,8 @@ from wgut.builders import (
     VertexBufferDescriptorsBuilder,
     get_device,
     write_buffer,
+    Window,
 )
-from wgut.window import Window
 import numpy as np
 import wgut.cgmath as cm
 
