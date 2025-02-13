@@ -7,6 +7,7 @@ from wgut.builders import (
     CommandBufferBuilder,
     RenderPipelineBuilder,
     TextureBuilder,
+    VertexBufferDescriptorsBuilder,
 )
 import numpy.typing as npt
 import numpy as np
@@ -16,15 +17,13 @@ from wgpu import (
     GPUSampler,
     GPUTexture,
     IndexFormat,
+    VertexFormat,
 )
+from typing import Self
 
 
 class AutoRenderPipeline:
-    def __init__(
-        self,
-        shader_source_file: str,
-        vertex_buffer_descriptors: list,
-    ):
+    def __init__(self, shader_source_file: str):
         if shader_source_file.endswith(".slang"):
             self.wgsl_source = compile_slang(shader_source_file)
         else:
@@ -39,15 +38,48 @@ class AutoRenderPipeline:
             self.bindings[gid] = {}
             for bid in self.reflection.get_binding_ids(gid):
                 self.bindings[gid][bid] = None
-        self.vertex_buffer_descriptors = vertex_buffer_descriptors
-        self.vertex_buffers: list[GPUBuffer | None] = [None] * len(
-            vertex_buffer_descriptors
-        )
+        self.vertex_buffer_descriptors = []
+        self.vertex_buffers: list[GPUBuffer | None] = []
         self.index_buffer = None
         self.index_format = IndexFormat.uint32
         self.depth_texture = None
         self.pipeline = None
         self.output_format = None
+        self.vertex_descriptors_builder = None
+
+    def set_vertex_buffer_descriptors(self, vertex_buffer_descriptors: list) -> Self:
+        if self.vertex_descriptors_builder is not None:
+            raise Exception(
+                "You already begin to create Vertex Buffer Descriptor with simple methods. You can't do both."
+            )
+        self.vertex_buffer_descriptors = vertex_buffer_descriptors
+        self.vertex_buffers = [None] * len(
+            vertex_buffer_descriptors
+        )  # Create slots for vertex buffers
+        self.pipeline = None  # must recreate the pipeline
+        return self
+
+    def add_simple_vertex_descriptor(self, *vertex_formats: VertexFormat | str) -> Self:
+        if self.vertex_descriptors_builder is None:
+            self.vertex_descriptors_builder = VertexBufferDescriptorsBuilder()
+            self.vertex_buffers = []  # reset the buffers
+        self.vertex_descriptors_builder.with_vertex_buffer()
+        for format in vertex_formats:
+            self.vertex_descriptors_builder.with_attribute(format)
+        self.vertex_buffers.append(None)  # Add a slot for the vertex buffer
+        return self
+
+    def add_simple_instance_descriptor(
+        self, *vertex_formats: VertexFormat | str
+    ) -> Self:
+        if self.vertex_descriptors_builder is None:
+            self.vertex_descriptors_builder = VertexBufferDescriptorsBuilder()
+            self.vertex_buffers = []  # reset the buffers
+        self.vertex_descriptors_builder.with_instance_buffer()
+        for format in vertex_formats:
+            self.vertex_descriptors_builder.with_attribute(format)
+        self.vertex_buffers.append(None)  # Add a slot for the vertex buffer
+        return self
 
     def set_binding_array(
         self,
@@ -147,6 +179,11 @@ class AutoRenderPipeline:
         if self.output_format is None or self.output_format != output_texture.format:
             self.output_format = output_texture.format
             self.pipeline = None  # must recreate the pipeline
+
+        if self.vertex_descriptors_builder is not None:
+            self.vertex_buffer_descriptors = self.vertex_descriptors_builder.build()
+            self.vertex_descriptors_builder = None
+            self.pipeline = None
 
         if self.pipeline is None:
             pipeline_builder = (

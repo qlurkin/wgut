@@ -1,5 +1,4 @@
 from wgpu import GPUTexture, VertexFormat
-from wgut.builders import VertexBufferDescriptorsBuilder
 from wgut.auto_render_pipeline import AutoRenderPipeline
 from wgut.window import Window
 import numpy as np
@@ -73,15 +72,10 @@ class MyApp(Window):
         )
         # fmt: on
 
-        vertex_buffer_descriptors = (
-            VertexBufferDescriptorsBuilder()
-            .with_vertex_buffer()
-            .with_attribute(VertexFormat.float32x3)
-            .with_attribute(VertexFormat.float32x3)
-            .build()
+        self.pipeline = AutoRenderPipeline("cube.wgsl")
+        self.pipeline.add_simple_vertex_descriptor(
+            VertexFormat.float32x3, VertexFormat.float32x3
         )
-
-        self.pipeline = AutoRenderPipeline("cube.wgsl", vertex_buffer_descriptors)
 
         self.pipeline.set_vertex_array(0, vertex_data)
         self.pipeline.set_index_array(index_data)

@@ -1,7 +1,6 @@
 from wgpu import GPUTexture, VertexFormat
 from wgut.auto_render_pipeline import AutoRenderPipeline
 from wgut.builders import (
-    VertexBufferDescriptorsBuilder,
     TextureBuilder,
 )
 from wgut.window import Window
@@ -21,15 +20,10 @@ class MyApp(Window):
             dtype=np.float32,
         )
 
-        vertex_buffer_descriptors = (
-            VertexBufferDescriptorsBuilder()
-            .with_vertex_buffer()
-            .with_attribute(VertexFormat.float32x2)
-            .with_attribute(VertexFormat.float32x2)
-            .build()
+        self.pipeline = AutoRenderPipeline("./texture.wgsl")
+        self.pipeline.add_simple_vertex_descriptor(
+            VertexFormat.float32x2, VertexFormat.float32x2
         )
-
-        self.pipeline = AutoRenderPipeline("./texture.wgsl", vertex_buffer_descriptors)
 
         self.pipeline.set_vertex_array(0, vertex_data)
 

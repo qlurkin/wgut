@@ -423,34 +423,9 @@ class RenderPipelineBuilder(PipelineBuilderBase):
         self.location = 0
         self.output_format = output_format
         self.depth_stencil_state = None
-        self.vertex_descriptors_builder = None
 
     def with_vertex_buffer_descriptors(self, vertex_buffer_descriptors: list) -> Self:
-        if self.vertex_descriptors_builder is not None:
-            raise Exception(
-                "You already begin to create Vertex Buffer Descriptor with simple methods. You can't do both."
-            )
         self.buffers = vertex_buffer_descriptors
-        return self
-
-    def with_simple_vertex_descriptor(
-        self, *vertex_formats: wgpu.VertexFormat | str
-    ) -> Self:
-        if self.vertex_descriptors_builder is None:
-            self.vertex_descriptors_builder = VertexBufferDescriptorsBuilder()
-        self.vertex_descriptors_builder.with_vertex_buffer()
-        for format in vertex_formats:
-            self.vertex_descriptors_builder.with_attribute(format)
-        return self
-
-    def with_simple_instance_descriptor(
-        self, *vertex_formats: wgpu.VertexFormat | str
-    ) -> Self:
-        if self.vertex_descriptors_builder is None:
-            self.vertex_descriptors_builder = VertexBufferDescriptorsBuilder()
-        self.vertex_descriptors_builder.with_instance_buffer()
-        for format in vertex_formats:
-            self.vertex_descriptors_builder.with_attribute(format)
         return self
 
     def with_depth_stencil(
@@ -467,9 +442,6 @@ class RenderPipelineBuilder(PipelineBuilderBase):
         return self
 
     def build(self) -> wgpu.GPURenderPipeline:
-        if self.vertex_descriptors_builder is not None:
-            self.buffers = self.vertex_descriptors_builder.build()
-
         return get_device().create_render_pipeline(
             label=self.label,
             layout=self.layout,  # type: ignore
