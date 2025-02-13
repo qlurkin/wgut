@@ -49,7 +49,7 @@ class AutoRenderPipeline:
         self.pipeline = None
         self.output_format = None
 
-    def set_array(
+    def set_binding_array(
         self,
         group: int,
         binding: int,
@@ -63,19 +63,23 @@ class AutoRenderPipeline:
             builder.with_usage(BufferUsage.STORAGE | additional_usages)  # type: ignore
 
         buffer = builder.build()
-        return self.set_buffer(group, binding, buffer)
+        return self.set_binding_buffer(group, binding, buffer)
 
-    def set_buffer(self, group: int, binding: int, buffer: GPUBuffer) -> GPUBuffer:
+    def set_binding_buffer(
+        self, group: int, binding: int, buffer: GPUBuffer
+    ) -> GPUBuffer:
         self.bind_groups[group] = None
         self.bindings[group][binding] = buffer
         return buffer
 
-    def set_texture(self, group: int, binding: int, texture: GPUTexture) -> GPUTexture:
+    def set_binding_texture(
+        self, group: int, binding: int, texture: GPUTexture
+    ) -> GPUTexture:
         self.bind_groups[group] = None
         self.bindings[group][binding] = texture
         return texture
 
-    def set_sampler(
+    def set_binding_sampler(
         self, group: int, binding: int, sampler: GPUSampler | None = None
     ) -> GPUSampler:
         if sampler is None:

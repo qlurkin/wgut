@@ -1,15 +1,5 @@
-from wgpu import BufferUsage, GPUTexture, IndexFormat, ShaderStage, VertexFormat
-from wgut.builders import (
-    BindGroupBuilder,
-    BingGroupLayoutBuilder,
-    RenderPipelineBuilder,
-    VertexBufferDescriptorsBuilder,
-    BufferBuilder,
-    CommandBufferBuilder,
-    PipelineLayoutBuilder,
-    TextureBuilder,
-    write_buffer,
-)
+from wgpu import GPUTexture, VertexFormat
+from wgut.builders import VertexBufferDescriptorsBuilder
 from wgut.auto_render_pipeline import AutoRenderPipeline
 from wgut.window import Window
 import numpy as np
@@ -28,7 +18,7 @@ class MyApp(Window):
 
         camera_data = np.array([view_matrix, proj_matrix])
 
-        self.pipeline.set_array(0, 0, camera_data)
+        self.pipeline.set_binding_array(0, 0, camera_data)
 
     def setup(self):
         self.set_title("Hello Cube")
