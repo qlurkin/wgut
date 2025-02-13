@@ -406,6 +406,13 @@ class VertexBufferDescriptorsBuilder:
         return self
 
     def build(self):
+        for buffer in self.buffers:
+            if buffer["array_stride"] is None:
+                last_attribute = buffer["attributes"][-1]
+                buffer["array_stride"] = (
+                    last_attribute["offset"]
+                    + VERTEX_FORMAT_SIZE[last_attribute["format"]]
+                )
         return self.buffers
 
 
@@ -433,16 +440,6 @@ class RenderPipelineBuilder(PipelineBuilderBase):
         return self
 
     def build(self) -> wgpu.GPURenderPipeline:
-        # pipeline_layout = DEVICE.create_pipeline_layout(bind_group_layouts=[])
-
-        for buffer in self.buffers:
-            if buffer["array_stride"] is None:
-                last_attribute = buffer["attributes"][-1]
-                buffer["array_stride"] = (
-                    last_attribute["offset"]
-                    + VERTEX_FORMAT_SIZE[last_attribute["format"]]
-                )
-
         return get_device().create_render_pipeline(
             label=self.label,
             layout=self.layout,  # type: ignore
