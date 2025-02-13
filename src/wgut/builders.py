@@ -354,7 +354,7 @@ class PipelineLayoutBuilder(BuilderBase):
         )
 
 
-class GraphicPipelineBuilder(PipelineBuilderBase):
+class RenderPipelineBuilder(PipelineBuilderBase):
     def __init__(self, output_format: TextureFormat | str):
         super().__init__()
         self.buffers = []

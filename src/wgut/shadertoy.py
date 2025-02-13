@@ -9,7 +9,7 @@ from wgut.builders import (
     PipelineLayoutBuilder,
     write_buffer,
     get_device,
-    GraphicPipelineBuilder,
+    RenderPipelineBuilder,
 )
 from wgut.window import Window
 import wgpu
@@ -161,7 +161,7 @@ class ShaderToy(Window):
         p_layout = PipelineLayoutBuilder().with_bind_group_layout(bg_layout).build()
 
         self.pipeline = (
-            GraphicPipelineBuilder(self.get_texture_format())
+            RenderPipelineBuilder(self.get_texture_format())
             .with_layout(p_layout)
             .with_shader_source(self.shader)
             .build()

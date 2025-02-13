@@ -2,7 +2,7 @@ from wgpu import BufferUsage, GPUTexture, IndexFormat, ShaderStage, VertexFormat
 from wgut.builders import (
     BindGroupBuilder,
     BingGroupLayoutBuilder,
-    GraphicPipelineBuilder,
+    RenderPipelineBuilder,
     BufferBuilder,
     CommandBufferBuilder,
     PipelineLayoutBuilder,
@@ -108,7 +108,7 @@ class MyApp(Window):
         )
 
         self.pipeline = (
-            GraphicPipelineBuilder(self.get_texture_format())
+            RenderPipelineBuilder(self.get_texture_format())
             .with_layout(p_layout)
             .with_shader("cube.wgsl")
             .with_depth_stencil()
