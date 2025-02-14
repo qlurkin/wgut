@@ -1,7 +1,6 @@
 from wgut.reflection import Reflection
 from wgut.builders import (
     BufferBuilder,
-    compile_slang,
     BindGroupBuilder,
     CommandBufferBuilder,
     ComputePipelineBuilder,
@@ -11,13 +10,8 @@ from wgpu import BufferUsage, GPUBuffer
 
 
 class AutoComputePipeline:
-    def __init__(self, shader_source_file: str):
-        if shader_source_file.endswith(".slang"):
-            self.wgsl_source = compile_slang(shader_source_file)
-        else:
-            with open(shader_source_file) as file:
-                self.wgsl_source = file.read()
-
+    def __init__(self, shader_source: str):
+        self.wgsl_source = shader_source
         self.reflection = Reflection(self.wgsl_source)
         self.bind_groups = {}
         self.bindings = {}

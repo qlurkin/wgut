@@ -251,15 +251,6 @@ class PipelineBuilderBase(BuilderBase):
         self.layout = layout
         return self
 
-    def with_shader(self, filename: str, replace: None | dict[str, str] = None) -> Self:
-        if replace is None:
-            replace = {}
-        with open(filename) as file:
-            shader_source = file.read()
-        for k, v in replace.items():
-            shader_source = shader_source.replace(k, v)
-        return self.with_shader_source(shader_source)
-
     def with_shader_source(self, source: str) -> Self:
         self.shader_source = source
         self.shader_module = get_device().create_shader_module(code=source)
@@ -683,3 +674,10 @@ class BindGroupBuilder(BuilderBase):
         return get_device().create_bind_group(
             label=self.label, layout=self.layout, entries=self.bindings
         )
+
+
+def load_file(filename):
+    with open(filename) as file:
+        content = file.read()
+
+    return content

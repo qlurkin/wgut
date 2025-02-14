@@ -1,9 +1,9 @@
 import numpy as np
 import wgpu
-from wgut import AutoComputePipeline, read_buffer
+from wgut import AutoComputePipeline, read_buffer, compile_slang
 
 
-computer = AutoComputePipeline("./compute.slang")
+computer = AutoComputePipeline(compile_slang("./compute.slang"))
 
 rng = np.random.default_rng()
 

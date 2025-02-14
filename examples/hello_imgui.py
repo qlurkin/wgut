@@ -15,6 +15,7 @@ from wgut import (
     get_device,
     write_buffer,
     Window,
+    load_file,
 )
 import numpy as np
 import wgut.cgmath as cm
@@ -123,7 +124,7 @@ class MyApp(Window):
             RenderPipelineBuilder(self.get_texture_format())
             .with_vertex_buffer_descriptors(vertex_buffer_descriptors)
             .with_layout(p_layout)
-            .with_shader("cube.wgsl")
+            .with_shader_source(load_file("cube.wgsl"))
             .with_depth_stencil()
             .build()
         )

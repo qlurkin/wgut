@@ -2,12 +2,11 @@ import numpy as np
 import time
 import wgpu
 from wgut import (
-    BindGroupBuilder,
-    BingGroupLayoutBuilder,
     BufferBuilder,
     get_adapter,
     read_buffer,
-    Computer,
+    AutoComputePipeline,
+    load_file,
 )
 
 
@@ -55,19 +54,10 @@ with Timer("numpy operation", 100) as rep:
 
 
 with Timer("Setup Computer"):
-    bg_layout = (
-        BingGroupLayoutBuilder()
-        .with_buffer(wgpu.ShaderStage.COMPUTE, "read-only-storage")
-        .with_buffer(wgpu.ShaderStage.COMPUTE, "storage")
-        .build()
-    )
-    computer = Computer(
-        "compute.wgsl",
-        bind_group_layouts=[bg_layout],
-        replace={
-            "WORKGROUP_SIZE": str(workgroup_size),
-            "Y_STRIDE": str(workgroup_size * dispatch_size) + "u",
-        },
+    computer = AutoComputePipeline(
+        load_file("compute.wgsl")
+        .replace("WORKGROUP_SIZE", str(workgroup_size))
+        .replace("Y_STRIDE", str(workgroup_size * dispatch_size) + "u")
     )
 
 
@@ -84,12 +74,13 @@ with Timer("Create Buffers"):
         .with_usage(wgpu.BufferUsage.STORAGE | wgpu.BufferUsage.COPY_SRC)
         .build()
     )
-    bg = BindGroupBuilder(bg_layout).with_buffer(buffer1).with_buffer(buffer2).build()
+    computer.set_buffer(0, 0, buffer1)
+    computer.set_buffer(0, 1, buffer2)
 
 
 with Timer("Computer dispatch", 1000) as rep:
     for _ in range(rep):
-        computer.dispatch([bg], n // (workgroup_size * mult), mult, 1)
+        computer.dispatch(n // (workgroup_size * mult), mult)
     out = read_buffer(buffer2)
 
 with Timer("Building np.array from memoryview"):

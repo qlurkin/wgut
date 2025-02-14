@@ -1,5 +1,5 @@
 from wgpu import GPUTexture, VertexFormat
-from wgut import AutoRenderPipeline, Window
+from wgut import AutoRenderPipeline, Window, load_file
 import numpy as np
 import wgut.cgmath as cm
 
@@ -71,7 +71,7 @@ class MyApp(Window):
         )
         # fmt: on
 
-        self.pipeline = AutoRenderPipeline("cube.wgsl")
+        self.pipeline = AutoRenderPipeline(load_file("cube.wgsl"))
         self.pipeline.add_simple_vertex_descriptor(
             VertexFormat.float32x3, VertexFormat.float32x3
         )

@@ -16,6 +16,7 @@ from wgut.builders import (
     get_device,
     print_adapter_info,
     get_adapter,
+    load_file,
 )
 from wgut.auto_compute_pipeline import AutoComputePipeline
 from wgut.auto_render_pipeline import AutoRenderPipeline
@@ -44,4 +45,5 @@ __all__ = [
     "print_adapter_info",
     "get_adapter",
     "Computer",
+    "load_file",
 ]

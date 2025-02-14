@@ -1,5 +1,5 @@
 from wgpu import GPUTexture, VertexFormat
-from wgut import TextureBuilder, AutoRenderPipeline, Window
+from wgut import TextureBuilder, AutoRenderPipeline, Window, load_file
 import numpy as np
 
 
@@ -16,7 +16,7 @@ class MyApp(Window):
             dtype=np.float32,
         )
 
-        self.pipeline = AutoRenderPipeline("./texture.wgsl")
+        self.pipeline = AutoRenderPipeline(load_file("./texture.wgsl"))
         self.pipeline.add_simple_vertex_descriptor(
             VertexFormat.float32x2, VertexFormat.float32x2
         )

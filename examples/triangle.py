@@ -6,6 +6,7 @@ from wgut import (
     CommandBufferBuilder,
     print_adapter_info,
     Window,
+    load_file,
 )
 import numpy as np
 
@@ -42,7 +43,7 @@ class MyApp(Window):
         self.pipeline = (
             RenderPipelineBuilder(self.get_texture_format())
             .with_vertex_buffer_descriptors(vertex_buffer_descriptors)
-            .with_shader("triangle.wgsl")
+            .with_shader_source(load_file("triangle.wgsl"))
             .build()
         )
 
