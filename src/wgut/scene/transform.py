@@ -2,15 +2,22 @@ import numpy as np
 import numpy.typing as npt
 from scipy.spatial.transform import Rotation
 from typing import Self
+from .mesh import Mesh
 
 
 class Transform:
-    def __init__(self, matrix: npt.NDArray | None = None, parent: Self | None = None):
+    def __init__(
+        self,
+        matrix: npt.NDArray | None = None,
+        parent: Self | None = None,
+        mesh: Mesh | None = None,
+    ):
         if matrix is None:
             matrix = np.identity(4)
         self.__matrix = matrix
         self.__children = []
         self.__parent = parent
+        self.__mesh = mesh
 
     def from_translation_rotation_scale(
         self,
@@ -67,6 +74,10 @@ class Transform:
         R_mat = self.get_rotation_matrix()
         return Rotation.from_matrix(R_mat).as_quat()
 
+    def get_normal_matrix(self) -> npt.NDArray:
+        M3 = self.__matrix[:3, :3]
+        return np.linalg.inv(M3).T
+
     def add_child(self, child: Self):
         self.__children.append(child)
 
@@ -75,3 +86,54 @@ class Transform:
 
     def get_children(self) -> list[Self]:
         return list(self.__children)
+
+    def get_mesh(self) -> Mesh | None:
+        return self.__mesh
+
+    def get_transformed_mesh(self) -> Mesh | None:
+        if self.__mesh is None:
+            return None
+
+        vertices = self.__mesh.get_vertices()
+
+        positions = vertices[:, :3]
+        colors = vertices[:, 3:6]
+        tex_coords = vertices[:, 6:8]
+        normals = vertices[:, 8:11]
+        tangents = vertices[:, 11:14]
+        bitangents = vertices[:, 14:17]
+
+        ones = np.ones((positions.shape[0], 1))
+        pos_homogeneous = np.hstack([positions, ones])
+        transformed_positions = (self.__matrix @ pos_homogeneous.T).T[:, :3]
+
+        M3 = self.__matrix[:3, :3]
+        normal_matrix = np.linalg.inv(M3).T
+
+        transformed_normals = (normal_matrix @ normals.T).T
+        transformed_normals /= np.linalg.norm(
+            transformed_normals, axis=1, keepdims=True
+        )
+
+        transformed_tangents = (normal_matrix @ tangents.T).T
+        transformed_tangents /= np.linalg.norm(
+            transformed_tangents, axis=1, keepdims=True
+        )
+
+        transformed_bitangents = (normal_matrix @ bitangents.T).T
+        transformed_bitangents /= np.linalg.norm(
+            transformed_bitangents, axis=1, keepdims=True
+        )
+
+        transformed_vertices = np.hstack(
+            [
+                transformed_positions,
+                colors,
+                tex_coords,
+                transformed_normals,
+                transformed_tangents,
+                transformed_bitangents,
+            ]
+        )
+
+        return Mesh(transformed_vertices, self.__mesh.get_indices())
