@@ -7,9 +7,11 @@ from wgut.builders import (
     BufferBuilder,
     CommandBufferBuilder,
     PipelineLayoutBuilder,
+    RenderPipelineBuilder,
+)
+from wgut.core import (
     write_buffer,
     get_device,
-    RenderPipelineBuilder,
 )
 from wgut.window import Window
 import wgpu

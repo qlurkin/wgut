@@ -10,17 +10,18 @@ from wgut.builders import (
     RenderPipelineBuilder,
     ComputePipelineBuilder,
     CommandBufferBuilder,
+)
+from wgut.core import (
     write_buffer,
     read_buffer,
-    compile_slang,
     get_device,
-    print_adapter_info,
     get_adapter,
+    print_adapter_info,
     load_file,
 )
+from wgut.slang import compile_slang
 from wgut.auto_compute_pipeline import AutoComputePipeline
 from wgut.auto_render_pipeline import AutoRenderPipeline
-from wgut.computer import Computer
 from wgut.window import Window
 
 __all__ = [
@@ -44,6 +45,5 @@ __all__ = [
     "ShaderToy",
     "print_adapter_info",
     "get_adapter",
-    "Computer",
     "load_file",
 ]
