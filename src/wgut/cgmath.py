@@ -39,11 +39,10 @@ def look_at(
     u = np.cross(s, f)
 
     # fmt: off
-    # Warning: Matrix in column major order
-    return np.array([[    s[0],     u[0],   -f[0], 0],
-                     [    s[1],     u[1],   -f[1], 0],
-                     [    s[2],     u[2],   -f[2], 0],
-                     [-eye @ s, -eye @ u, eye @ f, 1]], dtype=np.float32)
+    return np.array([[ s[0],  s[1],  s[2], -eye @ s],
+                     [ u[0],  u[1],  u[2], -eye @ u],
+                     [-f[0], -f[1], -f[2],  eye @ f],
+                     [    0,     0,     0,        1]], dtype=np.float32)
     # fmt: on
 
 
@@ -61,9 +60,8 @@ def perspective(fovy_deg: float, aspect: float, near: float, far: float) -> ntp.
     c3r2 = -far * near / (far - near)
 
     # fmt: off
-    # Warning: Matrix in column major order
     return np.array([[c0r0,    0,    0,    0],
                      [   0, c1r1,    0,    0],
-                     [   0,    0, c2r2,   -1],
-                     [   0,    0, c3r2,    0]], dtype=np.float32)
+                     [   0,    0, c2r2, c3r2],
+                     [   0,    0,   -1,    0]], dtype=np.float32)
     # fmt: on

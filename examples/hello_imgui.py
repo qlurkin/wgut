@@ -30,7 +30,8 @@ class MyApp(Window):
         view_matrix = cm.look_at([3, 2, 4], [0, 0, 0], [0, 1, 0])
         proj_matrix = cm.perspective(45, width / height, 0.1, 100)
 
-        camera_data = np.array([view_matrix, proj_matrix])
+        # Must send transpose version of matrices, because GPU expect matrices in column major order
+        camera_data = np.array([view_matrix.T, proj_matrix.T])
 
         write_buffer(self.camera_buffer, camera_data)
 
