@@ -44,6 +44,16 @@ class VertexBufferDescriptorsBuilder:
         self.buffers = []
         self.location = 0
 
+    def with_vertex_descriptor(self, vertex_descriptor: dict) -> Self:
+        max_location = self.location
+        for attr in vertex_descriptor["attributes"]:
+            attr["shader_location"] += self.location
+            if attr["shader_location"] > max_location:
+                max_location = attr["shader_location"]
+        self.buffers.append(vertex_descriptor)
+        self.location = max_location + 1
+        return self
+
     def with_buffer(
         self, step_mode: wgpu.VertexStepMode | str, array_stride: int | None = None
     ) -> Self:
