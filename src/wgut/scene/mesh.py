@@ -24,31 +24,31 @@ def vertex(
         color = np.ones((vertex_count, 4))
 
     if color.ndim == 1:
-        color = np.full(vertex_count, color)
+        color = np.full((vertex_count, 4), color)
 
     if tex_coord is None:
         tex_coord = np.zeros((vertex_count, 2))
 
     if tex_coord.ndim == 1:
-        tex_coord = np.full(vertex_count, tex_coord)
+        tex_coord = np.full((vertex_count, 2), tex_coord)
 
     if normal is None:
         normal = np.zeros((vertex_count, 3))
 
     if normal.ndim == 1:
-        normal = np.full(vertex_count, normal)
+        normal = np.full((vertex_count, 3), normal)
 
     if tangent is None:
         tangent = np.zeros((vertex_count, 3))
 
     if tangent.ndim == 1:
-        tangent = np.full(vertex_count, tangent)
+        tangent = np.full((vertex_count, 3), tangent)
 
     if bitangent is None:
         bitangent = np.zeros((vertex_count, 3))
 
     if bitangent.ndim == 1:
-        bitangent = np.full(vertex_count, bitangent)
+        bitangent = np.full((vertex_count, 3), bitangent)
 
     return np.hstack([position, color, tex_coord, normal, tangent, bitangent])
 
@@ -177,9 +177,15 @@ def compute_tangent_vectors(
 
     for i in range(len(tangents)):
         t = tangents[i]
-        t /= np.linalg.norm(t)
-        t -= (normals[i] @ t) * normals[i]
-        t /= np.linalg.norm(t)
+        norm = np.linalg.norm(t)
+        if norm != 0:
+            t /= np.linalg.norm(t)
+            t -= (normals[i] @ t) * normals[i]
+            t /= np.linalg.norm(t)
+        else:
+            print("undefined tangent at position", positions[i])
+            t = normals[i]
+
         tangents[i] = t
 
     return tangents
@@ -190,8 +196,42 @@ def compute_bitangent_vectors(
 ) -> npt.NDArray:
     bitangents = []
     for i in range(len(normals)):
-        bitangents.append(np.cross(normals[i], tangents[i]))
+        if np.array_equal(normals[i], tangents[i]):
+            bitangents.append(normals[i].copy())
+            print(
+                f"degenerate tangent space for normal {normals[i]} and tangent{tangents[i]}"
+            )
+        else:
+            bitangents.append(np.cross(normals[i], tangents[i]))
     return np.array(bitangents)
+
+
+def compute_line_list(triangle_list: npt.NDArray) -> npt.NDArray:
+    lines = set()
+
+    def add_line(i1: int, i2: int):
+        a = min(i1, i2)
+        b = max(i1, i2)
+
+        # Cantor's Pairing Function
+        # key = ((a + b) * (a + b + 1) / 2) + a
+
+        lines.add((a, b))
+
+    for i in range(0, len(triangle_list), 3):
+        i1 = triangle_list[i]
+        i2 = triangle_list[i + 1]
+        i3 = triangle_list[i + 2]
+        add_line(i1, i2)
+        add_line(i2, i3)
+        add_line(i3, i1)
+
+    res = []
+    for line in lines:
+        res.append(line[0])
+        res.append(line[1])
+
+    return np.array(res)
 
 
 class Mesh:
