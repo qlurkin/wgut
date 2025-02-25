@@ -1,5 +1,171 @@
 import numpy.typing as npt
 import numpy as np
+import wgpu
+import scipy as sp
+
+
+def vertex(
+    position: npt.NDArray,
+    color: npt.NDArray | None = None,
+    tex_coord: npt.NDArray | None = None,
+    normal: npt.NDArray | None = None,
+    tangent: npt.NDArray | None = None,
+    bitangent: npt.NDArray | None = None,
+):
+    if len(position) == 3:
+        position = np.hstack([position, [1.0]])
+    if color is None:
+        color = np.array([1.0, 1.0, 1.0, 1.0])
+    if tex_coord is None:
+        tex_coord = np.array([0.0, 0.0])
+    if normal is None:
+        normal = np.array([0.0, 0.0, 0.0])
+    if tangent is None:
+        tangent = np.array([0.0, 0.0, 0.0])
+    if bitangent is None:
+        bitangent = np.array([0.0, 0.0, 0.0])
+    return np.array([position, color, tex_coord, normal, tangent, bitangent]).flatten()
+
+
+def get_vertex_buffer_descriptor():
+    return {
+        "array_stride": 4 * (4 + 4 + 2 + 3 + 3 + 3),
+        "step_mode": wgpu.VertexStepMode.vertex,
+        "attributes": [
+            {
+                "format": wgpu.VertexFormat.float32x4,
+                "offset": 0,
+                "shader_location": 0,
+            },
+            {
+                "format": wgpu.VertexFormat.float32x4,
+                "offset": 3 * 4,
+                "shader_location": 1,
+            },
+            {
+                "format": wgpu.VertexFormat.float32x2,
+                "offset": (3 + 3) * 4,
+                "shader_location": 2,
+            },
+            {
+                "format": wgpu.VertexFormat.float32x3,
+                "offset": (3 + 3 + 2) * 4,
+                "shader_location": 3,
+            },
+            {
+                "format": wgpu.VertexFormat.float32x3,
+                "offset": (3 + 3 + 2 + 3) * 4,
+                "shader_location": 4,
+            },
+            {
+                "format": wgpu.VertexFormat.float32x3,
+                "offset": (3 + 3 + 2 + 3 + 3) * 4,
+                "shader_location": 5,
+            },
+        ],
+    }
+
+
+def compute_spherical_uv(position: npt.NDArray) -> npt.NDArray:
+    x, y, z = position
+    u = (np.atan2(x, z) + np.pi) / np.pi
+    v = np.acos(y / np.linalg.norm(position)) / np.pi
+    return np.array([u, v])
+
+
+def compute_triangle_normal(
+    p1: npt.NDArray, p2: npt.NDArray, p3: npt.NDArray
+) -> npt.NDArray:
+    p_1_2 = p2 - p1
+    p_1_3 = p3 - p1
+
+    res = np.cross(p_1_2, p_1_3)
+    return res / np.linalg.norm(res)
+
+
+def compute_triangle_tangent(
+    p1: npt.NDArray,
+    uv1: npt.NDArray,
+    p2: npt.NDArray,
+    uv2: npt.NDArray,
+    p3: npt.NDArray,
+    uv3: npt.NDArray,
+) -> tuple[npt.NDArray, npt.NDArray]:
+    p_1_2 = p2 - p1
+    p_1_3 = p3 - p1
+
+    tc_1_2 = uv2 - uv1
+    tc_1_3 = uv3 - uv1
+
+    tangent = tc_1_3[1] * p_1_2 - tc_1_2[1] * p_1_3
+    tangent /= np.linalg.norm(tangent)
+
+    bitangent = -tc_1_3[0] * p_1_2 + tc_1_2[0] * p_1_3
+    bitangent /= np.linalg.norm(bitangent)
+
+    return tangent, bitangent
+
+
+def compute_normal_vectors(positions: npt.NDArray, indices: npt.NDArray) -> npt.NDArray:
+    normals = np.zeros((positions.shape[0], 3))
+
+    for i in range(0, len(indices), 3):
+        index1 = indices[i]
+        index2 = indices[i + 1]
+        index3 = indices[i + 2]
+
+        normal = compute_triangle_normal(
+            positions[index1], positions[index2], positions[index3]
+        )
+
+        normals[index1] += normal
+        normals[index2] += normal
+        normals[index3] += normal
+
+    normals /= np.linalg.norm(normals, axis=1, keepdims=True)
+    return normals
+
+
+def compute_tangent_vectors(
+    positions: npt.NDArray, uvs: npt.NDArray, normals: npt.NDArray, indices: npt.NDArray
+) -> npt.NDArray:
+    tangents = np.zeros((positions.shape[0], 3))
+
+    for i in range(0, len(indices), 3):
+        index1 = indices[i]
+        index2 = indices[i + 1]
+        index3 = indices[i + 2]
+
+        tangent, _ = compute_triangle_tangent(
+            positions[index1],
+            uvs[index1],
+            positions[index2],
+            uvs[index2],
+            positions[index3],
+            uvs[index3],
+        )
+
+        tangents[index1] += tangent
+        tangents[index2] += tangent
+        tangents[index3] += tangent
+
+    for i in range(len(tangents)):
+        t = tangents[i]
+        t /= np.linalg.norm(t)
+        t -= (normals[i] @ t) * normals[i]
+        t /= np.linalg.norm(t)
+        tangents[i] = t
+
+    return tangents
+
+
+def compute_bitangent_vectors(
+    normals: npt.NDArray, tangents: npt.NDArray
+) -> npt.NDArray:
+    bitangents = []
+    for i in range(len(normals)):
+        bitangents.append(np.cross(normals[i], tangents[i]))
+    return np.array(bitangents)
 
 
 class Mesh:
@@ -14,48 +180,36 @@ class Mesh:
         return self.__indices
 
     def get_transformed_vertices(self, transformation_matrix: npt.NDArray):
-        vertices = self.__vertices
-
-        # TODO: use scipy.linalg.block_diag to do all in one multiplication without decompose vertices
-        positions = vertices[:, :3]
-        colors = vertices[:, 3:6]
-        tex_coords = vertices[:, 6:8]
-        normals = vertices[:, 8:11]
-        tangents = vertices[:, 11:14]
-        bitangents = vertices[:, 14:17]
-
-        ones = np.ones((positions.shape[0], 1))
-        pos_homogeneous = np.hstack([positions, ones])
-        # TODO: simplifie all these transpositions
-        transformed_positions = (transformation_matrix @ pos_homogeneous.T).T[:, :3]
-
         M3 = transformation_matrix[:3, :3]
         normal_matrix = np.linalg.inv(M3).T
 
-        transformed_normals = (normal_matrix @ normals.T).T
-        transformed_normals /= np.linalg.norm(
-            transformed_normals, axis=1, keepdims=True
-        )
-
-        transformed_tangents = (normal_matrix @ tangents.T).T
-        transformed_tangents /= np.linalg.norm(
-            transformed_tangents, axis=1, keepdims=True
-        )
-
-        transformed_bitangents = (normal_matrix @ bitangents.T).T
-        transformed_bitangents /= np.linalg.norm(
-            transformed_bitangents, axis=1, keepdims=True
-        )
-
-        transformed_vertices = np.hstack(
+        big_transform = sp.linalg.block_diag(
             [
-                transformed_positions,
-                colors,
-                tex_coords,
-                transformed_normals,
-                transformed_tangents,
-                transformed_bitangents,
+                transformation_matrix,
+                np.identity(4),
+                np.identity(2),
+                normal_matrix,
+                normal_matrix,
+                normal_matrix,
             ]
+        )
+
+        # vertices are on rows so the product is transposed
+        transformed_vertices = self.__vertices @ big_transform.T
+
+        # normalize normals
+        transformed_vertices[:, 10:13] /= np.linalg.norm(
+            transformed_vertices[:, 10:13], axis=1, keepdims=True
+        )
+
+        # normalize tangents
+        transformed_vertices[:, 13:16] /= np.linalg.norm(
+            transformed_vertices[:, 13:16], axis=1, keepdims=True
+        )
+
+        # normalize bitangents
+        transformed_vertices[:, 16:19] /= np.linalg.norm(
+            transformed_vertices[:, 16:19], axis=1, keepdims=True
         )
 
         return transformed_vertices
