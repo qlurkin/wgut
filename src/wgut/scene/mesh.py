@@ -12,19 +12,45 @@ def vertex(
     tangent: npt.NDArray | None = None,
     bitangent: npt.NDArray | None = None,
 ):
-    if len(position) == 3:
-        position = np.hstack([position, [1.0]])
+    if position.ndim == 1:
+        position = position.reshape((1, len(position)))
+
+    vertex_count = position.shape[0]
+
+    if position.shape[1] == 3:
+        position = np.hstack([position, np.ones((vertex_count, 1))])
+
     if color is None:
-        color = np.array([1.0, 1.0, 1.0, 1.0])
+        color = np.ones((vertex_count, 4))
+
+    if color.ndim == 1:
+        color = np.full(vertex_count, color)
+
     if tex_coord is None:
-        tex_coord = np.array([0.0, 0.0])
+        tex_coord = np.zeros((vertex_count, 2))
+
+    if tex_coord.ndim == 1:
+        tex_coord = np.full(vertex_count, tex_coord)
+
     if normal is None:
-        normal = np.array([0.0, 0.0, 0.0])
+        normal = np.zeros((vertex_count, 3))
+
+    if normal.ndim == 1:
+        normal = np.full(vertex_count, normal)
+
     if tangent is None:
-        tangent = np.array([0.0, 0.0, 0.0])
+        tangent = np.zeros((vertex_count, 3))
+
+    if tangent.ndim == 1:
+        tangent = np.full(vertex_count, tangent)
+
     if bitangent is None:
-        bitangent = np.array([0.0, 0.0, 0.0])
-    return np.array([position, color, tex_coord, normal, tangent, bitangent]).flatten()
+        bitangent = np.zeros((vertex_count, 3))
+
+    if bitangent.ndim == 1:
+        bitangent = np.full(vertex_count, bitangent)
+
+    return np.hstack([position, color, tex_coord, normal, tangent, bitangent])
 
 
 def get_vertex_buffer_descriptor():
