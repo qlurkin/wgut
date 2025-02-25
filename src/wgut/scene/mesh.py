@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy.typing as npt
 import numpy as np
 import wgpu
@@ -199,7 +201,7 @@ def compute_bitangent_vectors(
         if np.array_equal(normals[i], tangents[i]):
             bitangents.append(normals[i].copy())
             print(
-                f"degenerate tangent space for normal {normals[i]} and tangent{tangents[i]}"
+                f"degenerate tangent space for normal {normals[i]} and tangent {tangents[i]}"
             )
         else:
             bitangents.append(np.cross(normals[i], tangents[i]))
@@ -232,6 +234,11 @@ def compute_line_list(triangle_list: npt.NDArray) -> npt.NDArray:
         res.append(line[1])
 
     return np.array(res)
+
+
+def fix_degenerated_tangent_space(mesh: Mesh) -> Mesh:
+    # TODO: Fix mesh by duplicating problematic vertex to store multiple tangent and bitangent for the same position
+    return mesh
 
 
 class Mesh:

@@ -7,6 +7,7 @@ from ..mesh import (
     compute_bitangent_vectors,
     compute_spherical_uv,
     vertex,
+    fix_degenerated_tangent_space,
 )
 
 
@@ -154,4 +155,4 @@ def icosphere(order: int) -> Mesh:
         bitangents,
     )
 
-    return Mesh(vertices, indices)
+    return fix_degenerated_tangent_space(Mesh(vertices, indices))
