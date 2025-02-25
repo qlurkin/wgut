@@ -2,13 +2,17 @@ import numpy as np
 import numpy.typing as npt
 from ..mesh import (
     Mesh,
-    compute_normal_vectors,
     compute_tangent_vectors,
     compute_bitangent_vectors,
-    compute_spherical_uv,
     vertex,
-    fix_degenerated_tangent_space,
 )
+
+
+def compute_spherical_uv(position: npt.NDArray) -> npt.NDArray:
+    x, y, z = position
+    u = (np.atan2(x, z) + np.pi) / np.pi
+    v = np.acos(y / np.linalg.norm(position)) / np.pi
+    return np.array([u, v])
 
 
 def icosphere_positions_and_indices(order: int) -> tuple[npt.NDArray, npt.NDArray]:
@@ -141,7 +145,8 @@ def icosphere_positions_and_indices(order: int) -> tuple[npt.NDArray, npt.NDArra
 def icosphere(order: int) -> Mesh:
     positions, indices = icosphere_positions_and_indices(order)
 
-    normals = compute_normal_vectors(positions, indices)
+    normals = positions.copy()
+    # TODO: Fix UVs
     uvs = np.array([compute_spherical_uv(pos) for pos in positions])
     tangents = compute_tangent_vectors(positions, uvs, normals, indices)
     bitangents = compute_bitangent_vectors(normals, tangents)
@@ -155,4 +160,4 @@ def icosphere(order: int) -> Mesh:
         bitangents,
     )
 
-    return fix_degenerated_tangent_space(Mesh(vertices, indices))
+    return Mesh(vertices, indices)

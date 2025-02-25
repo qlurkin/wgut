@@ -94,13 +94,6 @@ def get_vertex_buffer_descriptor():
     }
 
 
-def compute_spherical_uv(position: npt.NDArray) -> npt.NDArray:
-    x, y, z = position
-    u = (np.atan2(x, z) + np.pi) / np.pi
-    v = np.acos(y / np.linalg.norm(position)) / np.pi
-    return np.array([u, v])
-
-
 def compute_triangle_normal(
     p1: npt.NDArray, p2: npt.NDArray, p3: npt.NDArray
 ) -> npt.NDArray:
@@ -234,11 +227,6 @@ def compute_line_list(triangle_list: npt.NDArray) -> npt.NDArray:
         res.append(line[1])
 
     return np.array(res)
-
-
-def fix_degenerated_tangent_space(mesh: Mesh) -> Mesh:
-    # TODO: Fix mesh by duplicating problematic vertex to store multiple tangent and bitangent for the same position
-    return mesh
 
 
 class Mesh:
