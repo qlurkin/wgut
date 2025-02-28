@@ -42,7 +42,11 @@ class Renderer:
         self.__pipeline.set_index_buffer(self.__index_buffer)
         self.__output_texture = None
         self.__output_size = None
-        self.__draw_count = 0
+        self.__frame_draw_count = 0
+        self.__frame_mesh_count = 0
+        self.__frame_triangle_count = 0
+        self.__frame_vertex_count = 0
+        self.__frame_stat = None
 
     def begin_frame(self, texture: GPUTexture):
         self.__output_texture = texture
@@ -58,7 +62,7 @@ class Renderer:
         index_data = mesh.get_indices()
 
         if len(vertex_data) > self.__vertex_buffer_size:
-            raise IndexError("Vetex Buffer Not Long Enough")
+            raise IndexError("Vertex Buffer Not Long Enough")
 
         if len(index_data) > self.__index_buffer_size:
             raise IndexError("index Buffer Not Long Enough")
@@ -69,7 +73,7 @@ class Renderer:
         ):
             self.__draw()
 
-        index_data += self.__vertex_count
+        index_data = index_data + self.__vertex_count
 
         buffer_offset = self.__vertex_count * self.__vertex_size
         write_buffer(self.__vertex_buffer, vertex_data, buffer_offset)
@@ -79,20 +83,34 @@ class Renderer:
 
         self.__vertex_count += len(vertex_data)
         self.__index_count += len(index_data)
+        self.__frame_mesh_count += 1
+        self.__frame_triangle_count += len(index_data) // 3
+        self.__frame_vertex_count += len(vertex_data)
 
     def end_frame(self):
         self.__draw()
+        self.__frame_stat = {
+            "draw": self.__frame_draw_count,
+            "mesh": self.__frame_mesh_count,
+            "triangle": self.__frame_triangle_count,
+            "vertex": self.__frame_vertex_count,
+        }
         self.__output_texture = None
-        print(self.__draw_count)
-        self.__draw_count = 0
+        self.__frame_draw_count = 0
+        self.__frame_mesh_count = 0
+        self.__frame_triangle_count = 0
+        self.__frame_vertex_count = 0
 
     def __draw(self):
         assert self.__output_texture is not None
 
         self.__pipeline.render(self.__output_texture, self.__index_count)
-        self.__draw_count += 1
+        self.__frame_draw_count += 1
         self.__vertex_count = 0
         self.__index_count = 0
 
     def set_binding_array(self, group: int, binding: int, array: npt.NDArray):
         self.__pipeline.set_binding_array(group, binding, array)
+
+    def get_frame_stat(self):
+        return self.__frame_stat

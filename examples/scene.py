@@ -33,7 +33,9 @@ class MyApp(Window):
         self.renderer.begin_frame(screen)
         self.renderer.add_mesh(self.mesh)
         self.renderer.add_mesh(self.mesh)
+        self.renderer.add_mesh(self.mesh)
         self.renderer.end_frame()
+        # print(self.renderer.get_frame_stat())
 
     def process_event(self, event):
         if event["event_type"] == "resize":
