@@ -1,7 +1,9 @@
 from wgpu import BufferUsage, GPUTexture
 import numpy.typing as npt
+import numpy as np
 
 from wgut.core import write_buffer
+from wgut.scene.transform import Transform
 from wgut.scene.mesh import Mesh
 from wgut.scene.mesh import get_vertex_buffer_descriptor
 from wgut.auto_render_pipeline import AutoRenderPipeline
@@ -47,18 +49,22 @@ class Renderer:
         self.__frame_triangle_count = 0
         self.__frame_vertex_count = 0
         self.__frame_stat = None
+        self.__clear = True
 
-    def begin_frame(self, texture: GPUTexture):
+    def begin_frame(self, texture: GPUTexture, camera_matrix: npt.NDArray):
+        # Must send transpose version of matrices, because GPU expect matrices in column major order
+        self.__pipeline.set_binding_array(0, 0, np.ascontiguousarray(camera_matrix.T))
         self.__output_texture = texture
         if self.__output_size is None or self.__output_size != texture.size[:2]:
             self.__output_size = texture.size[:2]
             self.__pipeline.create_depth_texture(self.__output_size)
+        self.__clear = True
 
-    def add_mesh(self, mesh: Mesh):
+    def add_mesh(self, mesh: Mesh, transform: Transform):
         if self.__output_texture is None:
             raise Exception("You must call begin_frame before adding meshes")
 
-        vertex_data = mesh.get_vertices()
+        vertex_data = mesh.get_transformed_vertices(transform.get_matrix())
         index_data = mesh.get_indices()
 
         if len(vertex_data) > self.__vertex_buffer_size:
@@ -104,7 +110,10 @@ class Renderer:
     def __draw(self):
         assert self.__output_texture is not None
 
-        self.__pipeline.render(self.__output_texture, self.__index_count)
+        self.__pipeline.render(
+            self.__output_texture, self.__index_count, clear=self.__clear
+        )
+        self.__clear = False
         self.__frame_draw_count += 1
         self.__vertex_count = 0
         self.__index_count = 0

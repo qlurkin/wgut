@@ -16,6 +16,7 @@ from wgpu import (
     GPUSampler,
     GPUTexture,
     IndexFormat,
+    LoadOp,
     VertexFormat,
 )
 from typing import Self
@@ -169,7 +170,11 @@ class AutoRenderPipeline:
         return self.set_depth_texture(texture)
 
     def render(
-        self, output_texture: GPUTexture, vertex_count: int, instance_count: int = 1
+        self,
+        output_texture: GPUTexture,
+        vertex_count: int,
+        instance_count: int = 1,
+        clear: bool = True,
     ):
         if self.output_format is None or self.output_format != output_texture.format:
             self.output_format = output_texture.format
@@ -206,9 +211,11 @@ class AutoRenderPipeline:
                         builder.with_buffer(self.bindings[gid][bid], index=bid)
                 self.bind_groups[gid] = builder.build()
         command_encoder = CommandBufferBuilder()
-        render_pass_builder = command_encoder.begin_render_pass(output_texture)
+        render_pass_builder = command_encoder.begin_render_pass(
+            output_texture
+        ).with_load_op(LoadOp.clear if clear else LoadOp.load)
         if self.depth_texture is not None:
-            render_pass_builder.with_depth_stencil(self.depth_texture)
+            render_pass_builder.with_depth_stencil(self.depth_texture, clear)
         render_pass = render_pass_builder.build()
         render_pass.set_pipeline(self.pipeline)
         for gid, g in self.bind_groups.items():

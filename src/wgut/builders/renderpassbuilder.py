@@ -31,11 +31,11 @@ class RenderPassBuilder(BuilderBase):
         self.store_op = store_op
         return self
 
-    def with_depth_stencil(self, texture: wgpu.GPUTexture) -> Self:
+    def with_depth_stencil(self, texture: wgpu.GPUTexture, clear: bool = True) -> Self:
         self.depth_stencil_attachment = {
-            "view": texture.create_view(),
+            "view": texture.create_view(),  # type: ignore
             "depth_clear_value": 1.0,
-            "depth_load_op": wgpu.LoadOp.clear,
+            "depth_load_op": wgpu.LoadOp.clear if clear else wgpu.LoadOp.load,
             "depth_store_op": wgpu.StoreOp.store,
         }
         return self
@@ -45,7 +45,7 @@ class RenderPassBuilder(BuilderBase):
             label=self.label,
             color_attachments=[
                 {
-                    "view": self.texture.create_view(),
+                    "view": self.texture.create_view(),  # type: ignore
                     "resolve_target": None,
                     "clear_value": self.clear_value,
                     "load_op": self.load_op,

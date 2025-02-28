@@ -249,14 +249,12 @@ class Mesh:
         normal_matrix = np.linalg.inv(M3).T
 
         big_transform = sp.linalg.block_diag(
-            [
-                transformation_matrix,
-                np.identity(4),
-                np.identity(2),
-                normal_matrix,
-                normal_matrix,
-                normal_matrix,
-            ]
+            transformation_matrix,
+            np.identity(4, dtype=np.float32),
+            np.identity(2, dtype=np.float32),
+            normal_matrix,
+            normal_matrix,
+            normal_matrix,
         )
 
         # vertices are on rows so the product is transposed

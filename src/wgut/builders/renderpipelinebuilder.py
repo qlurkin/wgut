@@ -23,9 +23,9 @@ class RenderPipelineBuilder(PipelineBuilderBase):
 
     def with_depth_stencil(
         self,
-        depth_format: wgpu.TextureFormat = wgpu.TextureFormat.depth32float,  # type: ignore
+        depth_format: wgpu.TextureFormat | str = wgpu.TextureFormat.depth32float,
         depth_write_enabled: bool = True,
-        depth_compare: wgpu.CompareFunction = wgpu.CompareFunction.less,  # type: ignore
+        depth_compare: wgpu.CompareFunction | str = wgpu.CompareFunction.less,
     ) -> Self:
         self.depth_stencil_state = {
             "format": depth_format,
