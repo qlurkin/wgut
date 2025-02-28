@@ -139,7 +139,7 @@ def icosphere_positions_and_indices(order: int) -> tuple[npt.NDArray, npt.NDArra
 
     positions /= np.linalg.norm(positions, axis=1, keepdims=True)
 
-    return positions, np.array(indices)
+    return positions, np.array(indices, dtype=np.uint32)
 
 
 def icosphere(order: int) -> Mesh:

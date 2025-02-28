@@ -13,14 +13,14 @@ def vertex(
     normal: npt.NDArray | None = None,
     tangent: npt.NDArray | None = None,
     bitangent: npt.NDArray | None = None,
-):
+) -> npt.NDArray:
     if position.ndim == 1:
         position = position.reshape((1, len(position)))
 
     vertex_count = position.shape[0]
 
     if position.shape[1] == 3:
-        position = np.hstack([position, np.ones((vertex_count, 1))])
+        position = np.hstack([position, np.ones((vertex_count, 1), dtype=np.float32)])
 
     if color is None:
         color = np.ones((vertex_count, 4))
@@ -52,7 +52,11 @@ def vertex(
     if bitangent.ndim == 1:
         bitangent = np.full((vertex_count, 3), bitangent)
 
-    return np.hstack([position, color, tex_coord, normal, tangent, bitangent])
+    res = np.hstack([position, color, tex_coord, normal, tangent, bitangent])
+    if res.dtype != np.float32:
+        print("Warning: Vertex Data not in Float32 => Casting")
+        res = np.array(res, dtype=np.float32)
+    return res
 
 
 def get_vertex_buffer_descriptor():
