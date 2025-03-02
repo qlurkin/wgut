@@ -7,6 +7,7 @@ struct VertexInput {
     @location(3) normal: vec3<f32>,
     @location(4) tangent: vec3<f32>,
     @location(5) bitangent: vec3<f32>,
+    @location(6) mat_id: f32,
 };
 
 struct VertexOutput {
@@ -16,6 +17,7 @@ struct VertexOutput {
     @location(2) normal: vec3<f32>,
     @location(3) tangent: vec3<f32>,
     @location(4) bitangent: vec3<f32>,
+    @location(5) mat_id: f32,
 };
 
 @vertex
@@ -23,7 +25,11 @@ fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.pos = camera * in.position;
     out.color = in.color;
+    out.uv = in.uv;
     out.normal = in.normal;
+    out.tangent = in.tangent;
+    out.bitangent = in.bitangent;
+    out.mat_id = in.mat_id;
     return out;
 }
 

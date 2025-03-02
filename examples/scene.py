@@ -5,6 +5,7 @@ from wgpu import GPUTexture
 from wgut import Window, load_file, get_device
 import numpy as np
 import wgut.cgmath as cm
+from wgut.scene.material import Material
 from wgut.scene.primitives.icosphere import icosphere
 from wgut.scene.renderer import Renderer
 from wgut.scene.transform import Transform
@@ -43,10 +44,12 @@ class MyApp(Window):
             np.array([[-2.5, 0, 0]], dtype=np.float32).T
         )
 
+        material = Material(np.array([1.0, 1.0, 0.0, 1.0], dtype=np.float32), 0.5, 0.0)
+
         self.renderer.begin_frame(screen, camera_matrix)
-        self.renderer.add_mesh(self.mesh, Transform())
-        self.renderer.add_mesh(self.mesh, translation1)
-        self.renderer.add_mesh(self.mesh, translation2)
+        self.renderer.add_mesh(self.mesh, Transform(), material)
+        self.renderer.add_mesh(self.mesh, translation1, material)
+        self.renderer.add_mesh(self.mesh, translation2, material)
         self.renderer.end_frame()
 
         self.imgui_renderer.render()
