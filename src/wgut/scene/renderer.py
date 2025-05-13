@@ -49,7 +49,6 @@ fn vs_main(in: VertexInput) -> VertexOutput {
     return out;
 }
 
-@group(1) @binding(0) var<storage, read> materials: array<Material>;
 
 """
 
@@ -97,17 +96,22 @@ class Renderer:
             .with_usage(BufferUsage.INDEX | BufferUsage.COPY_DST)
             .build()
         )
-        self.__material_buffer = (
-            BufferBuilder()
-            .with_size(material_buffer_size * self.__material_size)
-            .with_usage(BufferUsage.STORAGE | BufferUsage.COPY_DST)
-            .build()
-        )
+
+        if self.__material_size > 0:
+            self.__material_buffer = (
+                BufferBuilder()
+                .with_size(material_buffer_size * self.__material_size)
+                .with_usage(BufferUsage.STORAGE | BufferUsage.COPY_DST)
+                .build()
+            )
         self.__vertex_count = 0
         self.__index_count = 0
         self.__pipeline.set_vertex_buffer(0, self.__vertex_buffer)
         self.__pipeline.set_index_buffer(self.__index_buffer)
-        self.__pipeline.set_binding_buffer(1, 0, self.__material_buffer)
+
+        if self.__material_size > 0:
+            self.__pipeline.set_binding_buffer(1, 0, self.__material_buffer)
+
         self.__output_texture = None
         self.__output_size = None
         self.__frame_draw_count = 0
@@ -157,11 +161,12 @@ class Renderer:
         if material not in self.__material_index:
             material_index = len(self.__material_index)
 
-            write_buffer(
-                self.__material_buffer,
-                material.get_data(),
-                material_index * self.__material_size,
-            )
+            if self.__material_size > 0:
+                write_buffer(
+                    self.__material_buffer,
+                    material.get_data(),
+                    material_index * self.__material_size,
+                )
             self.__material_index[material] = material_index
         else:
             material_index = self.__material_index[material]

@@ -14,6 +14,8 @@ class BasicColorMaterial:
                 color: vec4<f32>,
             }
 
+            @group(1) @binding(0) var<storage, read> materials: array<Material>;
+
             @fragment
             fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
                 var color = materials[u32(in.mat_id)].color;
