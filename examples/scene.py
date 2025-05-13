@@ -2,7 +2,7 @@
 from imgui_bundle import imgui
 from wgpu.utils.imgui import ImguiRenderer
 from wgpu import GPUTexture
-from wgut import Window, load_file, get_device
+from wgut import Window, get_device
 import numpy as np
 import wgut.cgmath as cm
 from wgut.scene.primitives.icosphere import icosphere
@@ -15,9 +15,9 @@ class MyApp(Window):
     def setup(self):
         self.set_title("Hello Scene")
 
-        self.mesh = icosphere(2)
+        self.mesh = icosphere(3)
 
-        self.renderer = Renderer(load_file("scene.wgsl"), 10000, 10000, 10)
+        self.renderer = Renderer(BasicColorMaterial, 10000, 12000, 10)
 
         self.imgui_renderer = ImguiRenderer(
             get_device(), self.get_canvas(), self.get_texture_format()

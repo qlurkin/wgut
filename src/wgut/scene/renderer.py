@@ -1,3 +1,4 @@
+from typing import Type
 from wgpu import BufferUsage, GPUTexture, VertexFormat
 import numpy.typing as npt
 import numpy as np
@@ -12,15 +13,57 @@ from wgut.builders.bufferbuilder import BufferBuilder
 from wgut.builders.vertexbufferdescriptorsbuilder import VertexBufferDescriptorsBuilder
 
 
+SHADER_START = """
+@group(0) @binding(0) var<uniform> camera: mat4x4<f32>;
+
+struct VertexInput {
+    @location(0) position: vec4<f32>,
+    @location(1) color: vec4<f32>,
+    @location(2) uv: vec2<f32>,
+    @location(3) normal: vec3<f32>,
+    @location(4) tangent: vec3<f32>,
+    @location(5) bitangent: vec3<f32>,
+    @location(6) mat_id: f32,
+};
+
+struct VertexOutput {
+    @builtin(position) pos: vec4<f32>,
+    @location(0) color: vec4<f32>,
+    @location(1) uv: vec2<f32>,
+    @location(2) normal: vec3<f32>,
+    @location(3) tangent: vec3<f32>,
+    @location(4) bitangent: vec3<f32>,
+    @location(5) mat_id: f32,
+};
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    var out: VertexOutput;
+    out.pos = camera * in.position;
+    out.color = in.color;
+    out.uv = in.uv;
+    out.normal = in.normal;
+    out.tangent = in.tangent;
+    out.bitangent = in.bitangent;
+    out.mat_id = in.mat_id;
+    return out;
+}
+
+@group(1) @binding(0) var<storage, read> materials: array<Material>;
+
+"""
+
+
 class Renderer:
     def __init__(
         self,
-        shader_source: str,
+        material_class: Type[Material],
         vertex_buffer_size: int,
         index_buffer_size: int,
         material_buffer_size: int,
     ):
-        self.__material_size = 16  # TODO: Change this
+        shader_source = SHADER_START + material_class.get_fragment()
+        self.__material_size = material_class.get_data_size()
         self.__vertex_buffer_size = vertex_buffer_size
         self.__index_buffer_size = index_buffer_size
         self.__material_buffer_size = material_buffer_size
