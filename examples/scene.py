@@ -5,19 +5,19 @@ from wgpu import GPUTexture
 from wgut import Window, load_file, get_device
 import numpy as np
 import wgut.cgmath as cm
-from wgut.scene.material import Material
 from wgut.scene.primitives.icosphere import icosphere
 from wgut.scene.renderer import Renderer
 from wgut.scene.transform import Transform
+from wgut.scene.uniform_color_material import BasicColorMaterial
 
 
 class MyApp(Window):
     def setup(self):
         self.set_title("Hello Scene")
 
-        self.mesh = icosphere(3)
+        self.mesh = icosphere(2)
 
-        self.renderer = Renderer(load_file("scene.wgsl"), 1000, 10000)
+        self.renderer = Renderer(load_file("scene.wgsl"), 10000, 10000, 10)
 
         self.imgui_renderer = ImguiRenderer(
             get_device(), self.get_canvas(), self.get_texture_format()
@@ -44,12 +44,14 @@ class MyApp(Window):
             np.array([[-2.5, 0, 0]], dtype=np.float32).T
         )
 
-        material = Material(np.array([1.0, 1.0, 0.0, 1.0], dtype=np.float32), 0.5, 0.0)
+        material1 = BasicColorMaterial((1.0, 0.0, 0.0))
+        material2 = BasicColorMaterial((0.0, 1.0, 0.0))
+        material3 = BasicColorMaterial((0.0, 0.0, 1.0))
 
         self.renderer.begin_frame(screen, camera_matrix)
-        self.renderer.add_mesh(self.mesh, Transform(), material)
-        self.renderer.add_mesh(self.mesh, translation1, material)
-        self.renderer.add_mesh(self.mesh, translation2, material)
+        self.renderer.add_mesh(self.mesh, Transform(), material1)
+        self.renderer.add_mesh(self.mesh, translation1, material2)
+        self.renderer.add_mesh(self.mesh, translation2, material3)
         self.renderer.end_frame()
 
         self.imgui_renderer.render()

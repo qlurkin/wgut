@@ -71,27 +71,27 @@ def get_vertex_buffer_descriptor():
             },
             {
                 "format": wgpu.VertexFormat.float32x4,
-                "offset": 3 * 4,
+                "offset": 4 * 4,
                 "shader_location": 1,
             },
             {
                 "format": wgpu.VertexFormat.float32x2,
-                "offset": (3 + 3) * 4,
+                "offset": (4 + 4) * 4,
                 "shader_location": 2,
             },
             {
                 "format": wgpu.VertexFormat.float32x3,
-                "offset": (3 + 3 + 2) * 4,
+                "offset": (4 + 4 + 2) * 4,
                 "shader_location": 3,
             },
             {
                 "format": wgpu.VertexFormat.float32x3,
-                "offset": (3 + 3 + 2 + 3) * 4,
+                "offset": (4 + 4 + 2 + 3) * 4,
                 "shader_location": 4,
             },
             {
                 "format": wgpu.VertexFormat.float32x3,
-                "offset": (3 + 3 + 2 + 3 + 3) * 4,
+                "offset": (4 + 4 + 2 + 3 + 3) * 4,
                 "shader_location": 5,
             },
         ],

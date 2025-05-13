@@ -14,16 +14,23 @@ from wgut.builders.vertexbufferdescriptorsbuilder import VertexBufferDescriptors
 
 class Renderer:
     def __init__(
-        self, shader_source: str, vertex_buffer_size: int, index_buffer_size: int
+        self,
+        shader_source: str,
+        vertex_buffer_size: int,
+        index_buffer_size: int,
+        material_buffer_size: int,
     ):
+        self.__material_size = 16  # TODO: Change this
         self.__vertex_buffer_size = vertex_buffer_size
         self.__index_buffer_size = index_buffer_size
+        self.__material_buffer_size = material_buffer_size
+
         self.__pipeline = AutoRenderPipeline(shader_source)
         vertex_buffer_descriptor = get_vertex_buffer_descriptor()
         vertex_buffer_descriptor["attributes"].append(  # Add material_index to vertex
             {
                 "format": VertexFormat.float32,
-                "offset": (3 + 3 + 2 + 3 + 3 + 3) * 4,
+                "offset": (4 + 4 + 2 + 3 + 3 + 3) * 4,
                 "shader_location": 6,
             },
         )
@@ -47,10 +54,17 @@ class Renderer:
             .with_usage(BufferUsage.INDEX | BufferUsage.COPY_DST)
             .build()
         )
+        self.__material_buffer = (
+            BufferBuilder()
+            .with_size(material_buffer_size * self.__material_size)
+            .with_usage(BufferUsage.STORAGE | BufferUsage.COPY_DST)
+            .build()
+        )
         self.__vertex_count = 0
         self.__index_count = 0
         self.__pipeline.set_vertex_buffer(0, self.__vertex_buffer)
         self.__pipeline.set_index_buffer(self.__index_buffer)
+        self.__pipeline.set_binding_buffer(1, 0, self.__material_buffer)
         self.__output_texture = None
         self.__output_size = None
         self.__frame_draw_count = 0
@@ -59,7 +73,6 @@ class Renderer:
         self.__frame_vertex_count = 0
         self.__frame_stat = None
         self.__clear = True
-        self.__materials = []
         self.__material_index = {}
 
     def begin_frame(self, texture: GPUTexture, camera_matrix: npt.NDArray):
@@ -91,13 +104,22 @@ class Renderer:
         if (
             self.__vertex_count + len(vertex_data) > self.__vertex_buffer_size
             or self.__index_count + len(index_data) > self.__index_buffer_size
+            or (
+                material not in self.__material_index
+                and len(self.__material_index) == self.__material_buffer_size
+            )
         ):
             self.__draw()
 
         if material not in self.__material_index:
-            material_index = len(self.__materials)
-            self.__material_index[material] = len(self.__materials)
-            self.__materials.append(material.get_data())
+            material_index = len(self.__material_index)
+
+            write_buffer(
+                self.__material_buffer,
+                material.get_data(),
+                material_index * self.__material_size,
+            )
+            self.__material_index[material] = material_index
         else:
             material_index = self.__material_index[material]
 
@@ -135,6 +157,8 @@ class Renderer:
     def __draw(self):
         assert self.__output_texture is not None
 
+        # TODO: create and send material buffer
+
         self.__pipeline.render(
             self.__output_texture, self.__index_count, clear=self.__clear
         )
@@ -142,7 +166,6 @@ class Renderer:
         self.__frame_draw_count += 1
         self.__vertex_count = 0
         self.__index_count = 0
-        self.__materials = []
         self.__material_index = {}
 
     def set_binding_array(self, group: int, binding: int, array: npt.NDArray):
