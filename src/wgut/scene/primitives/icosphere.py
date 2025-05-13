@@ -1,4 +1,5 @@
 import numpy as np
+from math import pi, atan2, acos
 import numpy.typing as npt
 from ..mesh import (
     Mesh,
@@ -142,12 +143,56 @@ def icosphere_positions_and_indices(order: int) -> tuple[npt.NDArray, npt.NDArra
     return positions, np.array(indices, dtype=np.uint32)
 
 
-def icosphere(order: int) -> Mesh:
+def icosphere_with_uv(order: int):
     positions, indices = icosphere_positions_and_indices(order)
 
+    def compute_uv(pos):
+        x, y, z = pos
+        u = (atan2(z, x) / (2 * pi)) % 1.0  # [0, 1)
+        v = acos(y) / pi  # [0, 1]
+        return np.array([u, v], dtype=np.float32)
+
+    vertex_map = {}
+    final_positions = []
+    final_uvs = []
+    final_indices = []
+
+    for i in range(0, len(indices), 3):
+        tri = indices[i : i + 3]
+        tri_indices = []
+        tri_uvs = [compute_uv(positions[v]) for v in tri]
+
+        us = [uv[0] for uv in tri_uvs]
+        if max(us) - min(us) > 0.5:
+            for j in range(3):
+                if us[j] < 0.5:
+                    tri_uvs[j][0] += 1.0
+
+        for j in range(3):
+            v_idx = tri[j]
+            uv = tuple(tri_uvs[j])
+            key = (v_idx, uv)
+            if key not in vertex_map:
+                vertex_map[key] = len(final_positions)
+                final_positions.append(positions[v_idx])
+                final_uvs.append(uv)
+            tri_indices.append(vertex_map[key])
+
+        final_indices.extend(tri_indices)
+
+    return (
+        np.array(final_positions, dtype=np.float32),
+        np.array(final_uvs, dtype=np.float32),
+        np.array(final_indices, dtype=np.uint32),
+    )
+
+
+def icosphere(order: int) -> Mesh:
+    # positions, indices = icosphere_positions_and_indices(order)
+    positions, uvs, indices = icosphere_with_uv(order)
+
     normals = positions.copy()
-    # TODO: Fix UVs
-    uvs = np.array([compute_spherical_uv(pos) for pos in positions])
+    # uvs = np.array([compute_spherical_uv(pos) for pos in positions])
     tangents = compute_tangent_vectors(positions, uvs, normals, indices)
     bitangents = compute_bitangent_vectors(normals, tangents)
 
