@@ -154,7 +154,7 @@ def compute_normal_vectors(positions: npt.NDArray, indices: npt.NDArray) -> npt.
 def compute_tangent_vectors(
     positions: npt.NDArray, uvs: npt.NDArray, normals: npt.NDArray, indices: npt.NDArray
 ) -> npt.NDArray:
-    tangents = np.zeros((positions.shape[0], 3))
+    tangents = np.zeros((positions.shape[0], 3)).astype(np.float32)
 
     for i in range(0, len(indices), 3):
         index1 = indices[i]
@@ -202,7 +202,7 @@ def compute_bitangent_vectors(
             )
         else:
             bitangents.append(np.cross(normals[i], tangents[i]))
-    return np.array(bitangents)
+    return np.array(bitangents, dtype=np.float32)
 
 
 def compute_line_list(triangle_list: npt.NDArray) -> npt.NDArray:
