@@ -188,11 +188,9 @@ def icosphere_with_uv(order: int):
 
 
 def icosphere(order: int) -> Mesh:
-    # positions, indices = icosphere_positions_and_indices(order)
     positions, uvs, indices = icosphere_with_uv(order)
 
     normals = positions.copy()
-    # uvs = np.array([compute_spherical_uv(pos) for pos in positions])
     tangents = compute_tangent_vectors(positions, uvs, normals, indices)
     bitangents = compute_bitangent_vectors(normals, tangents)
 
