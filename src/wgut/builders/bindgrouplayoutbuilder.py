@@ -48,7 +48,7 @@ class BingGroupLayoutBuilder(BuilderBase):
         self.index = index + 1
         return self
 
-    def with_texture(
+    def with_texture_2d(
         self,
         visibility: wgpu.ShaderStage | int,
         index: int | None = None,
@@ -60,6 +60,23 @@ class BingGroupLayoutBuilder(BuilderBase):
                 "binding": index,
                 "visibility": visibility,
                 "texture": {},
+            }
+        )
+        self.index = index + 1
+        return self
+
+    def with_texture_2d_array(
+        self,
+        visibility: wgpu.ShaderStage | int,
+        index: int | None = None,
+    ) -> Self:
+        if index is None:
+            index = self.index
+        self.entries.append(
+            {
+                "binding": index,
+                "visibility": visibility,
+                "texture": {"view_dimension": wgpu.TextureViewDimension.d2_array},
             }
         )
         self.index = index + 1

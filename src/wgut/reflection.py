@@ -137,8 +137,10 @@ class Reflection:
             visibility = 0
             for v in binding["visibility"]:
                 visibility = visibility | VISIBILITIES[v]
-            if binding["type"].startswith("texture"):
-                builder.with_texture(visibility, binding_index)
+            if binding["type"].startswith("texture_2d<"):
+                builder.with_texture_2d(visibility, binding_index)
+            elif binding["type"].startswith("texture_2d_array<"):
+                builder.with_texture_2d_array(visibility, binding_index)
             elif binding["type"] == "sampler":
                 builder.with_sampler(visibility, binding_index)
             else:

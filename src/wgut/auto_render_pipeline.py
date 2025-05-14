@@ -219,7 +219,12 @@ class AutoRenderPipeline:
                 builder = BindGroupBuilder(layout)
                 for bid in self.__bindings[gid]:
                     if isinstance(self.__bindings[gid][bid], GPUTexture):
-                        builder.with_texture(self.__bindings[gid][bid], index=bid)
+                        if self.__bindings[gid][bid].size[2] == 1:
+                            builder.with_texture(self.__bindings[gid][bid], index=bid)
+                        else:
+                            builder.with_texture_array(
+                                self.__bindings[gid][bid], index=bid
+                            )
                     elif isinstance(self.__bindings[gid][bid], GPUSampler):
                         builder.with_sampler(self.__bindings[gid][bid], index=bid)
                     else:

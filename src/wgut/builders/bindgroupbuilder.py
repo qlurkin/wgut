@@ -48,6 +48,20 @@ class BindGroupBuilder(BuilderBase):
         self.index = index + 1
         return self
 
+    def with_texture_array(self, texture: wgpu.GPUTexture, index=None) -> Self:
+        if index is None:
+            index = self.index
+        self.bindings.append(
+            {
+                "binding": index,
+                "resource": texture.create_view(
+                    dimension=wgpu.TextureViewDimension.d2_array  # type: ignore
+                ),
+            }
+        )
+        self.index = index + 1
+        return self
+
     def with_sampler(
         self,
         sampler: wgpu.GPUSampler | None = None,
