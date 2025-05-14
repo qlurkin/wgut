@@ -39,6 +39,7 @@ class AutoRenderPipeline:
         self.index_buffer = None
         self.index_format = IndexFormat.uint32
         self.depth_texture = None
+        self.with_depth = False
         self.pipeline = None
         self.output_format = None
         self.vertex_descriptors_builder = None
@@ -169,6 +170,10 @@ class AutoRenderPipeline:
         texture = TextureBuilder().build_depth(size)
         return self.set_depth_texture(texture)
 
+    def with_depth_texture(self) -> Self:
+        self.with_depth = True
+        return self
+
     def render(
         self,
         output_texture: GPUTexture,
@@ -176,6 +181,13 @@ class AutoRenderPipeline:
         instance_count: int = 1,
         clear: bool = True,
     ):
+        if self.with_depth and (
+            self.depth_texture is None
+            or self.depth_texture.width != output_texture.width
+            or self.depth_texture.height != output_texture.height
+        ):
+            self.create_depth_texture((output_texture.width, output_texture.height))
+
         if self.output_format is None or self.output_format != output_texture.format:
             self.output_format = output_texture.format
             self.pipeline = None  # must recreate the pipeline
