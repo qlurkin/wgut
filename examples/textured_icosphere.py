@@ -41,8 +41,7 @@ class MyApp(Window):
         self.pipeline.render(screen, self.indices_count)
 
     def process_event(self, event):
-        if event["event_type"] in ["pointer_down", "pointer_up", "pointer_move"]:
-            self.camera.process_event(event)
+        self.camera.process_event(event)
 
 
 MyApp().run()

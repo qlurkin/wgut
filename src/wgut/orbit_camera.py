@@ -55,6 +55,13 @@ class OrbitCamera:
 
         event_type = event["event_type"]
 
+        if event_type == "wheel":
+            dw = event["dy"]
+            delta_radius = dw * 0.01
+            self.__radius += delta_radius
+            if self.__radius < 0.1:
+                self.__radius = 0.1
+
         if event_type == "pointer_down":
             self.__moving = True
             self.__move_start = (self.__theta, self.__phi)
