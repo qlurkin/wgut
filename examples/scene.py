@@ -4,11 +4,11 @@ from wgpu.utils.imgui import ImguiRenderer
 from wgpu import GPUTexture
 from wgut import Window, get_device
 import numpy as np
-import wgut.cgmath as cm
 from wgut.scene.primitives.icosphere import icosphere
 from wgut.scene.renderer import Renderer
 from wgut.scene.transform import Transform
 from wgut.scene.uniform_color_material import BasicColorMaterial
+from wgut.orbit_camera import OrbitCamera
 
 
 class MyApp(Window):
@@ -18,6 +18,8 @@ class MyApp(Window):
         self.mesh = icosphere(3)
 
         self.renderer = Renderer(BasicColorMaterial, 10000, 12000, 10)
+
+        self.camera = OrbitCamera((6, 4, 5), (0, 0, 0), 45, 0.1, 100)
 
         self.imgui_renderer = ImguiRenderer(
             get_device(), self.get_canvas(), self.get_texture_format()
@@ -33,8 +35,7 @@ class MyApp(Window):
 
     def render(self, screen: GPUTexture):
         width, height, _ = screen.size
-        view_matrix = cm.look_at([6, 4, 5], [0, 0, 0], [0, 1, 0])
-        proj_matrix = cm.perspective(45, width / height, 0.1, 100)
+        view_matrix, proj_matrix = self.camera.get_matrices(width / height)
         camera_matrix = np.array(proj_matrix @ view_matrix, dtype=np.float32)
 
         translation1 = Transform().set_translation(
@@ -72,7 +73,7 @@ class MyApp(Window):
         return imgui.get_draw_data()
 
     def process_event(self, event):
-        pass
+        self.camera.process_event(event)
 
 
 MyApp().run()
