@@ -67,7 +67,7 @@ class Renderer:
         self.__index_buffer_size = index_buffer_size
         self.__material_buffer_size = material_buffer_size
 
-        self.__pipeline = AutoRenderPipeline(shader_source)
+        self.__pipeline = AutoRenderPipeline(shader_source).with_depth_texture()
         vertex_buffer_descriptor = get_vertex_buffer_descriptor()
         vertex_buffer_descriptor["attributes"].append(  # Add material_index to vertex
             {
@@ -113,7 +113,6 @@ class Renderer:
             self.__pipeline.set_binding_buffer(1, 0, self.__material_buffer)
 
         self.__output_texture = None
-        self.__output_size = None
         self.__frame_draw_count = 0
         self.__frame_mesh_count = 0
         self.__frame_triangle_count = 0
@@ -126,9 +125,6 @@ class Renderer:
         # Must send transpose version of matrices, because GPU expect matrices in column major order
         self.__pipeline.set_binding_array(0, 0, np.ascontiguousarray(camera_matrix.T))
         self.__output_texture = texture
-        if self.__output_size is None or self.__output_size != texture.size[:2]:
-            self.__output_size = texture.size[:2]
-            self.__pipeline.create_depth_texture(self.__output_size)
         self.__clear = True
         self.__frame_draw_count = 0
         self.__frame_mesh_count = 0

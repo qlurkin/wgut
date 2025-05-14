@@ -5,20 +5,6 @@ import wgut.cgmath as cm
 
 
 class MyApp(Window):
-    def on_resize(self):
-        canvas = self.get_canvas()
-        self.pipeline.create_depth_texture(canvas.get_physical_size())
-
-        width, height = canvas.get_logical_size()
-
-        view_matrix = cm.look_at([3, 2, 4], [0, 0, 0], [0, 1, 0])
-        proj_matrix = cm.perspective(45, width / height, 0.1, 100)
-
-        # Must send transpose version of matrices, because GPU expect matrices in column major order
-        camera_data = np.array([view_matrix.T, proj_matrix.T])
-
-        self.pipeline.set_binding_array(0, 0, camera_data)
-
     def setup(self):
         self.set_title("Hello Cube")
 
@@ -73,6 +59,7 @@ class MyApp(Window):
         # fmt: on
 
         self.pipeline = AutoRenderPipeline(load_file("cube.wgsl"))
+        self.pipeline.with_depth_texture()
         self.pipeline.add_simple_vertex_descriptor(
             VertexFormat.float32x3, VertexFormat.float32x3
         )
@@ -80,14 +67,16 @@ class MyApp(Window):
         self.pipeline.set_vertex_array(0, vertex_data)
         self.pipeline.set_index_array(index_data)
 
-        self.on_resize()
-
     def render(self, screen: GPUTexture):
-        self.pipeline.render(screen, 36)
+        view_matrix = cm.look_at([3, 2, 4], [0, 0, 0], [0, 1, 0])
+        proj_matrix = cm.perspective(45, screen.width / screen.height, 0.1, 100)
 
-    def process_event(self, event):
-        if event["event_type"] == "resize":
-            self.on_resize()
+        # Must send transpose version of matrices, because GPU expect matrices in column major order
+        camera_data = np.array([view_matrix.T, proj_matrix.T])
+
+        self.pipeline.set_binding_array(0, 0, camera_data)
+
+        self.pipeline.render(screen, 36)
 
 
 MyApp().run()
