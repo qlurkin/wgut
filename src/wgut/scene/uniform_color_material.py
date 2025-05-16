@@ -1,3 +1,4 @@
+from PIL.Image import Image
 import numpy as np
 from numpy.typing import NDArray
 
@@ -26,9 +27,20 @@ class BasicColorMaterial:
     def get_data(self) -> NDArray:
         return self.__data
 
+    def get_textures(self) -> list[Image]:
+        return []
+
     @staticmethod
     def get_data_size() -> int:
         return 16
+
+    @staticmethod
+    def get_texture_count() -> int:
+        return 0
+
+    @staticmethod
+    def get_texture_size() -> tuple[int, int]:
+        return (0, 0)
 
     def __eq__(self, other):
         return self.__color == other.__color

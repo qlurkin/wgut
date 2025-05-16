@@ -1,9 +1,10 @@
 from typing import Type
-from wgpu import BufferUsage, GPUTexture, VertexFormat
+from wgpu import BufferUsage, GPUTexture, TextureFormat, TextureUsage, VertexFormat
 import numpy.typing as npt
 import numpy as np
 
-from wgut.core import write_buffer
+from wgut.builders.texturebuilder import TextureBuilder
+from wgut.core import write_buffer, write_texture
 from wgut.scene.material import Material
 from wgut.scene.transform import Transform
 from wgut.scene.mesh import Mesh
@@ -63,6 +64,10 @@ class Renderer:
     ):
         shader_source = SHADER_START + material_class.get_fragment()
         self.__material_size = material_class.get_data_size()
+        self.__material_texture_count = material_class.get_texture_count()
+        self.__texture_array_size = material_class.get_texture_size() + (
+            self.__material_texture_count * material_buffer_size,
+        )
         self.__vertex_buffer_size = vertex_buffer_size
         self.__index_buffer_size = index_buffer_size
         self.__material_buffer_size = material_buffer_size
@@ -97,6 +102,7 @@ class Renderer:
             .build()
         )
 
+        self.__material_buffer = None
         if self.__material_size > 0:
             self.__material_buffer = (
                 BufferBuilder()
@@ -104,13 +110,34 @@ class Renderer:
                 .with_usage(BufferUsage.STORAGE | BufferUsage.COPY_DST)
                 .build()
             )
+
+        self.__textures = None
+        if self.__material_texture_count > 0:
+            self.__textures = (
+                TextureBuilder()
+                .with_size(self.__texture_array_size)
+                .with_format(TextureFormat.rgba8unorm_srgb)
+                .with_usage(TextureUsage.COPY_DST | TextureUsage.TEXTURE_BINDING)
+                .build()
+            )
+
         self.__vertex_count = 0
         self.__index_count = 0
+        self.__texture_count = 0
         self.__pipeline.set_vertex_buffer(0, self.__vertex_buffer)
         self.__pipeline.set_index_buffer(self.__index_buffer)
 
-        if self.__material_size > 0:
-            self.__pipeline.set_binding_buffer(1, 0, self.__material_buffer)
+        binding_index = 0
+
+        if self.__material_buffer is not None:
+            self.__pipeline.set_binding_buffer(1, binding_index, self.__material_buffer)
+            binding_index += 1
+
+        if self.__textures is not None:
+            self.__pipeline.set_binding_texture(1, binding_index, self.__textures)
+            binding_index += 1
+            self.__pipeline.set_binding_sampler(1, binding_index)
+            binding_index += 1
 
         self.__output_texture = None
         self.__frame_draw_count = 0
@@ -157,13 +184,19 @@ class Renderer:
         if material not in self.__material_index:
             material_index = len(self.__material_index)
 
-            if self.__material_size > 0:
+            if self.__material_buffer is not None:
                 write_buffer(
                     self.__material_buffer,
                     material.get_data(),
                     material_index * self.__material_size,
                 )
             self.__material_index[material] = material_index
+
+            if self.__textures is not None:
+                images = material.get_textures()
+                for img in images:
+                    write_texture(self.__textures, img, self.__texture_count)
+                    self.__texture_count += 1
         else:
             material_index = self.__material_index[material]
 
@@ -210,6 +243,7 @@ class Renderer:
         self.__frame_draw_count += 1
         self.__vertex_count = 0
         self.__index_count = 0
+        self.__texture_count = 0
         self.__material_index = {}
 
     def set_binding_array(self, group: int, binding: int, array: npt.NDArray):

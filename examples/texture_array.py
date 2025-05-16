@@ -7,7 +7,7 @@ from wgut.core import load_image, write_texture
 
 class MyApp(Window):
     def setup(self):
-        self.set_title("Hello Texture")
+        self.set_title("Hello Texture Array")
 
         vertex_data = np.array(
             [

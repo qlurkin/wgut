@@ -7,7 +7,7 @@ import numpy as np
 from wgut.scene.primitives.icosphere import icosphere
 from wgut.scene.renderer import Renderer
 from wgut.scene.transform import Transform
-from wgut.scene.uniform_color_material import BasicColorMaterial
+from wgut.scene.pbr_material import PbrMaterial
 from wgut.orbit_camera import OrbitCamera
 
 
@@ -15,9 +15,12 @@ class MyApp(Window):
     def setup(self):
         self.set_title("Hello Scene")
 
-        self.mesh = icosphere(3)
+        self.mesh = icosphere(4)
+        self.material1 = PbrMaterial("./cloth.jpg")
+        self.material2 = PbrMaterial("./wood.jpg")
+        # self.material3 = BasicColorMaterial((0.0, 0.0, 1.0))
 
-        self.renderer = Renderer(BasicColorMaterial, 10000, 12000, 10)
+        self.renderer = Renderer(PbrMaterial, 10000, 50000, 10)
 
         self.camera = OrbitCamera((6, 4, 5), (0, 0, 0), 45, 0.1, 100)
 
@@ -45,14 +48,10 @@ class MyApp(Window):
             np.array([[-2.5, 0, 0]], dtype=np.float32).T
         )
 
-        material1 = BasicColorMaterial((1.0, 0.0, 0.0))
-        material2 = BasicColorMaterial((0.0, 1.0, 0.0))
-        material3 = BasicColorMaterial((0.0, 0.0, 1.0))
-
         self.renderer.begin_frame(screen, camera_matrix)
-        self.renderer.add_mesh(self.mesh, Transform(), material1)
-        self.renderer.add_mesh(self.mesh, translation1, material2)
-        self.renderer.add_mesh(self.mesh, translation2, material3)
+        self.renderer.add_mesh(self.mesh, Transform(), self.material1)
+        self.renderer.add_mesh(self.mesh, translation1, self.material2)
+        self.renderer.add_mesh(self.mesh, translation2, self.material2)
         self.renderer.end_frame()
 
         self.imgui_renderer.render()
