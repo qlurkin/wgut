@@ -61,7 +61,7 @@ def vertex(
 
 def get_vertex_buffer_descriptor():
     return {
-        "array_stride": 4 * (4 + 4 + 2 + 3 + 3 + 3),
+        "array_stride": 4 * (4 + 4 + 2 + 3 + 3 + 3 + 1),
         "step_mode": wgpu.VertexStepMode.vertex,
         "attributes": [
             {
@@ -93,6 +93,11 @@ def get_vertex_buffer_descriptor():
                 "format": wgpu.VertexFormat.float32x3,
                 "offset": (4 + 4 + 2 + 3 + 3) * 4,
                 "shader_location": 5,
+            },
+            {
+                "format": wgpu.VertexFormat.float32,
+                "offset": (4 + 4 + 2 + 3 + 3 + 3) * 4,
+                "shader_location": 6,
             },
         ],
     }

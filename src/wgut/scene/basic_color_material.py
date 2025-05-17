@@ -1,6 +1,9 @@
 from PIL.Image import Image
 import numpy as np
 from numpy.typing import NDArray
+from wgpu import GPUBuffer, GPUTexture
+
+from wgut.auto_render_pipeline import AutoRenderPipeline
 
 
 class BasicColorMaterial:
@@ -20,6 +23,7 @@ class BasicColorMaterial:
             @fragment
             fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
                 var color = materials[u32(in.mat_id)].color;
+                color = vec4<f32>(pow(color.rgb, vec3<f32>(2.2)), 1.0);
                 return color;
             }
         """
@@ -47,3 +51,11 @@ class BasicColorMaterial:
 
     def __hash__(self):
         return hash(self.__color)
+
+    @staticmethod
+    def set_bindings(
+        pipeline: AutoRenderPipeline,
+        material_buffer: GPUBuffer,
+        texture_array: GPUTexture,
+    ):
+        pipeline.set_binding_buffer(1, 0, material_buffer)

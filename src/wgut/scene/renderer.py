@@ -1,5 +1,5 @@
 from typing import Type
-from wgpu import BufferUsage, GPUTexture, TextureFormat, TextureUsage, VertexFormat
+from wgpu import BufferUsage, GPUTexture, TextureFormat, TextureUsage
 import numpy.typing as npt
 import numpy as np
 
@@ -57,38 +57,32 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 class Renderer:
     def __init__(
         self,
-        material_class: Type[Material],
+        # material_class: Type[Material],
         vertex_buffer_size: int,
         index_buffer_size: int,
         material_buffer_size: int,
+        texture_array_size: tuple[int, int, int],
     ):
-        shader_source = SHADER_START + material_class.get_fragment()
-        self.__material_size = material_class.get_data_size()
-        self.__material_texture_count = material_class.get_texture_count()
-        self.__texture_array_size = material_class.get_texture_size() + (
-            self.__material_texture_count * material_buffer_size,
-        )
+        # shader_source = SHADER_START + material_class.get_fragment()
+        # self.__material_size = material_class.get_data_size()
+        # self.__material_texture_count = material_class.get_texture_count()
+        # self.__texture_array_size = material_class.get_texture_size() + (
+        #     self.__material_texture_count * material_buffer_size,
+        # )
+        self.__texture_array_size = texture_array_size
         self.__vertex_buffer_size = vertex_buffer_size
         self.__index_buffer_size = index_buffer_size
         self.__material_buffer_size = material_buffer_size
 
-        self.__pipeline = AutoRenderPipeline(shader_source).with_depth_texture()
+        # self.__pipeline = AutoRenderPipeline(shader_source).with_depth_texture()
         vertex_buffer_descriptor = get_vertex_buffer_descriptor()
-        vertex_buffer_descriptor["attributes"].append(  # Add material_index to vertex
-            {
-                "format": VertexFormat.float32,
-                "offset": (4 + 4 + 2 + 3 + 3 + 3) * 4,
-                "shader_location": 6,
-            },
-        )
-        vertex_buffer_descriptor["array_stride"] += 4
-        vertex_buffer_descriptors = (
+        self.__vertex_buffer_descriptors = (
             VertexBufferDescriptorsBuilder()
             .with_vertex_descriptor(vertex_buffer_descriptor)
             .build()
         )
         self.__vertex_size = vertex_buffer_descriptor["array_stride"]
-        self.__pipeline.set_vertex_buffer_descriptors(vertex_buffer_descriptors)
+        # self.__pipeline.set_vertex_buffer_descriptors(vertex_buffer_descriptors)
         self.__vertex_buffer = (
             BufferBuilder()
             .with_size(vertex_buffer_size * self.__vertex_size)
@@ -101,45 +95,38 @@ class Renderer:
             .with_usage(BufferUsage.INDEX | BufferUsage.COPY_DST)
             .build()
         )
-
-        self.__material_buffer = None
-        if self.__material_size > 0:
-            self.__material_buffer = (
-                BufferBuilder()
-                .with_size(material_buffer_size * self.__material_size)
-                .with_usage(BufferUsage.STORAGE | BufferUsage.COPY_DST)
-                .build()
-            )
-
-        self.__textures = None
-        if self.__material_texture_count > 0:
-            self.__textures = (
-                TextureBuilder()
-                .with_size(self.__texture_array_size)
-                .with_format(TextureFormat.rgba8unorm_srgb)
-                .with_usage(TextureUsage.COPY_DST | TextureUsage.TEXTURE_BINDING)
-                .build()
-            )
+        self.__material_buffer = (
+            BufferBuilder()
+            .with_size(material_buffer_size)
+            .with_usage(BufferUsage.STORAGE | BufferUsage.COPY_DST)
+            .build()
+        )
+        self.__textures = (
+            TextureBuilder()
+            .with_size(self.__texture_array_size)
+            .with_format(TextureFormat.rgba8unorm)
+            .with_usage(TextureUsage.COPY_DST | TextureUsage.TEXTURE_BINDING)
+            .build()
+        )
 
         self.__vertex_count = 0
         self.__index_count = 0
         self.__texture_count = 0
-        self.__pipeline.set_vertex_buffer(0, self.__vertex_buffer)
-        self.__pipeline.set_index_buffer(self.__index_buffer)
+        # self.__pipeline.set_vertex_buffer(0, self.__vertex_buffer)
+        # self.__pipeline.set_index_buffer(self.__index_buffer)
 
-        binding_index = 0
+        # binding_index = 0
+        #
+        # if self.__material_buffer is not None:
+        #     self.__pipeline.set_binding_buffer(1, binding_index, self.__material_buffer)
+        #     binding_index += 1
+        #
+        # if self.__textures is not None:
+        #     self.__pipeline.set_binding_texture(1, binding_index, self.__textures)
+        #     binding_index += 1
+        #     self.__pipeline.set_binding_sampler(1, binding_index)
+        #     binding_index += 1
 
-        if self.__material_buffer is not None:
-            self.__pipeline.set_binding_buffer(1, binding_index, self.__material_buffer)
-            binding_index += 1
-
-        if self.__textures is not None:
-            self.__pipeline.set_binding_texture(1, binding_index, self.__textures)
-            binding_index += 1
-            self.__pipeline.set_binding_sampler(1, binding_index)
-            binding_index += 1
-
-        self.__output_texture = None
         self.__frame_draw_count = 0
         self.__frame_mesh_count = 0
         self.__frame_triangle_count = 0
@@ -147,21 +134,44 @@ class Renderer:
         self.__frame_stat = None
         self.__clear = True
         self.__material_index = {}
+        self.__pipelines = {}
+        self.__meshes = {}
+        self.__depth_texture = None
 
-    def begin_frame(self, texture: GPUTexture, camera_matrix: npt.NDArray):
-        # Must send transpose version of matrices, because GPU expect matrices in column major order
-        self.__pipeline.set_binding_array(0, 0, np.ascontiguousarray(camera_matrix.T))
-        self.__output_texture = texture
-        self.__clear = True
-        self.__frame_draw_count = 0
-        self.__frame_mesh_count = 0
-        self.__frame_triangle_count = 0
-        self.__frame_vertex_count = 0
+    def create_pipeline(self, material_class: Type[Material]):
+        if material_class not in self.__pipelines:
+            shader_source = SHADER_START + material_class.get_fragment()
+            pipeline = AutoRenderPipeline(shader_source).with_depth_texture()
+            pipeline.set_vertex_buffer_descriptors(self.__vertex_buffer_descriptors)
+            pipeline.set_vertex_buffer(0, self.__vertex_buffer)
+            pipeline.set_index_buffer(self.__index_buffer)
+            material_class.set_bindings(
+                pipeline, self.__material_buffer, self.__textures
+            )
+            self.__pipelines[material_class] = pipeline
+
+    def begin_frame(self):
+        self.__meshes = {}
 
     def add_mesh(self, mesh: Mesh, transform: Transform, material: Material):
-        if self.__output_texture is None:
-            raise Exception("You must call begin_frame before adding meshes")
+        cls = type(material)
+        if cls not in self.__meshes:
+            if material.get_data_size() > self.__material_buffer_size:
+                raise IndexError("Material Buffer Not Long Enough")
+            if material.get_texture_count() > self.__texture_array_size[2]:
+                raise IndexError("Texture Array Not Long Enough")
+            self.create_pipeline(cls)
+            self.__meshes[cls] = []
+        self.__meshes[cls].append((mesh, transform, material))
 
+    def __add_mesh(
+        self,
+        pipeline: AutoRenderPipeline,
+        output_texture: GPUTexture,
+        mesh: Mesh,
+        transform: Transform,
+        material: Material,
+    ):
         vertex_data = mesh.get_transformed_vertices(transform.get_matrix())
         index_data = mesh.get_indices()
 
@@ -176,20 +186,27 @@ class Renderer:
             or self.__index_count + len(index_data) > self.__index_buffer_size
             or (
                 material not in self.__material_index
-                and len(self.__material_index) == self.__material_buffer_size
+                and (len(self.__material_index) + 1) * material.get_data_size()
+                > self.__material_buffer_size
+            )
+            or (
+                material not in self.__material_index
+                and (len(self.__material_index) + 1) * material.get_texture_count()
+                > self.__texture_array_size[2]
             )
         ):
-            self.__draw()
+            self.__draw(pipeline, output_texture)
 
         if material not in self.__material_index:
             material_index = len(self.__material_index)
 
             if self.__material_buffer is not None:
-                write_buffer(
-                    self.__material_buffer,
-                    material.get_data(),
-                    material_index * self.__material_size,
-                )
+                if material.get_data_size() > 0:
+                    write_buffer(
+                        self.__material_buffer,
+                        material.get_data(),
+                        material_index * material.get_data_size(),
+                    )
             self.__material_index[material] = material_index
 
             if self.__textures is not None:
@@ -221,24 +238,38 @@ class Renderer:
         self.__frame_triangle_count += len(index_data) // 3
         self.__frame_vertex_count += len(vertex_data)
 
-    def end_frame(self):
-        self.__draw()
+    def end_frame(self, output_texture: GPUTexture, camera_matrix: npt.NDArray):
+        self.__clear = True
+        self.__frame_draw_count = 0
+        self.__frame_mesh_count = 0
+        self.__frame_triangle_count = 0
+        self.__frame_vertex_count = 0
+
+        if (
+            self.__depth_texture is None
+            or self.__depth_texture.size != output_texture.size
+        ):
+            self.__depth_texture = TextureBuilder().build_depth(output_texture.size)
+
+        for material_class in self.__meshes:
+            pipeline = self.__pipelines[material_class]
+            pipeline.set_depth_texture(self.__depth_texture)
+            # Must send transpose version of matrices, because GPU expect matrices in column major order
+            pipeline.set_binding_array(0, 0, np.ascontiguousarray(camera_matrix.T))
+            for mesh, transform, material in self.__meshes[material_class]:
+                self.__add_mesh(pipeline, output_texture, mesh, transform, material)
+            self.__draw(pipeline, output_texture)
+
         self.__frame_stat = {
             "draw": self.__frame_draw_count,
             "mesh": self.__frame_mesh_count,
             "triangle": self.__frame_triangle_count,
             "vertex": self.__frame_vertex_count,
         }
-        self.__output_texture = None
 
-    def __draw(self):
-        assert self.__output_texture is not None
+    def __draw(self, pipeline: AutoRenderPipeline, output_texture: GPUTexture):
+        pipeline.render(output_texture, self.__index_count, clear=self.__clear)
 
-        # TODO: create and send material buffer
-
-        self.__pipeline.render(
-            self.__output_texture, self.__index_count, clear=self.__clear
-        )
         self.__clear = False
         self.__frame_draw_count += 1
         self.__vertex_count = 0
@@ -246,8 +277,8 @@ class Renderer:
         self.__texture_count = 0
         self.__material_index = {}
 
-    def set_binding_array(self, group: int, binding: int, array: npt.NDArray):
-        self.__pipeline.set_binding_array(group, binding, array)
+    # def set_binding_array(self, group: int, binding: int, array: npt.NDArray):
+    #     self.__pipeline.set_binding_array(group, binding, array)
 
     def get_frame_stat(self):
         return self.__frame_stat

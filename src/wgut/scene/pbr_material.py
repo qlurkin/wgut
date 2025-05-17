@@ -2,6 +2,8 @@ from __future__ import annotations
 from PIL.Image import Image
 import numpy as np
 from numpy.typing import NDArray
+from wgpu import GPUBuffer, GPUTexture
+from wgut.auto_render_pipeline import AutoRenderPipeline
 from wgut.core import load_image
 
 
@@ -20,6 +22,7 @@ class PbrMaterial:
             fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
                 var id = i32(in.mat_id);
                 var color = textureSample(textures, samplr, in.uv, id);
+                color = vec4<f32>(pow(color.rgb, vec3<f32>(2.2)), 1.0);
                 return color;
             }
         """
@@ -52,3 +55,12 @@ class PbrMaterial:
 
     def __hash__(self):
         return hash(self.__filename)
+
+    @staticmethod
+    def set_bindings(
+        pipeline: AutoRenderPipeline,
+        material_buffer: GPUBuffer,
+        texture_array: GPUTexture,
+    ):
+        pipeline.set_binding_texture(1, 0, texture_array)
+        pipeline.set_binding_sampler(1, 1)
