@@ -1,27 +1,29 @@
 from __future__ import annotations
-from PIL.Image import Image
 import numpy as np
 from numpy.typing import NDArray
 from wgpu import GPUBuffer, GPUTexture
 from wgut.auto_render_pipeline import AutoRenderPipeline
-from wgut.core import load_image
 
 
 class PbrMaterial:
     def __init__(self, filename: str):
-        self.__image = load_image(filename)
         self.__filename = filename
 
     @staticmethod
     def get_fragment() -> str:
         return """
+            struct TexId {
+                diffuse: i32,
+            }
+
             @group(1) @binding(0) var textures: texture_2d_array<f32>;
             @group(1) @binding(1) var samplr: sampler;
+            @group(1) @binding(2) var<storage, read> tex_ids: array<TexId>;
 
             @fragment
             fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
                 var id = i32(in.mat_id);
-                var color = textureSample(textures, samplr, in.uv, id);
+                var color = textureSample(textures, samplr, in.uv, tex_ids[id].diffuse);
                 color = vec4<f32>(pow(color.rgb, vec3<f32>(2.2)), 1.0);
                 return color;
             }
@@ -30,8 +32,8 @@ class PbrMaterial:
     def get_data(self) -> NDArray:
         return np.array([])
 
-    def get_textures(self) -> list[Image]:
-        return [self.__image]
+    def get_textures(self) -> list[str]:
+        return [self.__filename]
 
     @staticmethod
     def get_data_size() -> int:
@@ -60,7 +62,9 @@ class PbrMaterial:
     def set_bindings(
         pipeline: AutoRenderPipeline,
         material_buffer: GPUBuffer,
+        texture_ids: GPUBuffer,
         texture_array: GPUTexture,
     ):
         pipeline.set_binding_texture(1, 0, texture_array)
         pipeline.set_binding_sampler(1, 1)
+        pipeline.set_binding_buffer(1, 2, texture_ids)

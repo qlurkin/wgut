@@ -4,7 +4,7 @@ import numpy.typing as npt
 import numpy as np
 
 from wgut.builders.texturebuilder import TextureBuilder
-from wgut.core import write_buffer, write_texture
+from wgut.core import load_image, write_buffer, write_texture
 from wgut.scene.material import Material
 from wgut.scene.transform import Transform
 from wgut.scene.mesh import Mesh
@@ -103,15 +103,20 @@ class Renderer:
         )
         self.__textures = (
             TextureBuilder()
-            .with_size(self.__texture_array_size)
+            .with_size(texture_array_size)
             .with_format(TextureFormat.rgba8unorm)
             .with_usage(TextureUsage.COPY_DST | TextureUsage.TEXTURE_BINDING)
+            .build()
+        )
+        self.__texture_ids_buffer = (
+            BufferBuilder()
+            .with_size(texture_array_size[2] * 4)
+            .with_usage(BufferUsage.STORAGE | BufferUsage.COPY_DST)
             .build()
         )
 
         self.__vertex_count = 0
         self.__index_count = 0
-        self.__texture_count = 0
         # self.__pipeline.set_vertex_buffer(0, self.__vertex_buffer)
         # self.__pipeline.set_index_buffer(self.__index_buffer)
 
@@ -137,6 +142,8 @@ class Renderer:
         self.__pipelines = {}
         self.__meshes = {}
         self.__depth_texture = None
+        self.__texture_atlas = {}
+        self.__texture_ids = []
 
     def create_pipeline(self, material_class: Type[Material]):
         if material_class not in self.__pipelines:
@@ -146,7 +153,10 @@ class Renderer:
             pipeline.set_vertex_buffer(0, self.__vertex_buffer)
             pipeline.set_index_buffer(self.__index_buffer)
             material_class.set_bindings(
-                pipeline, self.__material_buffer, self.__textures
+                pipeline,
+                self.__material_buffer,
+                self.__texture_ids_buffer,
+                self.__textures,
             )
             self.__pipelines[material_class] = pipeline
 
@@ -212,8 +222,13 @@ class Renderer:
             if self.__textures is not None:
                 images = material.get_textures()
                 for img in images:
-                    write_texture(self.__textures, img, self.__texture_count)
-                    self.__texture_count += 1
+                    if img not in self.__texture_atlas:
+                        ids = set(range(self.__texture_array_size[2]))
+                        ids = ids - set(self.__texture_ids)
+                        id = ids.pop()
+                        write_texture(self.__textures, load_image(img), id)
+                        self.__texture_atlas[img] = id
+                    self.__texture_ids.append(self.__texture_atlas[img])
         else:
             material_index = self.__material_index[material]
 
@@ -268,14 +283,19 @@ class Renderer:
         }
 
     def __draw(self, pipeline: AutoRenderPipeline, output_texture: GPUTexture):
+        if len(self.__texture_ids) > 0:
+            write_buffer(
+                self.__texture_ids_buffer, np.array(self.__texture_ids, dtype=np.int32)
+            )
+
         pipeline.render(output_texture, self.__index_count, clear=self.__clear)
 
         self.__clear = False
         self.__frame_draw_count += 1
         self.__vertex_count = 0
         self.__index_count = 0
-        self.__texture_count = 0
         self.__material_index = {}
+        self.__texture_ids = []
 
     # def set_binding_array(self, group: int, binding: int, array: npt.NDArray):
     #     self.__pipeline.set_binding_array(group, binding, array)

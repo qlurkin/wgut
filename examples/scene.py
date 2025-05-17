@@ -21,7 +21,7 @@ class MyApp(Window):
         self.material2 = PbrMaterial("./wood.jpg")
         self.material3 = BasicColorMaterial((1.0, 0.0, 0.0))
 
-        self.renderer = Renderer(10000, 50000, 32, (1024, 1024, 8))
+        self.renderer = Renderer(10000, 50000, 32, (1024, 1024, 2))
 
         self.camera = OrbitCamera((6, 4, 5), (0, 0, 0), 45, 0.1, 100)
 

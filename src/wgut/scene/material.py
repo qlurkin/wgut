@@ -1,5 +1,4 @@
 from typing import Protocol
-from PIL.Image import Image
 import numpy.typing as npt
 from wgpu import GPUBuffer, GPUTexture
 
@@ -16,10 +15,11 @@ class Material(Protocol):
     @staticmethod
     def get_texture_size() -> tuple[int, int]: ...
     def get_data(self) -> npt.NDArray: ...
-    def get_textures(self) -> list[Image]: ...
+    def get_textures(self) -> list[str]: ...
     @staticmethod
     def set_bindings(
         pipeline: AutoRenderPipeline,
         material_buffer: GPUBuffer,
+        texture_ids: GPUBuffer,
         texture_array: GPUTexture,
     ): ...

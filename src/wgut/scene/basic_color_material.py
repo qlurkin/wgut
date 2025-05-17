@@ -1,4 +1,3 @@
-from PIL.Image import Image
 import numpy as np
 from numpy.typing import NDArray
 from wgpu import GPUBuffer, GPUTexture
@@ -31,7 +30,7 @@ class BasicColorMaterial:
     def get_data(self) -> NDArray:
         return self.__data
 
-    def get_textures(self) -> list[Image]:
+    def get_textures(self) -> list[str]:
         return []
 
     @staticmethod
@@ -56,6 +55,7 @@ class BasicColorMaterial:
     def set_bindings(
         pipeline: AutoRenderPipeline,
         material_buffer: GPUBuffer,
+        texture_ids: GPUBuffer,
         texture_array: GPUTexture,
     ):
         pipeline.set_binding_buffer(1, 0, material_buffer)
