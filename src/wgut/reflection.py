@@ -44,15 +44,16 @@ class Reflection:
         for match in matches:
             match = match[1]
             attributes = {}
-            for attr in match["attributes"]:
-                typ = None
-                values = []
-                for child in attr.children:
-                    if child.type == "identifier":
-                        typ = child.text.decode()
-                    if child.type == "int_literal":
-                        values.append(int(child.text.decode()))
-                attributes[typ] = values
+            if "attributes" in match:
+                for attr in match["attributes"]:
+                    typ = None
+                    values = []
+                    for child in attr.children:
+                        if child.type == "identifier":
+                            typ = child.text.decode()
+                        if child.type == "int_literal":
+                            values.append(int(child.text.decode()))
+                    attributes[typ] = values
 
             functions.append(
                 {

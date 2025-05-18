@@ -2,6 +2,7 @@ from typing import Type
 from wgpu import BufferUsage, GPUTexture, TextureFormat, TextureUsage
 import numpy.typing as npt
 import numpy as np
+import random
 
 from wgut.builders.texturebuilder import TextureBuilder
 from wgut.core import load_image, write_buffer, write_texture
@@ -144,6 +145,7 @@ class Renderer:
         self.__depth_texture = None
         self.__texture_atlas = {}
         self.__texture_ids = []
+        self.__texture_names: list[str | None] = [None] * texture_array_size[2]
 
     def create_pipeline(self, material_class: Type[Material]):
         if material_class not in self.__pipelines:
@@ -225,9 +227,13 @@ class Renderer:
                     if img not in self.__texture_atlas:
                         ids = set(range(self.__texture_array_size[2]))
                         ids = ids - set(self.__texture_ids)
-                        id = ids.pop()
-                        write_texture(self.__textures, load_image(img), id)
+                        id = random.choice(list(ids))
+                        old_name = self.__texture_names[id]
+                        if old_name is not None:
+                            del self.__texture_atlas[old_name]
+                        self.__texture_names[id] = img
                         self.__texture_atlas[img] = id
+                        write_texture(self.__textures, load_image(img), id)
                     self.__texture_ids.append(self.__texture_atlas[img])
         else:
             material_index = self.__material_index[material]
