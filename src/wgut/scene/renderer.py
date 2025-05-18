@@ -13,10 +13,16 @@ from wgut.scene.mesh import get_vertex_buffer_descriptor
 from wgut.auto_render_pipeline import AutoRenderPipeline
 from wgut.builders.bufferbuilder import BufferBuilder
 from wgut.builders.vertexbufferdescriptorsbuilder import VertexBufferDescriptorsBuilder
+from wgut.camera import Camera
 
 
 SHADER_START = """
-@group(0) @binding(0) var<uniform> camera: mat4x4<f32>;
+struct Camera {
+    matrix: mat4x4<f32>,
+    position: vec4<f32>,
+};
+
+@group(0) @binding(0) var<uniform> camera: Camera;
 
 struct VertexInput {
     @location(0) position: vec4<f32>,
@@ -41,7 +47,7 @@ struct VertexOutput {
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.pos = camera * in.position;
+    out.pos = camera.matrix * in.position;
     out.color = in.color;
     out.uv = in.uv;
     out.normal = in.normal;
@@ -58,24 +64,16 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 class Renderer:
     def __init__(
         self,
-        # material_class: Type[Material],
         vertex_buffer_size: int,
         index_buffer_size: int,
         material_buffer_size: int,
         texture_array_size: tuple[int, int, int],
     ):
-        # shader_source = SHADER_START + material_class.get_fragment()
-        # self.__material_size = material_class.get_data_size()
-        # self.__material_texture_count = material_class.get_texture_count()
-        # self.__texture_array_size = material_class.get_texture_size() + (
-        #     self.__material_texture_count * material_buffer_size,
-        # )
         self.__texture_array_size = texture_array_size
         self.__vertex_buffer_size = vertex_buffer_size
         self.__index_buffer_size = index_buffer_size
         self.__material_buffer_size = material_buffer_size
 
-        # self.__pipeline = AutoRenderPipeline(shader_source).with_depth_texture()
         vertex_buffer_descriptor = get_vertex_buffer_descriptor()
         self.__vertex_buffer_descriptors = (
             VertexBufferDescriptorsBuilder()
@@ -83,7 +81,6 @@ class Renderer:
             .build()
         )
         self.__vertex_size = vertex_buffer_descriptor["array_stride"]
-        # self.__pipeline.set_vertex_buffer_descriptors(vertex_buffer_descriptors)
         self.__vertex_buffer = (
             BufferBuilder()
             .with_size(vertex_buffer_size * self.__vertex_size)
@@ -118,21 +115,6 @@ class Renderer:
 
         self.__vertex_count = 0
         self.__index_count = 0
-        # self.__pipeline.set_vertex_buffer(0, self.__vertex_buffer)
-        # self.__pipeline.set_index_buffer(self.__index_buffer)
-
-        # binding_index = 0
-        #
-        # if self.__material_buffer is not None:
-        #     self.__pipeline.set_binding_buffer(1, binding_index, self.__material_buffer)
-        #     binding_index += 1
-        #
-        # if self.__textures is not None:
-        #     self.__pipeline.set_binding_texture(1, binding_index, self.__textures)
-        #     binding_index += 1
-        #     self.__pipeline.set_binding_sampler(1, binding_index)
-        #     binding_index += 1
-
         self.__frame_draw_count = 0
         self.__frame_mesh_count = 0
         self.__frame_triangle_count = 0
@@ -259,7 +241,7 @@ class Renderer:
         self.__frame_triangle_count += len(index_data) // 3
         self.__frame_vertex_count += len(vertex_data)
 
-    def end_frame(self, output_texture: GPUTexture, camera_matrix: npt.NDArray):
+    def end_frame(self, output_texture: GPUTexture, camera: Camera):
         self.__clear = True
         self.__frame_draw_count = 0
         self.__frame_mesh_count = 0
@@ -272,11 +254,21 @@ class Renderer:
         ):
             self.__depth_texture = TextureBuilder().build_depth(output_texture.size)
 
+        view_matrix, proj_matrix = camera.get_matrices(
+            output_texture.width / output_texture.height
+        )
+        camera_position = np.hstack([camera.get_position(), [1.0]]).astype(np.float32)
+        camera_matrix = np.array(proj_matrix @ view_matrix, dtype=np.float32)
+
+        # Must send transpose version of matrices, because GPU expect matrices in column major order
+        camera_data = np.vstack(
+            [np.ascontiguousarray(camera_matrix.T), camera_position]
+        )
+
         for material_class in self.__meshes:
             pipeline = self.__pipelines[material_class]
             pipeline.set_depth_texture(self.__depth_texture)
-            # Must send transpose version of matrices, because GPU expect matrices in column major order
-            pipeline.set_binding_array(0, 0, np.ascontiguousarray(camera_matrix.T))
+            pipeline.set_binding_array(0, 0, camera_data)
             for mesh, transform, material in self.__meshes[material_class]:
                 self.__add_mesh(pipeline, output_texture, mesh, transform, material)
             self.__draw(pipeline, output_texture)
@@ -302,9 +294,6 @@ class Renderer:
         self.__index_count = 0
         self.__material_index = {}
         self.__texture_ids = []
-
-    # def set_binding_array(self, group: int, binding: int, array: npt.NDArray):
-    #     self.__pipeline.set_binding_array(group, binding, array)
 
     def get_frame_stat(self):
         return self.__frame_stat

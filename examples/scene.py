@@ -38,10 +38,6 @@ class MyApp(Window):
         self.frame_time = delta_time
 
     def render(self, screen: GPUTexture):
-        width, height, _ = screen.size
-        view_matrix, proj_matrix = self.camera.get_matrices(width / height)
-        camera_matrix = np.array(proj_matrix @ view_matrix, dtype=np.float32)
-
         translation1 = Transform().set_translation(
             np.array([[2.5, 0, 0]], dtype=np.float32).T
         )
@@ -53,7 +49,7 @@ class MyApp(Window):
         self.renderer.add_mesh(self.mesh, Transform(), self.material1)
         self.renderer.add_mesh(self.mesh, translation1, self.material2)
         self.renderer.add_mesh(self.mesh, translation2, self.material3)
-        self.renderer.end_frame(screen, camera_matrix)
+        self.renderer.end_frame(screen, self.camera)
 
         self.imgui_renderer.render()
 

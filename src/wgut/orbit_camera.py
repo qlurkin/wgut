@@ -42,13 +42,16 @@ class OrbitCamera:
         self.__pointer_start = (0.0, 0.0)
 
     def get_matrices(self, ratio: float) -> tuple[NDArray, NDArray]:
-        position = self.__target + spherical_to_cartesian(
-            self.__radius, self.__theta, self.__phi
-        )
+        position = self.get_position()
         view_matrix = cm.look_at(position, self.__target, [0, 1, 0])
         proj_matrix = cm.perspective(self.__fovy, ratio, self.__near, self.__far)
 
         return view_matrix, proj_matrix
+
+    def get_position(self) -> NDArray:
+        return self.__target + spherical_to_cartesian(
+            self.__radius, self.__theta, self.__phi
+        )
 
     def process_event(self, event) -> bool:
         dirty = False
