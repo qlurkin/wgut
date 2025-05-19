@@ -8,19 +8,41 @@ from wgut.auto_render_pipeline import AutoRenderPipeline
 class PbrMaterial:
     def __init__(
         self,
-        albedo: str,
-        normal: str,
-        roughness: str,
-        metalicity: str,
-        emissivity: str,
-        occlusion: str,
+        albedo: str | tuple[float, float, float, float],
+        normal: str | None,
+        roughness: str | float,
+        metalicity: str | float,
+        emissivity: str | tuple[float, float, float],
+        occlusion: str | None,
     ):
-        self.__albedo = albedo
-        self.__normal = normal
-        self.__roughness = roughness
-        self.__metalicity = metalicity
-        self.__emissivity = emissivity
-        self.__occlusion = occlusion
+        self.__albedo_filename = albedo if isinstance(albedo, str) else ""
+        self.__normal_filename = normal if isinstance(normal, str) else ""
+        self.__roughness_filename = roughness if isinstance(roughness, str) else ""
+        self.__metalicity_filename = metalicity if isinstance(metalicity, str) else ""
+        self.__emissivity_filename = emissivity if isinstance(emissivity, str) else ""
+        self.__occlusion_filename = occlusion if isinstance(occlusion, str) else ""
+
+        self.__albedo_data = (
+            albedo if not isinstance(albedo, str) else (0.0, 0.0, 0.0, 0.0)
+        )
+        self.__normal_data = (0.5, 0.5, 1.0, 1.0)
+        self.__roughness_data = roughness if not isinstance(roughness, str) else 0.0
+        self.__metalicity_data = metalicity if not isinstance(metalicity, str) else 0.0
+        self.__emissivity_data = (
+            emissivity + (1.0,)
+            if not isinstance(emissivity, str)
+            else (0.0, 0.0, 0.0, 0.0)
+        )
+        self.__occlusion_data = 1.0
+
+        self.__texture_count = len(
+            list(
+                filter(
+                    lambda v: isinstance(v, str),
+                    [albedo, normal, roughness, metalicity, emissivity, occlusion],
+                )
+            )
+        )
 
     @staticmethod
     def get_fragment() -> str:
@@ -32,11 +54,64 @@ class PbrMaterial:
                 metalicity: i32,
                 emissivity: i32,
                 occlusion: i32,
-            }
+            };
+
+            struct MatData {
+                albedo: vec4<f32>,
+                normal: vec4<f32>,
+                emissivity: vec4<f32>,
+                roughness: f32,
+                metalicity: f32,
+                occlusion: f32,
+                padding: f32,
+            };
 
             @group(1) @binding(0) var textures: texture_2d_array<f32>;
             @group(1) @binding(1) var samplr: sampler;
             @group(1) @binding(2) var<storage, read> tex_ids: array<TexId>;
+            @group(1) @binding(3) var<storage, read> mat_data: array<MatData>;
+
+            fn get_albedo(uv: vec2<f32>, mat_id: i32) -> vec3<f32> {
+                if (tex_ids[mat_id].albedo < 0) {
+                    return mat_data[mat_id].albedo.rgb;
+                }
+                return textureSample(textures, samplr, uv, tex_ids[mat_id].albedo).rgb;
+            }
+
+            fn get_normal(uv: vec2<f32>, mat_id: i32) -> vec3<f32> {
+                if (tex_ids[mat_id].normal < 0) {
+                    return mat_data[mat_id].normal.rgb;
+                }
+                return textureSample(textures, samplr, uv, tex_ids[mat_id].normal).rgb;
+            }
+
+            fn get_roughness(uv: vec2<f32>, mat_id: i32) -> f32 {
+                if (tex_ids[mat_id].roughness < 0) {
+                    return mat_data[mat_id].roughness;
+                }
+                return textureSample(textures, samplr, uv, tex_ids[mat_id].roughness).r;
+            }
+
+            fn get_metalicity(uv: vec2<f32>, mat_id: i32) -> f32 {
+                if (tex_ids[mat_id].metalicity < 0) {
+                    return mat_data[mat_id].metalicity;
+                }
+                return textureSample(textures, samplr, uv, tex_ids[mat_id].metalicity).r;
+            }
+
+            fn get_emissivity(uv: vec2<f32>, mat_id: i32) -> vec3<f32> {
+                if (tex_ids[mat_id].emissivity < 0) {
+                    return mat_data[mat_id].emissivity.rgb;
+                }
+                return textureSample(textures, samplr, uv, tex_ids[mat_id].emissivity).rgb;
+            }
+
+            fn get_occlusion(uv: vec2<f32>, mat_id: i32) -> f32 {
+                if (tex_ids[mat_id].occlusion < 0) {
+                    return mat_data[mat_id].occlusion;
+                }
+                return textureSample(textures, samplr, uv, tex_ids[mat_id].occlusion).r;
+            }
 
             const PI: f32 = 3.141592;
 
@@ -105,22 +180,20 @@ class PbrMaterial:
 
             @fragment
             fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+                let id = i32(in.mat_id);
+
+                var albedo = pow(get_albedo(in.uv, id), vec3<f32>(2.2));  // gamma correction
+                let normal = 2.0 * get_normal(in.uv, id) - 1.0;
+                let roughness = get_roughness(in.uv, id);
+                let metalicity = get_metalicity(in.uv, id);
+                let emissivity = get_emissivity(in.uv, id);
+                let occlusion = get_occlusion(in.uv, id);
+
                 let F0 = vec3<f32>(0.15); // Base Reflectance
                 let lightColor = lights[0].color.rgb * PI;
-                var id = i32(in.mat_id);
-                let emissivity = textureSample(textures, samplr, in.uv, tex_ids[id].emissivity).rgb;
-                let metalicity = textureSample(textures, samplr, in.uv, tex_ids[id].metalicity).r;
-                var albedo = textureSample(textures, samplr, in.uv, tex_ids[id].albedo).rgb;
-                albedo = pow(albedo, vec3<f32>(2.2)); // gamma correction
-
-                let roughness = textureSample(textures, samplr, in.uv, tex_ids[id].roughness).r;
-
                 let alpha = roughness * roughness;
 
-                // normal map
-                let normal_from_map = 2.0 * textureSample(textures, samplr, in.uv, tex_ids[id].normal).rgb - 1.0;
-                let N = normalize(normal_from_map.x * in.tangent + normal_from_map.y * in.bitangent + normal_from_map.z * in.normal);
-                //let N = normalize(in.normal);
+                let N = normalize(normal.x * in.tangent + normal.y * in.bitangent + normal.z * in.normal);
 
                 var L = normalize(-lights[0].position.xyz);  // direction light
                 if(lights[0].position.w != 0.0) {
@@ -130,8 +203,6 @@ class PbrMaterial:
                 let V = normalize(camera.position.xyz - in.position.xyz);
                 let H = normalize(V + L);
 
-                let occlusion = textureSample(textures, samplr, in.uv, tex_ids[id].occlusion).rgb;
-
                 let ambiantLightColor = vec3<f32>(0.40);
                 let ambiant = albedo * ambiantLightColor * occlusion;
 
@@ -140,25 +211,36 @@ class PbrMaterial:
         """
 
     def get_data(self) -> NDArray:
-        return np.array([])
+        data = np.hstack(
+            [
+                self.__albedo_data,
+                self.__normal_data,
+                self.__emissivity_data,
+                self.__roughness_data,
+                self.__metalicity_data,
+                self.__occlusion_data,
+                [0.0],
+            ]
+        ).astype(np.float32)
+
+        return data
 
     def get_textures(self) -> list[str]:
         return [
-            self.__albedo,
-            self.__normal,
-            self.__roughness,
-            self.__metalicity,
-            self.__emissivity,
-            self.__occlusion,
+            self.__albedo_filename,
+            self.__normal_filename,
+            self.__roughness_filename,
+            self.__metalicity_filename,
+            self.__emissivity_filename,
+            self.__occlusion_filename,
         ]
 
     @staticmethod
     def get_data_size() -> int:
-        return 0
+        return 64
 
-    @staticmethod
-    def get_texture_count() -> int:
-        return 6
+    def get_texture_count(self) -> int:
+        return self.__texture_count
 
     @staticmethod
     def get_texture_size() -> tuple[int, int]:
@@ -166,11 +248,11 @@ class PbrMaterial:
 
     def __eq__(self, other):
         if isinstance(other, PbrMaterial):
-            return self.__albedo == other.__albedo
+            return self.__albedo_filename == other.__albedo_filename
         return False
 
     def __hash__(self):
-        return hash(self.__albedo)
+        return hash(self.__albedo_filename)
 
     @staticmethod
     def set_bindings(
@@ -182,3 +264,4 @@ class PbrMaterial:
         pipeline.set_binding_texture(1, 0, texture_array)
         pipeline.set_binding_sampler(1, 1)
         pipeline.set_binding_buffer(1, 2, texture_ids)
+        pipeline.set_binding_buffer(1, 3, material_buffer)

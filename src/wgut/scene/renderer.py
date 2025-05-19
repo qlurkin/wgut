@@ -76,7 +76,11 @@ class Renderer:
         index_buffer_size: int,
         material_buffer_size: int,
         texture_array_size: tuple[int, int, int],
+        texture_ids_buffer_size: int | None = None,
     ):
+        if texture_ids_buffer_size is None:
+            texture_ids_buffer_size = texture_array_size[2] * 4
+
         self.__texture_array_size = texture_array_size
         self.__vertex_buffer_size = vertex_buffer_size
         self.__index_buffer_size = index_buffer_size
@@ -116,7 +120,7 @@ class Renderer:
         )
         self.__texture_ids_buffer = (
             BufferBuilder()
-            .with_size(texture_array_size[2] * 4)
+            .with_size(texture_ids_buffer_size)
             .with_usage(BufferUsage.STORAGE | BufferUsage.COPY_DST)
             .build()
         )
@@ -223,17 +227,20 @@ class Renderer:
             if self.__textures is not None:
                 images = material.get_textures()
                 for img in images:
-                    if img not in self.__texture_atlas:
-                        ids = set(range(self.__texture_array_size[2]))
-                        ids = ids - set(self.__texture_ids)
-                        id = random.choice(list(ids))
-                        old_name = self.__texture_names[id]
-                        if old_name is not None:
-                            del self.__texture_atlas[old_name]
-                        self.__texture_names[id] = img
-                        self.__texture_atlas[img] = id
-                        write_texture(self.__textures, load_image(img), id)
-                    self.__texture_ids.append(self.__texture_atlas[img])
+                    if len(img) == 0:
+                        self.__texture_ids.append(-1)
+                    else:
+                        if img not in self.__texture_atlas:
+                            ids = set(range(self.__texture_array_size[2]))
+                            ids = ids - set(self.__texture_ids)
+                            id = random.choice(list(ids))
+                            old_name = self.__texture_names[id]
+                            if old_name is not None:
+                                del self.__texture_atlas[old_name]
+                            self.__texture_names[id] = img
+                            self.__texture_atlas[img] = id
+                            write_texture(self.__textures, load_image(img), id)
+                        self.__texture_ids.append(self.__texture_atlas[img])
         else:
             material_index = self.__material_index[material]
 
