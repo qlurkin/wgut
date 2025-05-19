@@ -1,6 +1,5 @@
 from typing import Type
 from wgpu import BufferUsage, GPUTexture, TextureFormat, TextureUsage
-import numpy.typing as npt
 import numpy as np
 import random
 
@@ -43,18 +42,20 @@ struct VertexInput {
 
 struct VertexOutput {
     @builtin(position) pos: vec4<f32>,
-    @location(0) color: vec4<f32>,
-    @location(1) uv: vec2<f32>,
-    @location(2) normal: vec3<f32>,
-    @location(3) tangent: vec3<f32>,
-    @location(4) bitangent: vec3<f32>,
-    @location(5) mat_id: f32,
+    @location(0) position: vec4<f32>,
+    @location(1) color: vec4<f32>,
+    @location(2) uv: vec2<f32>,
+    @location(3) normal: vec3<f32>,
+    @location(4) tangent: vec3<f32>,
+    @location(5) bitangent: vec3<f32>,
+    @location(6) mat_id: f32,
 };
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.pos = camera.matrix * in.position;
+    out.position = in.position;
     out.color = in.color;
     out.uv = in.uv;
     out.normal = in.normal;
