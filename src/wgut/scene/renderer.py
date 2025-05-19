@@ -22,7 +22,14 @@ struct Camera {
     position: vec4<f32>,
 };
 
+// 4th component of color is intensity, 4th component of position equal to 0 means Direction Light. All four component of position to 0 means ambiant light.
+struct Light {
+    position: vec4<f32>,
+    color: vec4<f32>,
+}
+
 @group(0) @binding(0) var<uniform> camera: Camera;
+@group(0) @binding(1) var<storage, read> lights: array<Light>;
 
 struct VertexInput {
     @location(0) position: vec4<f32>,
@@ -128,6 +135,15 @@ class Renderer:
         self.__texture_atlas = {}
         self.__texture_ids = []
         self.__texture_names: list[str | None] = [None] * texture_array_size[2]
+
+        self.__lights_buffer = (
+            BufferBuilder()
+            .from_data(
+                np.array([-1.0, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0], dtype=np.float32)
+            )
+            .with_usage(BufferUsage.STORAGE | BufferUsage.COPY_DST)
+            .build()
+        )
 
     def create_pipeline(self, material_class: Type[Material]):
         if material_class not in self.__pipelines:
@@ -269,6 +285,7 @@ class Renderer:
             pipeline = self.__pipelines[material_class]
             pipeline.set_depth_texture(self.__depth_texture)
             pipeline.set_binding_array(0, 0, camera_data)
+            pipeline.set_binding_buffer(0, 1, self.__lights_buffer)
             for mesh, transform, material in self.__meshes[material_class]:
                 self.__add_mesh(pipeline, output_texture, mesh, transform, material)
             self.__draw(pipeline, output_texture)
