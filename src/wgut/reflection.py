@@ -17,7 +17,6 @@ class Reflection:
 
         for match in matches:
             match = match[1]
-            # print("MATCH GLOBAL:", match)
             attributes = {}
             for ty, id in zip(match["attr.type"], match["attr.id"]):
                 attributes[ty.text.decode()] = int(id.text.decode())
@@ -111,7 +110,6 @@ class Reflection:
         functions = set()
         while len(names) > 0:
             name = names.pop()
-            done.add(name)
             for fun in all_functions:
                 matches = self.__tree.query(
                     f'((identifier) @name (#eq? @name "{name}"))', fun["body_tree"]
@@ -124,6 +122,7 @@ class Reflection:
                     else:
                         if name not in done:
                             names.add(fun["name"])
+            done.add(name)
         return res
 
     def __create_bind_group_layout(self, index):
