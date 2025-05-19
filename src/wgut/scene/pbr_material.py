@@ -6,14 +6,32 @@ from wgut.auto_render_pipeline import AutoRenderPipeline
 
 
 class PbrMaterial:
-    def __init__(self, filename: str):
-        self.__filename = filename
+    def __init__(
+        self,
+        albedo: str,
+        normal: str,
+        roughness: str,
+        metalicity: str,
+        emissivity: str,
+        occlusion: str,
+    ):
+        self.__albedo = albedo
+        self.__normal = normal
+        self.__roughness = roughness
+        self.__metalicity = metalicity
+        self.__emissivity = emissivity
+        self.__occlusion = occlusion
 
     @staticmethod
     def get_fragment() -> str:
         return """
             struct TexId {
-                diffuse: i32,
+                albedo: i32,
+                normal: i32,
+                roughness: i32,
+                metalicity: i32,
+                emissivity: i32,
+                occlusion: i32,
             }
 
             @group(1) @binding(0) var textures: texture_2d_array<f32>;
@@ -89,38 +107,35 @@ class PbrMaterial:
             fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
                 let F0 = vec3<f32>(0.15); // Base Reflectance
                 let lightColor = lights[0].color.rgb * PI;
-                let emissivity = vec3<f32>(0.0);
-                let metallic = 0.0;
                 var id = i32(in.mat_id);
-                var albedo = textureSample(textures, samplr, in.uv, tex_ids[id].diffuse).rgb;
+                let emissivity = textureSample(textures, samplr, in.uv, tex_ids[id].emissivity).rgb;
+                let metalicity = textureSample(textures, samplr, in.uv, tex_ids[id].metalicity).r;
+                var albedo = textureSample(textures, samplr, in.uv, tex_ids[id].albedo).rgb;
                 albedo = pow(albedo, vec3<f32>(2.2)); // gamma correction
 
-                let roughness = 0.5;
+                let roughness = textureSample(textures, samplr, in.uv, tex_ids[id].roughness).r;
 
                 let alpha = roughness * roughness;
 
                 // normal map
-                // let normal_from_map = 2.0 * textureSample(t_normal, t_sampler, tex_coords) - 1.0;
-                // let N = normalize(normal_from_map.x * tangent + normal_from_map.y * bitangent + normal_from_map.z * normal);
-                let N = normalize(in.normal);
+                let normal_from_map = 2.0 * textureSample(textures, samplr, in.uv, tex_ids[id].normal).rgb - 1.0;
+                let N = normalize(normal_from_map.x * in.tangent + normal_from_map.y * in.bitangent + normal_from_map.z * in.normal);
+                //let N = normalize(in.normal);
 
                 var L = normalize(-lights[0].position.xyz);  // direction light
                 if(lights[0].position.w != 0.0) {
                     L = normalize(lights[0].position.xyz - in.position.xyz); // point light
                 }
-                
-                
+
                 let V = normalize(camera.position.xyz - in.position.xyz);
                 let H = normalize(V + L);
 
-                let occlusion = 1.0;
+                let occlusion = textureSample(textures, samplr, in.uv, tex_ids[id].occlusion).rgb;
 
                 let ambiantLightColor = vec3<f32>(0.40);
                 let ambiant = albedo * ambiantLightColor * occlusion;
 
-
-                //return vec4<f32>(albedo, 1.0);
-                return vec4<f32>(PBR(alpha, F0, N, L, V, H, albedo, lightColor, emissivity, metallic) + ambiant, 1.0);
+                return vec4<f32>(PBR(alpha, F0, N, L, V, H, albedo, lightColor, emissivity, metalicity) + ambiant, 1.0);
             }
         """
 
@@ -128,7 +143,14 @@ class PbrMaterial:
         return np.array([])
 
     def get_textures(self) -> list[str]:
-        return [self.__filename]
+        return [
+            self.__albedo,
+            self.__normal,
+            self.__roughness,
+            self.__metalicity,
+            self.__emissivity,
+            self.__occlusion,
+        ]
 
     @staticmethod
     def get_data_size() -> int:
@@ -136,22 +158,19 @@ class PbrMaterial:
 
     @staticmethod
     def get_texture_count() -> int:
-        return 1
+        return 6
 
     @staticmethod
     def get_texture_size() -> tuple[int, int]:
         return (1024, 1024)
 
-    def get_filename(self) -> str:
-        return self.__filename
-
     def __eq__(self, other):
         if isinstance(other, PbrMaterial):
-            return self.__filename == other.get_filename()
+            return self.__albedo == other.__albedo
         return False
 
     def __hash__(self):
-        return hash(self.__filename)
+        return hash(self.__albedo)
 
     @staticmethod
     def set_bindings(

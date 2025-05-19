@@ -17,11 +17,25 @@ class MyApp(Window):
         self.set_title("Hello Scene")
 
         self.mesh = icosphere(3)
-        self.material1 = PbrMaterial("./cloth.jpg")
-        self.material2 = PbrMaterial("./wood.jpg")
+        self.material1 = PbrMaterial(
+            "./textures/Substance_Graph_BaseColor.jpg",
+            "./textures/Substance_Graph_Normal.jpg",
+            "./textures/Substance_Graph_Roughness.jpg",
+            "./textures/zero.jpg",
+            "./textures/zero.jpg",
+            "./textures/Substance_Graph_AmbientOcclusion.jpg",
+        )
+        self.material2 = PbrMaterial(
+            "./textures/Wood_025_basecolor.jpg",
+            "./textures/Wood_025_normal.jpg",
+            "./textures/Wood_025_roughness.jpg",
+            "./textures/zero.jpg",
+            "./textures/zero.jpg",
+            "./textures/Wood_025_ambientOcclusion.jpg",
+        )
         self.material3 = BasicColorMaterial((1.0, 0.0, 0.0))
 
-        self.renderer = Renderer(10000, 50000, 32, (1024, 1024, 2))
+        self.renderer = Renderer(10000, 50000, 32, (1024, 1024, 16))
 
         self.camera = OrbitCamera((6, 4, 5), (0, 0, 0), 45, 0.1, 100)
 
