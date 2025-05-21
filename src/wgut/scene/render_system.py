@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from wgpu import GPUTexture
 from wgut.camera import Camera
-from wgut.scene.ecs import ECS
+from wgut.scene.ecs import ECS, EntityNotFound
 from wgut.scene.material import Material
 from wgut.scene.mesh import Mesh
 from wgut.scene.renderer import Renderer
@@ -20,6 +20,11 @@ class CameraComponent:
 @dataclass
 class MaterialComponent:
     material: Material
+
+
+@dataclass
+class RenderStat:
+    stat: dict
 
 
 def render_system(
@@ -47,5 +52,12 @@ def render_system(
         ):
             renderer.add_mesh(mesh, transform, material.material)
         renderer.end_frame(screen, camera)
+        try:
+            (render_stat,) = ecs.query_one([RenderStat])
+            render_stat.stat = renderer.get_frame_stat()
+        except EntityNotFound:
+            stat = renderer.get_frame_stat()
+            if stat is not None:
+                ecs.spawn([RenderStat(stat)])
 
     return render
