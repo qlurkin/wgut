@@ -16,6 +16,10 @@ def render_gui_system(gui_func: Callable[[ECS], imgui.ImDrawData]) -> System:
         if imgui_renderer is not None:
             imgui_renderer.render()
 
+    def update(ecs: ECS, delta_time: float):
+        if imgui_renderer is not None:
+            imgui_renderer.backend.io.delta_time = delta_time
+
     def setup(ecs: ECS):
         nonlocal imgui_renderer
         (window,) = ecs.query_one([WindowSystemApp])
@@ -29,5 +33,6 @@ def render_gui_system(gui_func: Callable[[ECS], imgui.ImDrawData]) -> System:
         imgui_renderer.set_gui(gui)
 
         ecs.on("render", render)
+        ecs.on("update", update)
 
     return setup
