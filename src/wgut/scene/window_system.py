@@ -21,7 +21,8 @@ class WindowSystemApp(Window):
         self.__ecs.dispatch("window_event", event)
 
 
-def window_system(ecs: ECS):
+def window_system(ecs: ECS, title="WGUT Window"):
     app = WindowSystemApp(ecs)
+    app.set_title(title)
     ecs.spawn([app])
     app.run()

@@ -61,5 +61,5 @@ def gui(ecs: ECS) -> imgui.ImDrawData:
     .on("window_event", process_event)
     .on("setup", render_gui_system(gui))
     .on("render", render_system(10000, 50000, 128, (1024, 1024, 7), 48))
-    .do(window_system)
+    .do(window_system, "Hello ECS")
 )
