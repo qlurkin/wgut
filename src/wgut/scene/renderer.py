@@ -1,3 +1,4 @@
+import time
 from typing import Type
 from wgpu import BufferUsage, GPUTexture, TextureFormat, TextureUsage
 import numpy as np
@@ -131,7 +132,13 @@ class Renderer:
         self.__frame_mesh_count = 0
         self.__frame_triangle_count = 0
         self.__frame_vertex_count = 0
-        self.__frame_stat = None
+        self.__frame_stat = {
+            "draw": 0,
+            "mesh": 0,
+            "triangle": 0,
+            "vertex": 0,
+            "time": 0.0,
+        }
         self.__clear = True
         self.__material_index = {}
         self.__pipelines = {}
@@ -167,6 +174,7 @@ class Renderer:
 
     def begin_frame(self):
         self.__meshes = {}
+        self.__start_time = time.perf_counter()
 
     def add_mesh(self, mesh: Mesh, transform: Transform, material: Material):
         cls = type(material)
@@ -298,11 +306,14 @@ class Renderer:
                 self.__add_mesh(pipeline, output_texture, mesh, transform, material)
             self.__draw(pipeline, output_texture)
 
+        render_time = time.perf_counter() - self.__start_time
+
         self.__frame_stat = {
             "draw": self.__frame_draw_count,
             "mesh": self.__frame_mesh_count,
             "triangle": self.__frame_triangle_count,
             "vertex": self.__frame_vertex_count,
+            "time": render_time,
         }
 
     def __draw(self, pipeline: AutoRenderPipeline, output_texture: GPUTexture):
@@ -320,5 +331,5 @@ class Renderer:
         self.__material_index = {}
         self.__texture_ids = []
 
-    def get_frame_stat(self):
+    def get_frame_stat(self) -> dict:
         return self.__frame_stat
