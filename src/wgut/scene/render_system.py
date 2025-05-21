@@ -43,8 +43,8 @@ def render_system(
     )
 
     def render(ecs: ECS, screen: GPUTexture):
+        cam_comp: CameraComponent
         cam_comp, _ = ecs.query_one([CameraComponent, ActiveCamera])
-        assert isinstance(cam_comp, CameraComponent)
         camera = cam_comp.camera
         renderer.begin_frame()
         for mesh, material, transform in ecs.query(
@@ -53,7 +53,7 @@ def render_system(
             renderer.add_mesh(mesh, transform, material.material)
         renderer.end_frame(screen, camera)
         try:
-            (render_stat,) = ecs.query_one([RenderStat])
+            render_stat: RenderStat = ecs.query_one(RenderStat)
             render_stat.stat = renderer.get_frame_stat()
         except EntityNotFound:
             stat = renderer.get_frame_stat()

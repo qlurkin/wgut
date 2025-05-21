@@ -32,13 +32,14 @@ def setup(ecs: ECS):
 
 
 def process_event(ecs: ECS, event):
-    (cam,) = ecs.query_one([CameraComponent])
-    cam.camera.process_event(event)
+    cam: CameraComponent = ecs.query_one(CameraComponent)
+    if isinstance(cam.camera, OrbitCamera):
+        cam.camera.process_event(event)
 
 
 def gui(ecs: ECS) -> imgui.ImDrawData:
     try:
-        (r_stat,) = ecs.query_one([RenderStat])
+        r_stat: RenderStat = ecs.query_one(RenderStat)
         stat = r_stat.stat
         imgui.new_frame()
         imgui.begin("Scene", None)

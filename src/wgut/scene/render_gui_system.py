@@ -16,13 +16,13 @@ def render_gui_system(gui_func: Callable[[ECS], imgui.ImDrawData]) -> System:
         if imgui_renderer is not None:
             imgui_renderer.render()
 
-    def update(ecs: ECS, delta_time: float):
+    def update(_ecs: ECS, delta_time: float):
         if imgui_renderer is not None:
             imgui_renderer.backend.io.delta_time = delta_time
 
     def setup(ecs: ECS):
         nonlocal imgui_renderer
-        (window,) = ecs.query_one([WindowSystemApp])
+        window: WindowSystemApp = ecs.query_one(WindowSystemApp)
         imgui_renderer = ImguiRenderer(
             get_device(), window.get_canvas(), window.get_texture_format()
         )
