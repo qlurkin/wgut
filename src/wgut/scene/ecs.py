@@ -9,6 +9,10 @@ class Entity:
     id: int
 
 
+class EntityNotFound(Exception):
+    pass
+
+
 class ECS:
     def __init__(self):
         self.__components = {Entity: {}}
@@ -47,7 +51,11 @@ class ECS:
     def query_one(self, types: list):
         ids = set(self.__components[Entity].keys())
         for ty in types:
+            if ty not in self.__components:
+                raise EntityNotFound()
             ids = ids & set(self.__components[ty].keys())
+        if len(ids) == 0:
+            raise EntityNotFound()
         id = ids.pop()
         return tuple(self.__components[ty][id] for ty in types)
 
