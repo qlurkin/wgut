@@ -23,4 +23,5 @@ class WindowSystemApp(Window):
 
 def window_system(ecs: ECS):
     app = WindowSystemApp(ecs)
+    ecs.spawn([app])
     app.run()
