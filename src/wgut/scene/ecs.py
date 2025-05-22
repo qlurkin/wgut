@@ -23,7 +23,9 @@ class EntityNotFound(Exception):
 
 
 # TODO:
-# - Support "Not" in Query
+# - Support "Not" in Query => Class "Not"
+# - Support Multiplicity in Query => Class "With" avec multiplicite a 1 par defaut
+#           => If class not "Not" nor "With" wrap with a "With"
 
 
 class ECS:
