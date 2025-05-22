@@ -27,8 +27,8 @@ def setup(ecs: ECS):
     )
     transform = Transform()
     camera = OrbitCamera((6, 4, 5), (0, 0, 0), 45, 0.1, 100)
-    ecs.spawn([mesh, MaterialComponent(material), transform])
-    ecs.spawn([CameraComponent(camera), ActiveCamera()])
+    ecs.spawn([mesh, MaterialComponent(material), transform], label="Ball")
+    ecs.spawn([CameraComponent(camera), ActiveCamera()], label="Camera")
 
 
 def process_event(ecs: ECS, event):
@@ -42,7 +42,7 @@ def gui(ecs: ECS) -> imgui.ImDrawData:
         r_stat: RenderStat = ecs.query_one(RenderStat)
         stat = r_stat.stat
         imgui.new_frame()
-        imgui.begin("Scene", None)
+        imgui.begin("Render Stats", None)
         imgui.text(f"Render Time: {stat['time']:.5f}s")
         imgui.text(f"Draw count: {stat['draw']}")
         imgui.text(f"Mesh count: {stat['mesh']}")
