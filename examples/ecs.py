@@ -16,7 +16,7 @@ from wgut.scene.transform import Transform
 
 
 def setup(ecs: ECS):
-    mesh = icosphere(4)
+    mesh = icosphere(3)
     material = PbrMaterial(
         "./textures/Wood_025_basecolor.jpg",
         "./textures/Wood_025_normal.jpg",
