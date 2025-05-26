@@ -4,7 +4,7 @@ import numpy as np
 from wgut.scene.mesh import Mesh, vertex
 
 
-def generate_cylinder_mesh(radius=1.0, height=2.0, segments=32):
+def cylinder(radius=1.0, height=2.0, segments=32):
     positions = []
     normals = []
     uvs = []
