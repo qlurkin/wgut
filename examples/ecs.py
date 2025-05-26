@@ -12,13 +12,22 @@ from wgut.scene.window_system import window_system
 from wgut.scene.ecs import ECS, EntityNotFound
 from wgut.scene.pbr_material import PbrMaterial
 from wgut.scene.primitives.icosphere import icosphere
+from wgut.scene.primitives.cube import cube
+from wgut.scene.primitives.torus import torus
+from wgut.scene.primitives.cone import cone
+from wgut.scene.primitives.cylinder import generate_cylinder_mesh
 from wgut.scene.transform import Transform
 
 
 def setup(ecs: ECS):
     mesh = icosphere(3)
+    mesh = cube(2)
+    mesh = torus()
+    mesh = cone()
+    mesh = generate_cylinder_mesh()
     material = PbrMaterial(
         "./textures/Wood_025_basecolor.jpg",
+        # (1.0, 0.0, 0.0, 1.0),
         "./textures/Wood_025_normal.jpg",
         "./textures/Wood_025_roughness.jpg",
         0.0,

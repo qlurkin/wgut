@@ -5,7 +5,7 @@ from ..mesh import (
 import numpy as np
 
 
-def cube(size=1.0):
+def cube(size=1.0) -> Mesh:
     hs = size / 2  # half-size
 
     faces = [
