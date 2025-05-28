@@ -20,6 +20,8 @@ from wgut.scene.primitives.cone import cone
 from wgut.scene.primitives.cylinder import cylinder
 from wgut.scene.transform import Transform
 
+default_layer = Layer("default")
+
 
 def setup(ecs: ECS):
     mesh = icosphere(3)
@@ -38,8 +40,9 @@ def setup(ecs: ECS):
     )
     transform = Transform()
     camera = OrbitCamera((6, 4, 5), (0, 0, 0), 45, 0.1, 100)
-    layer = Layer("default")
-    ecs.spawn([mesh, MaterialComponent(material), transform, layer], label="Ball")
+    ecs.spawn(
+        [mesh, MaterialComponent(material), transform, default_layer], label="Ball"
+    )
     ecs.spawn([CameraComponent(camera), ActiveCamera()], label="Camera")
 
 
@@ -72,7 +75,7 @@ renderer = Renderer(10000, 50000, 128, (1024, 1024, 7), 48)
     .on("setup", setup)
     .on("window_event", process_event)
     .on("render_gui", gui)
-    .do(render_system, renderer, ["default"])
+    .do(render_system, renderer, [default_layer])
     .do(render_gui_system)
     .do(window_system, "Hello ECS")
 )

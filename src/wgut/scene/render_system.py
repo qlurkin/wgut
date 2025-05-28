@@ -33,9 +33,14 @@ class Layer:
     name: str
 
 
-def render_system(ecs: ECS, renderer: Renderer, layers: list[str]):
+def render_system(ecs: ECS, renderer: Renderer, layers: list[str | Layer]):
     if len(layers) == 0:
         raise ValueError("Must have at least one layer")
+
+    for i in range(len(layers)):
+        layer = layers[i]
+        if isinstance(layer, Layer):
+            layers[i] = layer.name
 
     def render(ecs: ECS, screen: GPUTexture):
         cam_comp: CameraComponent
