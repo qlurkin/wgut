@@ -139,7 +139,8 @@ class Renderer:
             "vertex": 0,
             "time": 0.0,
         }
-        self.__clear = True
+        self.__clear_color = True
+        self.__clear_depth = True
         self.__material_index = {}
         self.__pipelines = {}
         self.__meshes = {}
@@ -273,8 +274,15 @@ class Renderer:
         self.__frame_triangle_count += len(index_data) // 3
         self.__frame_vertex_count += len(vertex_data)
 
-    def end_frame(self, output_texture: GPUTexture, camera: Camera):
-        self.__clear = True
+    def end_frame(
+        self,
+        output_texture: GPUTexture,
+        camera: Camera,
+        clear_color=True,
+        clear_depth=True,
+    ):
+        self.__clear_color = clear_color
+        self.__clear_depth = clear_depth
         self.__frame_draw_count = 0
         self.__frame_mesh_count = 0
         self.__frame_triangle_count = 0
@@ -322,9 +330,15 @@ class Renderer:
                 self.__texture_ids_buffer, np.array(self.__texture_ids, dtype=np.int32)
             )
 
-        pipeline.render(output_texture, self.__index_count, clear=self.__clear)
+        pipeline.render(
+            output_texture,
+            self.__index_count,
+            clear_color=self.__clear_color,
+            clear_depth=self.__clear_depth,
+        )
 
-        self.__clear = False
+        self.__clear_color = False
+        self.__clear_depth = False
         self.__frame_draw_count += 1
         self.__vertex_count = 0
         self.__index_count = 0

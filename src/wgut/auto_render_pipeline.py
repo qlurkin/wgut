@@ -179,7 +179,8 @@ class AutoRenderPipeline:
         output_texture: GPUTexture,
         vertex_count: int,
         instance_count: int = 1,
-        clear: bool = True,
+        clear_color: bool = True,
+        clear_depth: bool = True,
     ):
         if self.__with_depth and (
             self.__depth_texture is None
@@ -233,9 +234,9 @@ class AutoRenderPipeline:
         command_encoder = CommandBufferBuilder()
         render_pass_builder = command_encoder.begin_render_pass(
             output_texture
-        ).with_load_op(LoadOp.clear if clear else LoadOp.load)
+        ).with_load_op(LoadOp.clear if clear_color else LoadOp.load)
         if self.__depth_texture is not None:
-            render_pass_builder.with_depth_stencil(self.__depth_texture, clear)
+            render_pass_builder.with_depth_stencil(self.__depth_texture, clear_depth)
         render_pass = render_pass_builder.build()
         render_pass.set_pipeline(self.__pipeline)
         for gid, g in self.__bind_groups.items():
