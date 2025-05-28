@@ -22,6 +22,11 @@ class EntityNotFound(Exception):
     pass
 
 
+@dataclass
+class Group:
+    members: list[int]
+
+
 # TODO:
 # - Support "Not" in Query
 
@@ -106,7 +111,9 @@ class ECS:
                     self.__components.pop(ty)
         return self
 
-    def query(self, types: Sequence[Type] | Type) -> Generator[Any, None, None]:
+    def query(
+        self, types: Sequence[Type] | Type, without: Sequence[type] | Type = []
+    ) -> Generator[Any, None, None]:
         returns_tuple = False
         if isinstance(types, Sequence):
             returns_tuple = True
@@ -122,6 +129,13 @@ class ECS:
                 ids = set()
                 break
 
+        if not isinstance(without, Sequence):
+            without = [without]
+
+        for ty in without:
+            if ty in self.__components:
+                ids = ids - set(self.__components[ty].keys())
+
         for id in ids:
             res = tuple(self.__components[ty][id] for ty in types)
             if returns_tuple:
@@ -129,27 +143,12 @@ class ECS:
             else:
                 yield res[0]
 
-    def query_one(self, types: Sequence[Type] | Type) -> Any:
-        returns_tuple = False
-        if isinstance(types, Sequence):
-            returns_tuple = True
-        else:
-            returns_tuple = False
-            types = [types]
-
-        ids = set(self.__components[Entity].keys())
-        for ty in types:
-            if ty not in self.__components:
-                raise EntityNotFound()
-            ids = ids & set(self.__components[ty].keys())
-        if len(ids) == 0:
-            raise EntityNotFound()
-        id = ids.pop()
-        res = tuple(self.__components[ty][id] for ty in types)
-        if returns_tuple:
+    def query_one(
+        self, types: Sequence[Type] | Type, without: Sequence[type] | Type = []
+    ) -> Any:
+        for res in self.query(types, without):
             return res
-        else:
-            return res[0]
+        raise EntityNotFound()
 
     def on(self, event: str, system: System) -> Self:
         if event not in self.__systems:
