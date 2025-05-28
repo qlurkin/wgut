@@ -8,6 +8,7 @@ from wgut.scene.render_system import (
     RenderStat,
     render_system,
 )
+from wgut.scene.renderer import Renderer
 from wgut.scene.window_system import window_system
 from wgut.scene.ecs import ECS, EntityNotFound
 from wgut.scene.pbr_material import PbrMaterial
@@ -46,11 +47,10 @@ def process_event(ecs: ECS, event):
         cam.camera.process_event(event)
 
 
-def gui(ecs: ECS) -> imgui.ImDrawData:
+def gui(ecs: ECS):
     try:
         r_stat: RenderStat = ecs.query_one(RenderStat)
         stat = r_stat.stat
-        imgui.new_frame()
         imgui.begin("Render Stats", None)
         imgui.text(f"Render Time: {stat['time']:.5f}s")
         imgui.text(f"Draw count: {stat['draw']}")
@@ -58,18 +58,19 @@ def gui(ecs: ECS) -> imgui.ImDrawData:
         imgui.text(f"Triangle count: {stat['triangle']}")
         imgui.text(f"Vertex count: {stat['vertex']}")
         imgui.end()
-        imgui.end_frame()
-        imgui.render()
     except EntityNotFound:
         pass
-    return imgui.get_draw_data()
+
+
+renderer = Renderer(10000, 50000, 128, (1024, 1024, 7), 48)
 
 
 (
     ECS()
     .on("setup", setup)
     .on("window_event", process_event)
-    .on("setup", render_gui_system(gui))
-    .on("render", render_system(10000, 50000, 128, (1024, 1024, 7), 48))
+    .on("render_gui", gui)
+    .do(render_system, renderer)
+    .do(render_gui_system)
     .do(window_system, "Hello ECS")
 )

@@ -27,20 +27,17 @@ class RenderStat:
     stat: dict
 
 
-def render_system(
-    vertex_buffer_size: int,
-    index_buffer_size: int,
-    material_buffer_size: int,
-    texture_array_size: tuple[int, int, int],
-    texture_ids_buffer_size: int | None = None,
-):
-    renderer = Renderer(
-        vertex_buffer_size,
-        index_buffer_size,
-        material_buffer_size,
-        texture_array_size,
-        texture_ids_buffer_size,
-    )
+@dataclass
+class Layer:
+    name: str
+    enabled: bool = True
+
+
+def render_system(ecs: ECS, renderer: Renderer, layers: list[str] = []):
+    layers = ["default"] + layers + ["gizmo"]
+
+    for layer in layers:
+        ecs.spawn([Layer(layer)])
 
     def render(ecs: ECS, screen: GPUTexture):
         cam_comp: CameraComponent
@@ -60,4 +57,4 @@ def render_system(
             if stat is not None:
                 ecs.spawn([RenderStat(stat)])
 
-    return render
+    ecs.on("render", render)
