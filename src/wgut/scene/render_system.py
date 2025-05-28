@@ -28,19 +28,14 @@ class RenderStat:
     stats: dict
 
 
-@dataclass
 class Layer:
-    name: str
+    def __init__(self, name: str = ""):
+        self.name = name
 
 
-def render_system(ecs: ECS, renderer: Renderer, layers: list[str | Layer]):
+def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
     if len(layers) == 0:
         raise ValueError("Must have at least one layer")
-
-    for i in range(len(layers)):
-        layer = layers[i]
-        if isinstance(layer, Layer):
-            layers[i] = layer.name
 
     def render(ecs: ECS, screen: GPUTexture):
         cam_comp: CameraComponent
@@ -50,7 +45,7 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[str | Layer]):
         for mesh, material, transform, layer in ecs.query(
             [Mesh, MaterialComponent, Transform, Layer]
         ):
-            layer_content[layer.name].append((mesh, transform, material))
+            layer_content[layer].append((mesh, transform, material))
 
         clear_color = True
         stats = {}

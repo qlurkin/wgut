@@ -20,7 +20,7 @@ from wgut.scene.primitives.cone import cone
 from wgut.scene.primitives.cylinder import cylinder
 from wgut.scene.transform import Transform
 
-default_layer = Layer("default")
+default_layer = Layer()
 
 
 def setup(ecs: ECS):
@@ -55,7 +55,7 @@ def process_event(ecs: ECS, event):
 def gui(ecs: ECS):
     try:
         r_stat: RenderStat = ecs.query_one(RenderStat)
-        stat = r_stat.stats["default"]
+        stat = r_stat.stats[default_layer]
         imgui.begin("Render Stats", None)
         imgui.text(f"Render Time: {stat['time']:.5f}s")
         imgui.text(f"Draw count: {stat['draw']}")
