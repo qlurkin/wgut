@@ -1,3 +1,4 @@
+from collections import defaultdict
 from dataclasses import dataclass
 from wgpu import GPUTexture
 from wgut.camera import Camera
@@ -30,25 +31,32 @@ class RenderStat:
 @dataclass
 class Layer:
     name: str
-    enabled: bool = True
 
 
-def render_system(ecs: ECS, renderer: Renderer, layers: list[str] = []):
-    layers = ["default"] + layers + ["gizmo"]
-
-    for layer in layers:
-        ecs.spawn([Layer(layer)])
+def render_system(ecs: ECS, renderer: Renderer, layers: list[str]):
+    if len(layers) == 0:
+        raise ValueError("Must have at least one layer")
 
     def render(ecs: ECS, screen: GPUTexture):
         cam_comp: CameraComponent
         cam_comp, _ = ecs.query_one([CameraComponent, ActiveCamera])
         camera = cam_comp.camera
-        renderer.begin_frame()
-        for mesh, material, transform in ecs.query(
-            [Mesh, MaterialComponent, Transform]
+        layer_content = defaultdict(list)
+        for mesh, material, transform, layer in ecs.query(
+            [Mesh, MaterialComponent, Transform, Layer]
         ):
-            renderer.add_mesh(mesh, transform, material.material)
-        renderer.end_frame(screen, camera)
+            layer_content[layer.name].append((mesh, transform, material))
+
+        clear_color = True
+        for layer in layers:
+            renderer.begin_frame()
+            for mesh, transform, material in layer_content[layer]:
+                renderer.add_mesh(mesh, transform, material.material)
+            renderer.end_frame(
+                screen, camera, clear_color=clear_color, clear_depth=True
+            )
+            clear_color = False
+
         try:
             render_stat: RenderStat = ecs.query_one(RenderStat)
             render_stat.stat = renderer.get_frame_stat()

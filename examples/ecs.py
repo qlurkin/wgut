@@ -4,6 +4,7 @@ from wgut.scene.render_gui_system import render_gui_system
 from wgut.scene.render_system import (
     ActiveCamera,
     CameraComponent,
+    Layer,
     MaterialComponent,
     RenderStat,
     render_system,
@@ -37,7 +38,8 @@ def setup(ecs: ECS):
     )
     transform = Transform()
     camera = OrbitCamera((6, 4, 5), (0, 0, 0), 45, 0.1, 100)
-    ecs.spawn([mesh, MaterialComponent(material), transform], label="Ball")
+    layer = Layer("default")
+    ecs.spawn([mesh, MaterialComponent(material), transform, layer], label="Ball")
     ecs.spawn([CameraComponent(camera), ActiveCamera()], label="Camera")
 
 
@@ -70,7 +72,7 @@ renderer = Renderer(10000, 50000, 128, (1024, 1024, 7), 48)
     .on("setup", setup)
     .on("window_event", process_event)
     .on("render_gui", gui)
-    .do(render_system, renderer)
+    .do(render_system, renderer, ["default"])
     .do(render_gui_system)
     .do(window_system, "Hello ECS")
 )
