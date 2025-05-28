@@ -1,15 +1,13 @@
-from typing import Callable
-
 from imgui_bundle import imgui
 from wgpu import GPUTexture
 from wgpu.utils.imgui import ImguiRenderer
 
-from wgut.scene.ecs import ECS, System
+from wgut.scene.ecs import ECS
 from wgut import get_device
 from wgut.scene.window_system import WindowSystemApp
 
 
-def render_gui_system(gui_func: Callable[[ECS], imgui.ImDrawData]) -> System:
+def render_gui_system(ecs: ECS):
     imgui_renderer: ImguiRenderer | None = None
 
     def render(_ecs: ECS, _screen: GPUTexture):
@@ -28,11 +26,15 @@ def render_gui_system(gui_func: Callable[[ECS], imgui.ImDrawData]) -> System:
         )
 
         def gui() -> imgui.ImDrawData:
-            return gui_func(ecs)
+            imgui.new_frame()
+            ecs.dispatch("render_gui")
+            imgui.end_frame()
+            imgui.render()
+            return imgui.get_draw_data()
 
         imgui_renderer.set_gui(gui)
 
-        ecs.on("render", render)
+        ecs.on("after_render", render)
         ecs.on("update", update)
 
-    return setup
+    ecs.on("setup", setup)
