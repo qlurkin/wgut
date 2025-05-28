@@ -25,7 +25,7 @@ class MaterialComponent:
 
 @dataclass
 class RenderStat:
-    stat: dict
+    stats: dict
 
 
 @dataclass
@@ -53,6 +53,7 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[str | Layer]):
             layer_content[layer.name].append((mesh, transform, material))
 
         clear_color = True
+        stats = {}
         for layer in layers:
             renderer.begin_frame()
             for mesh, transform, material in layer_content[layer]:
@@ -60,14 +61,13 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[str | Layer]):
             renderer.end_frame(
                 screen, camera, clear_color=clear_color, clear_depth=True
             )
+            stats[layer] = renderer.get_frame_stat()
             clear_color = False
 
         try:
             render_stat: RenderStat = ecs.query_one(RenderStat)
-            render_stat.stat = renderer.get_frame_stat()
+            render_stat.stats = stats
         except EntityNotFound:
-            stat = renderer.get_frame_stat()
-            if stat is not None:
-                ecs.spawn([RenderStat(stat)])
+            ecs.spawn([RenderStat(stats)])
 
     ecs.on("render", render)

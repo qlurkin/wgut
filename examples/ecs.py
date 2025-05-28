@@ -55,7 +55,7 @@ def process_event(ecs: ECS, event):
 def gui(ecs: ECS):
     try:
         r_stat: RenderStat = ecs.query_one(RenderStat)
-        stat = r_stat.stat
+        stat = r_stat.stats["default"]
         imgui.begin("Render Stats", None)
         imgui.text(f"Render Time: {stat['time']:.5f}s")
         imgui.text(f"Draw count: {stat['draw']}")
