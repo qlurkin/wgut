@@ -16,6 +16,7 @@ class WindowSystemApp(Window):
 
     def render(self, screen: GPUTexture):
         self.__ecs.dispatch("render", screen)
+        self.__ecs.dispatch("after_render", screen)
 
     def process_event(self, event):
         self.__ecs.dispatch("window_event", event)
