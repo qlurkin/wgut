@@ -47,7 +47,6 @@ class VertexBufferDescriptorsBuilder:
     def with_vertex_descriptor(self, vertex_descriptor: dict) -> Self:
         max_location = self.location
         for attr in vertex_descriptor["attributes"]:
-            attr["shader_location"] += self.location
             if attr["shader_location"] > max_location:
                 max_location = attr["shader_location"]
         self.buffers.append(vertex_descriptor)

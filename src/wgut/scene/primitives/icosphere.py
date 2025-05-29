@@ -1,6 +1,7 @@
 import numpy as np
 from math import pi, atan2, acos
 import numpy.typing as npt
+from pyglm.glm import array, int32
 from ..mesh import (
     Mesh,
     compute_tangent_vectors,
@@ -203,4 +204,4 @@ def icosphere(order: int) -> Mesh:
         bitangents,
     )
 
-    return Mesh(vertices, indices)
+    return Mesh(*vertices, array([int32(i) for i in indices]))

@@ -62,7 +62,7 @@ def gui(ecs: ECS):
         pass
 
 
-renderer = Renderer(10000, 50000, 128, (1024, 1024, 7), 48)
+renderer = Renderer(30000, 90000, 128, (1024, 1024, 7), 48)
 
 
 (

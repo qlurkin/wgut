@@ -3,16 +3,16 @@ from typing import Type
 from wgpu import BufferUsage, GPUTexture, TextureFormat, TextureUsage
 import numpy as np
 import random
+from pyglm.glm import array, float32
 
 from wgut.builders.texturebuilder import TextureBuilder
 from wgut.core import load_image, write_buffer, write_texture
 from wgut.scene.material import Material
 from wgut.scene.transform import Transform
 from wgut.scene.mesh import Mesh
-from wgut.scene.mesh import get_vertex_buffer_descriptor
+from wgut.scene.mesh import get_vertex_buffer_descriptors
 from wgut.auto_render_pipeline import AutoRenderPipeline
 from wgut.builders.bufferbuilder import BufferBuilder
-from wgut.builders.vertexbufferdescriptorsbuilder import VertexBufferDescriptorsBuilder
 from wgut.camera import Camera
 
 
@@ -69,6 +69,24 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 """
 
+POSITION_LOCATION = 0
+COLOR_LOCATION = 1
+UV_LOCATION = 2
+NORMAL_LOCATION = 3
+TANGENT_LOCATION = 4
+BITANGENT_LOCATION = 5
+MAT_ID_LOCATION = 6
+
+VERTEX_DATA_SIZE = {
+    POSITION_LOCATION: 4 * 4,
+    COLOR_LOCATION: 4 * 4,
+    UV_LOCATION: 4 * 2,
+    NORMAL_LOCATION: 4 * 3,
+    TANGENT_LOCATION: 4 * 3,
+    BITANGENT_LOCATION: 4 * 3,
+    MAT_ID_LOCATION: 4,
+}
+
 
 class Renderer:
     def __init__(
@@ -87,19 +105,52 @@ class Renderer:
         self.__index_buffer_size = index_buffer_size
         self.__material_buffer_size = material_buffer_size
 
-        vertex_buffer_descriptor = get_vertex_buffer_descriptor()
-        self.__vertex_buffer_descriptors = (
-            VertexBufferDescriptorsBuilder()
-            .with_vertex_descriptor(vertex_buffer_descriptor)
-            .build()
-        )
-        self.__vertex_size = vertex_buffer_descriptor["array_stride"]
-        self.__vertex_buffer = (
+        self.__vertex_buffer_descriptors = get_vertex_buffer_descriptors()
+
+        self.__vertex_buffers = []
+        self.__vertex_buffers.append(
             BufferBuilder()
-            .with_size(vertex_buffer_size * self.__vertex_size)
+            .with_size(vertex_buffer_size * 4 * 4)
             .with_usage(BufferUsage.VERTEX | BufferUsage.COPY_DST)
             .build()
         )
+        self.__vertex_buffers.append(
+            BufferBuilder()
+            .with_size(vertex_buffer_size * 4 * 4)
+            .with_usage(BufferUsage.VERTEX | BufferUsage.COPY_DST)
+            .build()
+        )
+        self.__vertex_buffers.append(
+            BufferBuilder()
+            .with_size(vertex_buffer_size * 4 * 2)
+            .with_usage(BufferUsage.VERTEX | BufferUsage.COPY_DST)
+            .build()
+        )
+        self.__vertex_buffers.append(
+            BufferBuilder()
+            .with_size(vertex_buffer_size * 4 * 3)
+            .with_usage(BufferUsage.VERTEX | BufferUsage.COPY_DST)
+            .build()
+        )
+        self.__vertex_buffers.append(
+            BufferBuilder()
+            .with_size(vertex_buffer_size * 4 * 3)
+            .with_usage(BufferUsage.VERTEX | BufferUsage.COPY_DST)
+            .build()
+        )
+        self.__vertex_buffers.append(
+            BufferBuilder()
+            .with_size(vertex_buffer_size * 4 * 3)
+            .with_usage(BufferUsage.VERTEX | BufferUsage.COPY_DST)
+            .build()
+        )
+        self.__vertex_buffers.append(
+            BufferBuilder()
+            .with_size(vertex_buffer_size * 4)
+            .with_usage(BufferUsage.VERTEX | BufferUsage.COPY_DST)
+            .build()
+        )
+
         self.__index_buffer = (
             BufferBuilder()
             .with_size(index_buffer_size * 4)
@@ -163,7 +214,8 @@ class Renderer:
             shader_source = SHADER_START + material_class.get_fragment()
             pipeline = AutoRenderPipeline(shader_source).with_depth_texture()
             pipeline.set_vertex_buffer_descriptors(self.__vertex_buffer_descriptors)
-            pipeline.set_vertex_buffer(0, self.__vertex_buffer)
+            for i in range(len(self.__vertex_buffers)):
+                pipeline.set_vertex_buffer(i, self.__vertex_buffers[i])
             pipeline.set_index_buffer(self.__index_buffer)
             material_class.set_bindings(
                 pipeline,
@@ -196,17 +248,18 @@ class Renderer:
         transform: Transform,
         material: Material,
     ):
+        t = time.perf_counter()
         vertex_data = mesh.get_transformed_vertices(transform.get_matrix())
         index_data = mesh.get_indices()
 
-        if len(vertex_data) > self.__vertex_buffer_size:
+        if len(vertex_data[0]) > self.__vertex_buffer_size:
             raise IndexError("Vertex Buffer Not Long Enough")
 
         if len(index_data) > self.__index_buffer_size:
             raise IndexError("index Buffer Not Long Enough")
 
         if (
-            self.__vertex_count + len(vertex_data) > self.__vertex_buffer_size
+            self.__vertex_count + len(vertex_data[0]) > self.__vertex_buffer_size
             or self.__index_count + len(index_data) > self.__index_buffer_size
             or (
                 material not in self.__material_index
@@ -253,20 +306,19 @@ class Renderer:
         else:
             material_index = self.__material_index[material]
 
-        vertex_data = np.hstack(
-            [
-                vertex_data,
-                np.full((len(vertex_data), 1), material_index, dtype=np.float32),
-            ]
+        vertex_data = vertex_data + (
+            array.from_numbers(float32, material_index).repeat(len(vertex_data[0])),
         )
 
         index_data = index_data + self.__vertex_count
 
-        buffer_offset = self.__vertex_count * self.__vertex_size
-        write_buffer(self.__vertex_buffer, vertex_data, buffer_offset)
+        for i in range(len(self.__vertex_buffers)):
+            buffer_offset = self.__vertex_count * VERTEX_DATA_SIZE[i]
+            write_buffer(self.__vertex_buffers[i], vertex_data[i], buffer_offset)
 
         buffer_offset = self.__index_count * 4
         write_buffer(self.__index_buffer, index_data, buffer_offset)
+        print("WRITE_BUFFERS:", time.perf_counter() - t)
 
         self.__vertex_count += len(vertex_data)
         self.__index_count += len(index_data)
