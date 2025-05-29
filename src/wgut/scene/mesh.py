@@ -281,3 +281,88 @@ class Mesh:
         )
 
         return transformed_vertices
+
+
+if __name__ == "__main__":
+    from glm import vec4, vec3, vec2, mat4, array, mat3, inverseTranspose
+    from wgut.scene.primitives.icosphere import icosphere
+    from wgut.scene.transform import Transform
+    from time import perf_counter
+
+    mesh = icosphere(5)
+    transform = Transform().set_translation(
+        np.array([[2.5, 1.0, 0.5]], dtype=np.float32).T
+    )
+    M = transform.get_matrix()
+    print(M)
+    M = mat4(
+        M[0][0],
+        M[1][0],
+        M[2][0],
+        M[3][0],
+        M[0][1],
+        M[1][1],
+        M[2][1],
+        M[3][1],
+        M[0][2],
+        M[1][2],
+        M[2][2],
+        M[3][2],
+        M[0][3],
+        M[1][3],
+        M[2][3],
+        M[3][3],
+    )
+    print(M)
+    print(mat3(M))
+
+    vertices = mesh.get_vertices()
+    positions = []
+    colors = []
+    normals = []
+    uvs = []
+    tangents = []
+    bitangents = []
+    for vertex in vertices:
+        position = vec4(vertex[0], vertex[1], vertex[2], vertex[3])  # type: ignore
+        color = vec4(vertex[4], vertex[5], vertex[6], vertex[7])  # type: ignore
+        uv = vec2(vertex[8], vertex[9])  # type: ignore
+        normal = vec3(vertex[10], vertex[11], vertex[12])  # type: ignore
+        tangent = vec3(vertex[13], vertex[14], vertex[15])  # type: ignore
+        bitangent = vec3(vertex[16], vertex[17], vertex[18])  # type: ignore
+        positions.append(position)
+        colors.append(position)
+        uvs.append(uv)
+        normals.append(normal)
+        tangents.append(tangent)
+        bitangents.append(bitangent)
+
+    positions = array(positions)
+    colors = array(colors)
+    uvs = array(uvs)
+    normals = array(normals)
+    tangents = array(tangents)
+    bitangents = array(bitangents)
+
+    n = 100
+    t = perf_counter()
+    for _ in range(n):
+        res = mesh.get_transformed_vertices(transform.get_matrix())
+    print((perf_counter() - t) / n)
+    print(res[1000])  # type: ignore
+
+    n = 100
+    t = perf_counter()
+    for _ in range(n):
+        N = inverseTranspose(mat3(M))
+
+        p = M * positions
+        no = N * normals
+        ta = N * tangents
+        bi = N * bitangents
+
+    print((perf_counter() - t) / n)
+    print(p[1000])  # type: ignore
+    print(no[1000])  # type: ignore
+    print(ta[1000])  # type: ignore
+    print(bi[1000])  # type: ignore
