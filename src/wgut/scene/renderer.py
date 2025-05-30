@@ -3,7 +3,7 @@ from typing import Type
 from wgpu import BufferUsage, GPUTexture, TextureFormat, TextureUsage
 import numpy as np
 import random
-from pyglm.glm import array, float32
+from pyglm.glm import array, float32, int32, vec4
 
 from wgut.builders.texturebuilder import TextureBuilder
 from wgut.core import load_image, write_buffer, write_texture
@@ -209,6 +209,13 @@ class Renderer:
             .build()
         )
 
+        self.__camera_buffer = (
+            BufferBuilder()
+            .with_size(4 * 4 * 4 + 4 * 4)
+            .with_usage(BufferUsage.UNIFORM | BufferUsage.COPY_DST)
+            .build()
+        )
+
     def create_pipeline(self, material_class: Type[Material]):
         if material_class not in self.__pipelines:
             shader_source = SHADER_START + material_class.get_fragment()
@@ -217,6 +224,8 @@ class Renderer:
             for i in range(len(self.__vertex_buffers)):
                 pipeline.set_vertex_buffer(i, self.__vertex_buffers[i])
             pipeline.set_index_buffer(self.__index_buffer)
+            pipeline.set_binding_buffer(0, 0, self.__camera_buffer)
+            pipeline.set_binding_buffer(0, 1, self.__lights_buffer)
             material_class.set_bindings(
                 pipeline,
                 self.__material_buffer,
@@ -347,19 +356,16 @@ class Renderer:
         view_matrix, proj_matrix = camera.get_matrices(
             output_texture.width / output_texture.height
         )
-        camera_position = np.hstack([camera.get_position(), [1.0]]).astype(np.float32)
-        camera_matrix = np.array(proj_matrix @ view_matrix, dtype=np.float32)
+        camera_position = vec4(camera.get_position(), 1.0)  # type: ignore
+        camera_matrix = proj_matrix * view_matrix
 
-        # Must send transpose version of matrices, because GPU expect matrices in column major order
-        camera_data = np.vstack(
-            [np.ascontiguousarray(camera_matrix.T), camera_position]
-        )
+        camera_data = camera_matrix.to_bytes() + camera_position.to_bytes()
+
+        write_buffer(self.__camera_buffer, camera_data)
 
         for material_class in self.__meshes:
             pipeline = self.__pipelines[material_class]
             pipeline.set_depth_texture(self.__depth_texture)
-            pipeline.set_binding_array(0, 0, camera_data)
-            pipeline.set_binding_buffer(0, 1, self.__lights_buffer)
             for mesh, transform, material in self.__meshes[material_class]:
                 self.__add_mesh(pipeline, output_texture, mesh, transform, material)
             self.__draw(pipeline, output_texture)
@@ -377,7 +383,8 @@ class Renderer:
     def __draw(self, pipeline: AutoRenderPipeline, output_texture: GPUTexture):
         if len(self.__texture_ids) > 0:
             write_buffer(
-                self.__texture_ids_buffer, np.array(self.__texture_ids, dtype=np.int32)
+                self.__texture_ids_buffer,
+                array.from_numbers(int32, *self.__texture_ids),
             )
 
         pipeline.render(
