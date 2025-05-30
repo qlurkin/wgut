@@ -29,8 +29,8 @@ class MyApp(Window):
 
         self.pipeline.set_vertex_array(0, vertex_data)
 
-        image0 = load_image("./wood.jpg")
-        image1 = load_image("./cloth.jpg")
+        image0 = load_image("./textures/Wood_025_basecolor.jpg")
+        image1 = load_image("./textures/Substance_Graph_BaseColor.jpg")
 
         texture = (
             TextureBuilder()

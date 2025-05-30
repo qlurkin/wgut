@@ -24,7 +24,9 @@ class MyApp(Window):
         self.pipeline.set_index_array(indices)
         self.indices_count = len(indices)
 
-        diffuse_texture = TextureBuilder().from_file("wood.jpg")
+        diffuse_texture = TextureBuilder().from_file(
+            "./textures/Wood_025_basecolor.jpg"
+        )
 
         self.pipeline.set_binding_texture(1, 0, diffuse_texture)
         self.pipeline.set_binding_sampler(1, 1)

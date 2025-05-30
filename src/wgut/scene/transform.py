@@ -10,6 +10,7 @@ class Transform:
     ):
         if matrix is None:
             matrix = identity(mat4)
+        print(matrix)
         self.__matrix = matrix
         self.__children = []
         self.__parent = parent
@@ -18,7 +19,7 @@ class Transform:
         return self.__matrix
 
     def get_normal_matrix(self) -> mat3:
-        return inverseTranspose(mat3(self.__matrix))
+        return inverseTranspose(mat3(self.__matrix))  # type: ignore
 
     def add_child(self, child: Self):
         self.__children.append(child)

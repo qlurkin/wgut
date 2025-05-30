@@ -23,7 +23,9 @@ class MyApp(Window):
 
         self.pipeline.set_vertex_array(0, vertex_data)
 
-        diffuse_texture = TextureBuilder().from_file("wood.jpg")
+        diffuse_texture = TextureBuilder().from_file(
+            "./textures/Wood_025_basecolor.jpg"
+        )
 
         self.pipeline.set_binding_texture(0, 0, diffuse_texture)
         self.pipeline.set_binding_sampler(0, 1)

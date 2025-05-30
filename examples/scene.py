@@ -1,9 +1,9 @@
 # imgui imports first
 from imgui_bundle import imgui
+from pyglm.glm import translate, vec3
 from wgpu.utils.imgui import ImguiRenderer
 from wgpu import GPUTexture
 from wgut import Window, get_device
-import numpy as np
 from wgut.scene.primitives.icosphere import icosphere
 from wgut.scene.renderer import Renderer
 from wgut.scene.transform import Transform
@@ -52,15 +52,12 @@ class MyApp(Window):
         self.frame_time = delta_time
 
     def render(self, screen: GPUTexture):
-        translation1 = Transform().set_translation(
-            np.array([[2.5, 0, 0]], dtype=np.float32).T
-        )
-        translation2 = Transform().set_translation(
-            np.array([[-2.5, 0, 0]], dtype=np.float32).T
-        )
+        translation0 = Transform(translate(vec3(0, 0, 2.5)))
+        translation1 = Transform(translate(vec3(2.5, 0, 0)))
+        translation2 = Transform(translate(vec3(-2.5, 0, 0)))
 
         self.renderer.begin_frame()
-        self.renderer.add_mesh(self.mesh, Transform(), self.material1)
+        self.renderer.add_mesh(self.mesh, translation0, self.material1)
         self.renderer.add_mesh(self.mesh, translation1, self.material2)
         self.renderer.add_mesh(self.mesh, translation2, self.material3)
         self.renderer.end_frame(screen, self.camera)

@@ -248,7 +248,6 @@ class Renderer:
         transform: Transform,
         material: Material,
     ):
-        t = time.perf_counter()
         vertex_data = mesh.get_transformed_vertices(transform.get_matrix())
         index_data = mesh.get_indices()
 
@@ -318,9 +317,8 @@ class Renderer:
 
         buffer_offset = self.__index_count * 4
         write_buffer(self.__index_buffer, index_data, buffer_offset)
-        print("WRITE_BUFFERS:", time.perf_counter() - t)
 
-        self.__vertex_count += len(vertex_data)
+        self.__vertex_count += len(vertex_data[0])
         self.__index_count += len(index_data)
         self.__frame_mesh_count += 1
         self.__frame_triangle_count += len(index_data) // 3
