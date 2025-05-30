@@ -1,3 +1,4 @@
+from pyglm.glm import array
 from wgut.reflection import Reflection
 from wgut.builders import (
     BufferBuilder,
@@ -82,10 +83,10 @@ class AutoRenderPipeline:
         self,
         group: int,
         binding: int,
-        array: npt.NDArray | bytes,
+        arr: npt.NDArray | bytes | array,
         additional_usages: BufferUsage | int = 0,
     ) -> GPUBuffer:
-        builder = BufferBuilder().from_data(array)
+        builder = BufferBuilder().from_data(arr)
         if self.__reflection.get_binding_space(group, binding) == "uniform":
             builder.with_usage(BufferUsage.UNIFORM | additional_usages)  # type: ignore
         else:

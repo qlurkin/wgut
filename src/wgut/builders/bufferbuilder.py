@@ -16,9 +16,15 @@ class BufferBuilder(BuilderBase):
         self.size = None
         self.usages = None
 
-    def from_data(self, data: npt.NDArray | bytes | memoryview) -> Self:
-        data = memoryview(data)
-        self.with_size(data.nbytes)
+    def from_data(self, data: npt.NDArray | bytes | array | memoryview) -> Self:
+        if isinstance(data, array):
+            data = data.to_bytes()
+        size = 0
+        if isinstance(data, bytes):
+            size = len(data)
+        else:
+            size = data.nbytes
+        self.with_size(size)
         self.data = data
         return self
 
