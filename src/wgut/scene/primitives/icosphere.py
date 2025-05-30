@@ -1,39 +1,28 @@
 import numpy as np
 from math import pi, atan2, acos
-import numpy.typing as npt
-from pyglm.glm import array, int32
+from pyglm.glm import array, int32, normalize, vec2, vec3, vec4
 from ..mesh import (
     Mesh,
     compute_tangent_vectors,
     compute_bitangent_vectors,
-    vertex,
 )
 
 
-# TODO: Use GLM
-def compute_spherical_uv(position: npt.NDArray) -> npt.NDArray:
-    x, y, z = position
-    u = (np.atan2(x, z) + np.pi) / np.pi
-    v = np.acos(y / np.linalg.norm(position)) / np.pi
-    return np.array([u, v])
-
-
-# TODO: Use GLM
-def icosphere_positions_and_indices(order: int) -> tuple[npt.NDArray, npt.NDArray]:
+def icosphere_positions_and_indices(order: int) -> tuple[array[vec3], array[int32]]:
     f = (1.0 + np.sqrt(5.0)) / 2.0
     positions = [
-        np.array([-1, f, 0], dtype=np.float32),
-        np.array([1, f, 0], dtype=np.float32),
-        np.array([-1, -f, 0], dtype=np.float32),
-        np.array([1, -f, 0], dtype=np.float32),
-        np.array([0, -1, f], dtype=np.float32),
-        np.array([0, 1, f], dtype=np.float32),
-        np.array([0, -1, -f], dtype=np.float32),
-        np.array([0, 1, -f], dtype=np.float32),
-        np.array([f, 0, -1], dtype=np.float32),
-        np.array([f, 0, 1], dtype=np.float32),
-        np.array([-f, 0, -1], dtype=np.float32),
-        np.array([-f, 0, 1], dtype=np.float32),
+        vec3(-1, f, 0),
+        vec3(1, f, 0),
+        vec3(-1, -f, 0),
+        vec3(1, -f, 0),
+        vec3(0, -1, f),
+        vec3(0, 1, f),
+        vec3(0, -1, -f),
+        vec3(0, 1, -f),
+        vec3(f, 0, -1),
+        vec3(f, 0, 1),
+        vec3(-f, 0, -1),
+        vec3(-f, 0, 1),
     ]
 
     indices = [
@@ -141,20 +130,19 @@ def icosphere_positions_and_indices(order: int) -> tuple[npt.NDArray, npt.NDArra
     for _ in range(order):
         indices = subdivide(indices)
 
-    positions /= np.linalg.norm(positions, axis=1, keepdims=True)
+    # positions /= np.linalg.norm(positions, axis=1, keepdims=True)
 
-    return positions, np.array(indices, dtype=np.uint32)
+    return array(positions).map(normalize), array.from_numbers(int32, *indices)
 
 
-# TODO: Use GLM
-def icosphere_with_uv(order: int):
+def icosphere_with_uv(order: int) -> tuple[array[vec3], array[vec2], array[int32]]:
     positions, indices = icosphere_positions_and_indices(order)
 
-    def compute_uv(pos):
+    def compute_uv(pos: vec3):
         x, y, z = pos
         u = (atan2(z, x) / (2 * pi)) % 1.0  # [0, 1)
         v = acos(y) / pi  # [0, 1]
-        return np.array([u, v], dtype=np.float32)
+        return vec2(u, v)
 
     vertex_map = {}
     final_positions = []
@@ -166,7 +154,7 @@ def icosphere_with_uv(order: int):
         tri_indices = []
         tri_uvs = [compute_uv(positions[v]) for v in tri]
 
-        us = [uv[0] for uv in tri_uvs]
+        us = [uv.x for uv in tri_uvs]
         if max(us) - min(us) > 0.5:
             for j in range(3):
                 if us[j] < 0.5:
@@ -174,7 +162,7 @@ def icosphere_with_uv(order: int):
 
         for j in range(3):
             v_idx = tri[j]
-            uv = tuple(tri_uvs[j])
+            uv = vec2(tri_uvs[j])
             key = (v_idx, uv)
             if key not in vertex_map:
                 vertex_map[key] = len(final_positions)
@@ -185,27 +173,25 @@ def icosphere_with_uv(order: int):
         final_indices.extend(tri_indices)
 
     return (
-        np.array(final_positions, dtype=np.float32),
-        np.array(final_uvs, dtype=np.float32),
-        np.array(final_indices, dtype=np.uint32),
+        array(final_positions),
+        array(final_uvs),
+        array.from_numbers(int32, *final_indices),
     )
 
 
-# TODO: Use GLM
 def icosphere(order: int) -> Mesh:
     positions, uvs, indices = icosphere_with_uv(order)
 
-    normals = positions.copy()
+    normals = array(positions)
     tangents = compute_tangent_vectors(positions, uvs, normals, indices)
     bitangents = compute_bitangent_vectors(normals, tangents)
 
-    vertices = vertex(
-        positions,
-        np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32),
+    return Mesh(
+        positions.map(lambda p: vec4(p, 1.0)),  # type: ignore
+        array(vec4(1.0)).repeat(len(positions)),
         uvs,
         normals,
         tangents,
         bitangents,
+        indices,
     )
-
-    return Mesh(*vertices, array([int32(i) for i in indices]))

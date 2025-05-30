@@ -3,7 +3,20 @@ from __future__ import annotations
 import numpy.typing as npt
 import numpy as np
 import wgpu
-from pyglm.glm import vec4, vec3, vec2, array, mat4, mat3, int32, inverseTranspose
+from pyglm.glm import (
+    cross,
+    dot,
+    length,
+    normalize,
+    vec4,
+    vec3,
+    vec2,
+    array,
+    mat4,
+    mat3,
+    int32,
+    inverseTranspose,
+)
 
 from wgut.builders.vertexbufferdescriptorsbuilder import VertexBufferDescriptorsBuilder
 
@@ -164,44 +177,41 @@ def get_vertex_buffer_descriptors():
     )
 
 
-# TODO: use glm
-def compute_triangle_normal(
-    p1: npt.NDArray, p2: npt.NDArray, p3: npt.NDArray
-) -> npt.NDArray:
+def compute_triangle_normal(p1: vec3, p2: vec3, p3: vec3) -> vec3:
     p_1_2 = p2 - p1
     p_1_3 = p3 - p1
 
-    res = np.cross(p_1_2, p_1_3)
-    return res / np.linalg.norm(res)
+    res = cross(p_1_2, p_1_3)
+    return normalize(res)
 
 
-# TODO: use glm
 def compute_triangle_tangent(
-    p1: npt.NDArray,
-    uv1: npt.NDArray,
-    p2: npt.NDArray,
-    uv2: npt.NDArray,
-    p3: npt.NDArray,
-    uv3: npt.NDArray,
-) -> tuple[npt.NDArray, npt.NDArray]:
+    p1: vec3,
+    uv1: vec2,
+    p2: vec3,
+    uv2: vec2,
+    p3: vec3,
+    uv3: vec2,
+) -> tuple[vec3, vec3]:
     p_1_2 = p2 - p1
     p_1_3 = p3 - p1
 
     tc_1_2 = uv2 - uv1
     tc_1_3 = uv3 - uv1
 
-    tangent = tc_1_3[1] * p_1_2 - tc_1_2[1] * p_1_3
-    tangent /= np.linalg.norm(tangent)
+    tangent = tc_1_3.y * p_1_2 - tc_1_2.y * p_1_3
+    tangent = normalize(tangent)
 
-    bitangent = -tc_1_3[0] * p_1_2 + tc_1_2[0] * p_1_3
-    bitangent /= np.linalg.norm(bitangent)
+    bitangent = -tc_1_3.x * p_1_2 + tc_1_2.x * p_1_3
+    bitangent = normalize(bitangent)
 
     return tangent, bitangent
 
 
-# TODO: use glm
-def compute_normal_vectors(positions: npt.NDArray, indices: npt.NDArray) -> npt.NDArray:
-    normals = np.zeros((positions.shape[0], 3))
+def compute_normal_vectors(
+    positions: array[vec3], indices: array[int32]
+) -> array[vec3]:
+    normals = array(vec3(0.0)).repeat(len(positions))
 
     for i in range(0, len(indices), 3):
         index1 = indices[i]
@@ -216,15 +226,17 @@ def compute_normal_vectors(positions: npt.NDArray, indices: npt.NDArray) -> npt.
         normals[index2] += normal
         normals[index3] += normal
 
-    normals /= np.linalg.norm(normals, axis=1, keepdims=True)
+    normals = normals.map(normalize)
     return normals
 
 
-# TODO: use glm
 def compute_tangent_vectors(
-    positions: npt.NDArray, uvs: npt.NDArray, normals: npt.NDArray, indices: npt.NDArray
-) -> npt.NDArray:
-    tangents = np.zeros((positions.shape[0], 3)).astype(np.float32)
+    positions: array[vec3],
+    uvs: array[vec2],
+    normals: array[vec3],
+    indices: array[int32],
+) -> array[vec3]:
+    tangents = array(vec3(0.0)).repeat(len(positions))
 
     for i in range(0, len(indices), 3):
         index1 = indices[i]
@@ -246,11 +258,11 @@ def compute_tangent_vectors(
 
     for i in range(len(tangents)):
         t = tangents[i]
-        norm = np.linalg.norm(t)
+        norm = length(t)
         if norm != 0:
-            t /= np.linalg.norm(t)
-            t -= (normals[i] @ t) * normals[i]
-            t /= np.linalg.norm(t)
+            t /= norm
+            t -= dot(normals[i], t) * normals[i]
+            t = normalize(t)
         else:
             print("undefined tangent at position", positions[i])
             t = normals[i]
@@ -260,32 +272,27 @@ def compute_tangent_vectors(
     return tangents
 
 
-# TODO: use glm
 def compute_bitangent_vectors(
-    normals: npt.NDArray, tangents: npt.NDArray
-) -> npt.NDArray:
+    normals: array[vec3], tangents: array[vec3]
+) -> array[vec3]:
     bitangents = []
     for i in range(len(normals)):
-        if np.array_equal(normals[i], tangents[i]):
-            bitangents.append(normals[i].copy())
+        if normals[i] == tangents[i]:
+            bitangents.append(vec3(normals[i]))
             print(
                 f"degenerate tangent space for normal {normals[i]} and tangent {tangents[i]}"
             )
         else:
-            bitangents.append(np.cross(normals[i], tangents[i]))
-    return np.array(bitangents, dtype=np.float32)
+            bitangents.append(cross(normals[i], tangents[i]))
+    return array(bitangents)
 
 
-# TODO: use glm
-def compute_line_list(triangle_list: npt.NDArray) -> npt.NDArray:
+def compute_line_list(triangle_list: array[int32]) -> array[int32]:
     lines = set()
 
     def add_line(i1: int, i2: int):
         a = min(i1, i2)
         b = max(i1, i2)
-
-        # Cantor's Pairing Function
-        # key = ((a + b) * (a + b + 1) / 2) + a
 
         lines.add((a, b))
 
@@ -302,7 +309,7 @@ def compute_line_list(triangle_list: npt.NDArray) -> npt.NDArray:
         res.append(line[0])
         res.append(line[1])
 
-    return np.array(res)
+    return array(res)
 
 
 class Mesh:
