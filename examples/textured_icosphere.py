@@ -1,3 +1,4 @@
+from pyglm.glm import array
 from wgpu import GPUTexture, VertexFormat
 from wgut import TextureBuilder, AutoRenderPipeline, Window, load_file
 from wgut.orbit_camera import OrbitCamera
@@ -37,9 +38,9 @@ class MyApp(Window):
         )
 
         # Must send transpose version of matrices, because GPU expect matrices in column major order
-        camera_data = np.array([view_matrix.T, proj_matrix.T])
+        camera_data = array(view_matrix, proj_matrix)
 
-        self.pipeline.set_binding_array(0, 0, camera_data)
+        self.pipeline.set_binding_array(0, 0, camera_data.to_bytes())
 
         self.pipeline.render(screen, self.indices_count)
 

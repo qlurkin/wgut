@@ -82,7 +82,7 @@ class AutoRenderPipeline:
         self,
         group: int,
         binding: int,
-        array: npt.NDArray,
+        array: npt.NDArray | bytes,
         additional_usages: BufferUsage | int = 0,
     ) -> GPUBuffer:
         builder = BufferBuilder().from_data(array)
