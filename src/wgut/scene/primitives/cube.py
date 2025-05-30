@@ -1,3 +1,4 @@
+from pyglm.glm import array, int32
 from ..mesh import (
     Mesh,
     vertex,
@@ -5,6 +6,7 @@ from ..mesh import (
 import numpy as np
 
 
+# TODO: Use GLM
 def cube(size=1.0) -> Mesh:
     hs = size / 2  # half-size
 
@@ -123,4 +125,4 @@ def cube(size=1.0) -> Mesh:
         np.array(tangents, dtype=np.float32),
         np.array(bitangents, dtype=np.float32),
     )
-    return Mesh(vertices, np.array(indices, dtype=np.int32))
+    return Mesh(*vertices, array.from_numbers(int32, *indices))

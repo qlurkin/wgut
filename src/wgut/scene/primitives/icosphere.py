@@ -10,6 +10,7 @@ from ..mesh import (
 )
 
 
+# TODO: Use GLM
 def compute_spherical_uv(position: npt.NDArray) -> npt.NDArray:
     x, y, z = position
     u = (np.atan2(x, z) + np.pi) / np.pi
@@ -17,6 +18,7 @@ def compute_spherical_uv(position: npt.NDArray) -> npt.NDArray:
     return np.array([u, v])
 
 
+# TODO: Use GLM
 def icosphere_positions_and_indices(order: int) -> tuple[npt.NDArray, npt.NDArray]:
     f = (1.0 + np.sqrt(5.0)) / 2.0
     positions = [
@@ -144,6 +146,7 @@ def icosphere_positions_and_indices(order: int) -> tuple[npt.NDArray, npt.NDArra
     return positions, np.array(indices, dtype=np.uint32)
 
 
+# TODO: Use GLM
 def icosphere_with_uv(order: int):
     positions, indices = icosphere_positions_and_indices(order)
 
@@ -188,6 +191,7 @@ def icosphere_with_uv(order: int):
     )
 
 
+# TODO: Use GLM
 def icosphere(order: int) -> Mesh:
     positions, uvs, indices = icosphere_with_uv(order)
 

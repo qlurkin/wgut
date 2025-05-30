@@ -1,9 +1,11 @@
 import math
 import numpy as np
+from pyglm.glm import array, int32
 
 from wgut.scene.mesh import Mesh, vertex
 
 
+# TODO: Use GLM
 def cylinder(radius=1.0, height=2.0, segments=32):
     positions = []
     normals = []
@@ -137,4 +139,4 @@ def cylinder(radius=1.0, height=2.0, segments=32):
         np.array(tangents, dtype=np.float32),
         np.array(bitangents, dtype=np.float32),
     )
-    return Mesh(vertices, np.array(indices, dtype=np.int32))
+    return Mesh(*vertices, array.from_numbers(int32, *indices))

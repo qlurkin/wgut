@@ -1,4 +1,6 @@
 import math
+
+from pyglm.glm import array, int32
 from ..mesh import (
     Mesh,
     vertex,
@@ -6,6 +8,7 @@ from ..mesh import (
 import numpy as np
 
 
+# TODO: Use GLM
 def torus(
     radius_major=1.0, radius_minor=0.3, segments_major=32, segments_minor=16
 ) -> Mesh:
@@ -73,4 +76,4 @@ def torus(
         np.array(tangents, dtype=np.float32),
         np.array(bitangents, dtype=np.float32),
     )
-    return Mesh(vertices, np.array(indices, dtype=np.int32))
+    return Mesh(*vertices, array.from_numbers(int32, *indices))
