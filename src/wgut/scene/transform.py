@@ -10,7 +10,6 @@ class Transform:
     ):
         if matrix is None:
             matrix = identity(mat4)
-        print(matrix)
         self.__matrix = matrix
         self.__children = []
         self.__parent = parent
