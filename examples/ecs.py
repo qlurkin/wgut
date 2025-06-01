@@ -28,7 +28,7 @@ def setup(ecs: ECS):
     # mesh = cone()
     mesh = torus()
     # mesh = cube()
-    # mesh = cylinder()
+    mesh = cylinder()
     material = PbrMaterial(
         "./textures/Wood_025_basecolor.jpg",
         "./textures/Wood_025_normal.jpg",
