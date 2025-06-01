@@ -1,9 +1,5 @@
-from pyglm.glm import array, int32
-from ..mesh import (
-    Mesh,
-    vertex,
-)
-import numpy as np
+from pyglm.glm import array, int32, vec2, vec3, vec4
+from ..mesh import Mesh
 
 
 # TODO: Use GLM
@@ -13,75 +9,81 @@ def cube(size=1.0) -> Mesh:
     faces = [
         # Front Face (+Z)
         {
-            "normal": (0, 0, 1),
-            "tangent": (1, 0, 0),
-            "bitangent": (0, 1, 0),
-            "verts": [
-                (-hs, -hs, +hs, 0, 0),
-                (+hs, -hs, +hs, 1, 0),
-                (+hs, +hs, +hs, 1, 1),
-                (-hs, +hs, +hs, 0, 1),
-            ],
+            "normal": vec3(0, 0, 1),
+            "tangent": vec3(1, 0, 0),
+            "bitangent": vec3(0, 1, 0),
+            "positions": array(
+                vec4(-hs, -hs, +hs, 1.0),
+                vec4(+hs, -hs, +hs, 1.0),
+                vec4(+hs, +hs, +hs, 1.0),
+                vec4(-hs, +hs, +hs, 1.0),
+            ),
+            "uvs": array(vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1)),
         },
         # Rear Face (-Z)
         {
-            "normal": (0, 0, -1),
-            "tangent": (-1, 0, 0),
-            "bitangent": (0, 1, 0),
-            "verts": [
-                (+hs, -hs, -hs, 0, 0),
-                (-hs, -hs, -hs, 1, 0),
-                (-hs, +hs, -hs, 1, 1),
-                (+hs, +hs, -hs, 0, 1),
-            ],
+            "normal": vec3(0, 0, -1),
+            "tangent": vec3(-1, 0, 0),
+            "bitangent": vec3(0, 1, 0),
+            "positions": array(
+                vec4(+hs, -hs, -hs, 1.0),
+                vec4(-hs, -hs, -hs, 1.0),
+                vec4(-hs, +hs, -hs, 1.0),
+                vec4(+hs, +hs, -hs, 1.0),
+            ),
+            "uvs": array(vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1)),
         },
         # Left Face (-X)
         {
-            "normal": (-1, 0, 0),
-            "tangent": (0, 0, -1),
-            "bitangent": (0, 1, 0),
-            "verts": [
-                (-hs, -hs, -hs, 0, 0),
-                (-hs, -hs, +hs, 1, 0),
-                (-hs, +hs, +hs, 1, 1),
-                (-hs, +hs, -hs, 0, 1),
-            ],
+            "normal": vec3(-1, 0, 0),
+            "tangent": vec3(0, 0, -1),
+            "bitangent": vec3(0, 1, 0),
+            "positions": array(
+                vec4(-hs, -hs, -hs, 1.0),
+                vec4(-hs, -hs, +hs, 1.0),
+                vec4(-hs, +hs, +hs, 1.0),
+                vec4(-hs, +hs, -hs, 1.0),
+            ),
+            "uvs": array(vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1)),
         },
         # Right Face (+X)
         {
-            "normal": (1, 0, 0),
-            "tangent": (0, 0, 1),
-            "bitangent": (0, 1, 0),
-            "verts": [
-                (+hs, -hs, +hs, 0, 0),
-                (+hs, -hs, -hs, 1, 0),
-                (+hs, +hs, -hs, 1, 1),
-                (+hs, +hs, +hs, 0, 1),
-            ],
+            "normal": vec3(1, 0, 0),
+            "tangent": vec3(0, 0, 1),
+            "bitangent": vec3(0, 1, 0),
+            "positions": array(
+                vec4(+hs, -hs, +hs, 1.0),
+                vec4(+hs, -hs, -hs, 1.0),
+                vec4(+hs, +hs, -hs, 1.0),
+                vec4(+hs, +hs, +hs, 1.0),
+            ),
+            "uvs": array(vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1)),
         },
         # Top Face (+Y)
         {
-            "normal": (0, 1, 0),
-            "tangent": (1, 0, 0),
-            "bitangent": (0, 0, -1),
-            "verts": [
-                (-hs, +hs, +hs, 0, 0),
-                (+hs, +hs, +hs, 1, 0),
-                (+hs, +hs, -hs, 1, 1),
-                (-hs, +hs, -hs, 0, 1),
-            ],
+            "normal": vec3(0, 1, 0),
+            "tangent": vec3(1, 0, 0),
+            "bitangent": vec3(0, 0, -1),
+            "positions": array(
+                vec4(-hs, +hs, +hs, 1.0),
+                vec4(+hs, +hs, +hs, 1.0),
+                vec4(+hs, +hs, -hs, 1.0),
+                vec4(-hs, +hs, -hs, 1.0),
+            ),
+            "uvs": array(vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1)),
         },
         # Bottom Face (-Y)
         {
-            "normal": (0, -1, 0),
-            "tangent": (1, 0, 0),
-            "bitangent": (0, 0, 1),
-            "verts": [
-                (-hs, -hs, -hs, 0, 0),
-                (+hs, -hs, -hs, 1, 0),
-                (+hs, -hs, +hs, 1, 1),
-                (-hs, -hs, +hs, 0, 1),
-            ],
+            "normal": vec3(0, -1, 0),
+            "tangent": vec3(1, 0, 0),
+            "bitangent": vec3(0, 0, 1),
+            "positions": array(
+                vec4(-hs, -hs, -hs, 1.0),
+                vec4(+hs, -hs, -hs, 1.0),
+                vec4(+hs, -hs, +hs, 1.0),
+                vec4(-hs, -hs, +hs, 1.0),
+            ),
+            "uvs": array(vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1)),
         },
     ]
 
@@ -92,15 +94,15 @@ def cube(size=1.0) -> Mesh:
     uvs = []
     indices = []
 
-    for _, face in enumerate(faces):
+    for face in faces:
         normal = face["normal"]
         tangent = face["tangent"]
         bitangent = face["bitangent"]
 
         base_index = len(positions)
-        for v in face["verts"]:
-            pos = v[:3]
-            uv = v[3:]
+        for i in range(4):
+            pos = face["positions"][i]
+            uv = face["uvs"][i]
 
             positions.append(pos)
             normals.append(normal)
@@ -117,12 +119,12 @@ def cube(size=1.0) -> Mesh:
             base_index + 0,
         ]
 
-    vertices = vertex(
-        np.array(positions, dtype=np.float32),
-        np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32),
-        np.array(uvs, dtype=np.float32),
-        np.array(normals, dtype=np.float32),
-        np.array(tangents, dtype=np.float32),
-        np.array(bitangents, dtype=np.float32),
+    return Mesh(
+        array(positions),
+        array(vec4(1.0)).repeat(len(positions)),
+        array(uvs),
+        array(normals),
+        array(tangents),
+        array(bitangents),
+        array.from_numbers(int32, *indices),
     )
-    return Mesh(*vertices, array.from_numbers(int32, *indices))
