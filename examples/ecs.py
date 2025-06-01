@@ -17,7 +17,6 @@ from wgut.scene.primitives.icosphere import icosphere
 from wgut.scene.primitives.cube import cube
 from wgut.scene.primitives.torus import torus
 from wgut.scene.primitives.cone import cone
-from wgut.scene.primitives.new_cone import cone as cone2
 from wgut.scene.primitives.cylinder import cylinder
 from wgut.scene.transform import Transform
 
@@ -29,7 +28,7 @@ def setup(ecs: ECS):
     mesh = torus()
     mesh = cube()
     mesh = cylinder()
-    mesh = cone2()
+    mesh = cone()
     material = PbrMaterial(
         "./textures/Wood_025_basecolor.jpg",
         "./textures/Wood_025_normal.jpg",
