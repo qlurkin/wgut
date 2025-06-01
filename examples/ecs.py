@@ -26,8 +26,8 @@ default_layer = Layer()
 def setup(ecs: ECS):
     mesh = icosphere(3)
     # mesh = cone()
-    # mesh = torus()
-    mesh = cube()
+    mesh = torus()
+    # mesh = cube()
     # mesh = cylinder()
     material = PbrMaterial(
         "./textures/Wood_025_basecolor.jpg",

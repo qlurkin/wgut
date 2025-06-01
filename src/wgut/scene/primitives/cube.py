@@ -2,7 +2,6 @@ from pyglm.glm import array, int32, vec2, vec3, vec4
 from ..mesh import Mesh
 
 
-# TODO: Use GLM
 def cube(size=1.0) -> Mesh:
     hs = size / 2  # half-size
 

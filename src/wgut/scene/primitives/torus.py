@@ -1,14 +1,9 @@
 import math
 
-from pyglm.glm import array, int32
-from ..mesh import (
-    Mesh,
-    vertex,
-)
-import numpy as np
+from pyglm.glm import array, cross, int32, vec2, vec3, vec4
+from ..mesh import Mesh
 
 
-# TODO: Use GLM
 def torus(
     radius_major=1.0, radius_minor=0.3, segments_major=32, segments_minor=16
 ) -> Mesh:
@@ -34,26 +29,23 @@ def torus(
             x = (radius_major + radius_minor * cos_phi) * cos_theta
             y = (radius_major + radius_minor * cos_phi) * sin_theta
             z = radius_minor * sin_phi
-            position = (x, y, z)
+            position = vec4(x, y, z, 1.0)
 
             nx = cos_phi * cos_theta
             ny = cos_phi * sin_theta
             nz = sin_phi
-            normal = (nx, ny, nz)
+            normal = vec3(nx, ny, nz)
 
             tx = -sin_theta
             ty = cos_theta
             tz = 0
-            tangent = (tx, ty, tz)
+            tangent = vec3(tx, ty, tz)
 
-            btx = normal[1] * tangent[2] - normal[2] * tangent[1]
-            bty = normal[2] * tangent[0] - normal[0] * tangent[2]
-            btz = normal[0] * tangent[1] - normal[1] * tangent[0]
-            bitangent = (btx, bty, btz)
+            bitangent = cross(normal, tangent)
 
             positions.append(position)
             normals.append(normal)
-            uvs.append((u, v))
+            uvs.append(vec2(u, v))
             tangents.append(tangent)
             bitangents.append(bitangent)
 
@@ -68,12 +60,12 @@ def torus(
             indices += [a, b, d]
             indices += [b, c, d]
 
-    vertices = vertex(
-        np.array(positions, dtype=np.float32),
-        np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32),
-        np.array(uvs, dtype=np.float32),
-        np.array(normals, dtype=np.float32),
-        np.array(tangents, dtype=np.float32),
-        np.array(bitangents, dtype=np.float32),
+    return Mesh(
+        array(positions),
+        array(vec4(1.0)).repeat(len(positions)),
+        array(uvs),
+        array(normals),
+        array(tangents),
+        array(bitangents),
+        array.from_numbers(int32, *indices),
     )
-    return Mesh(*vertices, array.from_numbers(int32, *indices))
