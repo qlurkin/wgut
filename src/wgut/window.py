@@ -1,5 +1,6 @@
 from wgpu.gui.glfw import WgpuCanvas, run
 import wgpu
+
 from .core import get_device
 import time
 

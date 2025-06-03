@@ -56,8 +56,8 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
             renderer.end_frame(
                 screen, camera, clear_color=clear_color, clear_depth=True
             )
-            stats[layer] = renderer.get_frame_stat()
             clear_color = False
+            stats[layer] = renderer.get_frame_stat()
 
         try:
             render_stat: RenderStat = ecs.query_one(RenderStat)

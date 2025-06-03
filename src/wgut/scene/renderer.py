@@ -1,10 +1,11 @@
 import time
 from typing import Type
-from wgpu import BufferUsage, GPUTexture, TextureFormat, TextureUsage
+from wgpu import BufferUsage, GPUTexture, LoadOp, TextureFormat, TextureUsage
 import numpy as np
 import random
 from pyglm.glm import array, float32, int32, vec4
 
+from wgut.builders.commandbufferbuilder import CommandBufferBuilder
 from wgut.builders.texturebuilder import TextureBuilder
 from wgut.core import load_image, write_buffer, write_texture
 from wgut.scene.material import Material
@@ -331,7 +332,7 @@ class Renderer:
         self.__index_count += len(index_data)
         self.__frame_mesh_count += 1
         self.__frame_triangle_count += len(index_data) // 3
-        self.__frame_vertex_count += len(vertex_data)
+        self.__frame_vertex_count += len(vertex_data[0])
 
     def end_frame(
         self,
@@ -370,6 +371,9 @@ class Renderer:
                 self.__add_mesh(pipeline, output_texture, mesh, transform, material)
             self.__draw(pipeline, output_texture)
 
+        if self.__clear_color or self.__clear_depth:
+            self.clear(output_texture, self.__clear_color, self.__clear_depth)
+
         render_time = time.perf_counter() - self.__start_time
 
         self.__frame_stat = {
@@ -401,6 +405,21 @@ class Renderer:
         self.__index_count = 0
         self.__material_index = {}
         self.__texture_ids = []
+
+    def clear(
+        self,
+        output_texture: GPUTexture,
+        clear_color: bool = True,
+        clear_depth: bool = True,
+    ):
+        cmd_bfr_bld = CommandBufferBuilder()
+        rnd_pass_bld = cmd_bfr_bld.begin_render_pass(output_texture)
+        rnd_pass_bld.with_load_op(LoadOp.clear if clear_color else LoadOp.load)
+        if self.__depth_texture is not None:
+            rnd_pass_bld.with_depth_stencil(self.__depth_texture, clear_depth)
+
+        rnd_pass_bld.build().end()
+        cmd_bfr_bld.submit()
 
     def get_frame_stat(self) -> dict:
         return self.__frame_stat

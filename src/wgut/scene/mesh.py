@@ -209,7 +209,7 @@ def compute_triangle_tangent(
 
 
 def compute_normal_vectors(
-    positions: array[vec3], indices: array[int32]
+    positions: array[vec3] | array[vec4], indices: array[int32]
 ) -> array[vec3]:
     normals = array(vec3(0.0)).repeat(len(positions))
 
@@ -219,7 +219,7 @@ def compute_normal_vectors(
         index3 = indices[i + 2]
 
         normal = compute_triangle_normal(
-            positions[index1], positions[index2], positions[index3]
+            positions[index1].xyz, positions[index2].xyz, positions[index3].xyz
         )
 
         normals[index1] += normal
@@ -231,7 +231,7 @@ def compute_normal_vectors(
 
 
 def compute_tangent_vectors(
-    positions: array[vec3],
+    positions: array[vec3] | array[vec4],
     uvs: array[vec2],
     normals: array[vec3],
     indices: array[int32],
@@ -244,11 +244,11 @@ def compute_tangent_vectors(
         index3 = indices[i + 2]
 
         tangent, _ = compute_triangle_tangent(
-            positions[index1],
+            positions[index1].xyz,
             uvs[index1],
-            positions[index2],
+            positions[index2].xyz,
             uvs[index2],
-            positions[index3],
+            positions[index3].xyz,
             uvs[index3],
         )
 
