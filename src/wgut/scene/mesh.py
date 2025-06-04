@@ -312,6 +312,11 @@ def compute_line_list(triangle_list: array[int32]) -> array[int32]:
     return array(res)
 
 
+# TODO:
+# - Add swap triangle orientation
+# - Add swap normals
+
+
 class Mesh:
     def __init__(
         self,

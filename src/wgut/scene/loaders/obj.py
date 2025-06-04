@@ -1,6 +1,11 @@
 from typing import Any
 from pyglm.glm import int32, vec2, vec3, vec4, array
-from wgut.scene.mesh import Mesh, compute_bitangent_vectors, compute_tangent_vectors
+from wgut.scene.mesh import (
+    Mesh,
+    compute_bitangent_vectors,
+    compute_normal_vectors,
+    compute_tangent_vectors,
+)
 import os
 from collections import namedtuple, defaultdict
 from wgut.scene.pbr_material import PbrMaterial
@@ -14,11 +19,13 @@ def parse_mtl_file(mtl_path: str) -> dict:
     materials = {}
     current = None
 
+    base_dir = os.path.dirname(mtl_path)
+
     def parse_color(tokens):
         if len(tokens) == 4:
-            return tuple(map(float, tokens[1:5]))  # RGBA
+            return tuple(map(float, tokens))  # RGBA
         elif len(tokens) == 3:
-            return tuple(map(float, tokens[1:4])) + (1.0,)
+            return tuple(map(float, tokens)) + (1.0,)
         return (1.0, 1.0, 1.0, 1.0)
 
     with open(mtl_path, "r") as f:
@@ -32,24 +39,25 @@ def parse_mtl_file(mtl_path: str) -> dict:
                     continue
                 key = tokens[0]
                 if key == "Kd":
-                    materials[current]["albedo"] = parse_color(tokens)
+                    materials[current]["albedo"] = parse_color(tokens[1:])
                 elif key == "map_Kd":
-                    materials[current]["albedo"] = tokens[1]
+                    texture_path = os.path.join(base_dir, tokens[1])
+                    materials[current]["albedo"] = texture_path
                 elif key in ["map_Bump", "bump"]:
-                    materials[current]["normal"] = tokens[1]
+                    texture_path = os.path.join(base_dir, tokens[1])
+                    materials[current]["normal"] = texture_path
                 elif key == "map_Roughness":
-                    materials[current]["roughness"] = tokens[1]
+                    texture_path = os.path.join(base_dir, tokens[1])
+                    materials[current]["roughness"] = texture_path
                 elif key == "map_Metallic":
-                    materials[current]["metallicity"] = tokens[1]
+                    texture_path = os.path.join(base_dir, tokens[1])
+                    materials[current]["metallicity"] = texture_path
                 elif key == "map_Occlusion":
-                    materials[current]["occlusion"] = tokens[1]
+                    texture_path = os.path.join(base_dir, tokens[1])
+                    materials[current]["occlusion"] = texture_path
                 elif key == "Ke":
                     materials[current]["emissivity"] = tuple(map(float, tokens[1:4]))
-
     return materials
-
-
-# TODO: support for no UVs (impossible to compute tangents) or no normals (compute them)
 
 
 def load_obj(obj_path: str) -> list[list[Any]]:
@@ -64,6 +72,9 @@ def load_obj(obj_path: str) -> list[list[Any]]:
     materials = {}
 
     base_dir = os.path.dirname(obj_path)
+
+    hasUV = False
+    hasNormals = False
 
     with open(obj_path, "r") as f:
         for line in f:
@@ -82,10 +93,13 @@ def load_obj(obj_path: str) -> list[list[Any]]:
                     colors_raw.append(vec4(1.0))  # default white
             elif line.startswith("vt "):
                 _, u, v = line.strip().split()
-                uvs_raw.append(vec2(float(u), float(v)))
+                # obj uv origin at bottom-left of the texture
+                uvs_raw.append(vec2(float(u), 1 - float(v)))
+                hasUV = True
             elif line.startswith("vn "):
                 _, nx, ny, nz = line.strip().split()
                 normals_raw.append(vec3(float(nx), float(ny), float(nz)))
+                hasNormals = True
             elif line.startswith("f "):
                 face = line.strip().split()[1:]
                 group = material_groups[current_material]
@@ -123,24 +137,32 @@ def load_obj(obj_path: str) -> list[list[Any]]:
         uv_array = []
         norm_array = []
         color_array = []
-        tangent_array = []
-        bitangent_array = []
 
         for key in vertices:
             pos_array.append(vec4(positions_raw[key.v], 1.0))  # type: ignore
             color_array.append(colors_raw[key.vc])
-            uv_array.append(uvs_raw[key.vt] if key.vt is not None else vec2(0.0))
-            norm_array.append(normals_raw[key.vn] if key.vn is not None else vec3(0.0))
-            tangent_array.append(vec3(1, 0, 0))  # placeholder
-            bitangent_array.append(vec3(0, 1, 0))  # placeholder
+            if hasUV:
+                uv_array.append(uvs_raw[key.vt])
+            if hasNormals:
+                norm_array.append(normals_raw[key.vn])
 
         positions = array(pos_array)
         colors = array(color_array)
-        uvs = array(uv_array)
-        normals = array(norm_array)
         indices = array.from_numbers(int32, *indices)
-        tangents = compute_tangent_vectors(positions, uvs, normals, indices)
-        bitangents = compute_bitangent_vectors(normals, tangents)
+
+        if hasNormals:
+            normals = array(norm_array)
+        else:
+            normals = compute_normal_vectors(positions, indices)
+
+        if hasUV:
+            uvs = array(uv_array)
+            tangents = compute_tangent_vectors(positions, uvs, normals, indices)
+            bitangents = compute_bitangent_vectors(normals, tangents)
+        else:
+            uvs = array(vec2(0.0)).repeat(len(positions))
+            tangents = array(vec3(0.0)).repeat(len(positions))
+            bitangents = array(vec3(0.0)).repeat(len(positions))
 
         mesh = Mesh(
             positions,

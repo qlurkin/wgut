@@ -246,13 +246,35 @@ class PbrMaterial:
     def get_texture_size() -> tuple[int, int]:
         return (1024, 1024)
 
+    def __as_tuple(self) -> tuple:
+        return (
+            self.__albedo_filename
+            if len(self.__albedo_filename) > 0
+            else self.__albedo_data,
+            self.__normal_filename
+            if len(self.__normal_filename) > 0
+            else self.__normal_data,
+            self.__roughness_filename
+            if len(self.__roughness_filename) > 0
+            else self.__roughness_data,
+            self.__metalicity_filename
+            if len(self.__metalicity_filename) > 0
+            else self.__metalicity_data,
+            self.__emissivity_filename
+            if len(self.__emissivity_filename) > 0
+            else self.__emissivity_data,
+            self.__occlusion_filename
+            if len(self.__occlusion_filename) > 0
+            else self.__occlusion_data,
+        )
+
     def __eq__(self, other):
         if isinstance(other, PbrMaterial):
-            return self.__albedo_filename == other.__albedo_filename
+            return self.__as_tuple() == other.__as_tuple()
         return False
 
     def __hash__(self):
-        return hash(self.__albedo_filename)
+        return hash(self.__as_tuple())
 
     @staticmethod
     def set_bindings(

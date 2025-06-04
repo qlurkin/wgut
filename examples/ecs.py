@@ -27,7 +27,7 @@ default_layer = Layer("default")
 # - wireframe
 # - gizmo test
 # - frustum culling
-# - obj, ply, gltf
+# - obj, ply, gltf loaders
 # - spawn_group
 # - particle systems
 # - drop shadow
@@ -53,7 +53,7 @@ def setup(ecs: ECS):
         (0.0, 0.0, 0.0),
         None,
     )
-    bunny_transform = Transform(translate(vec3(0, -1.0, 0)) @ scale(vec3(20)))  # type: ignore
+    bunny_transform = Transform(translate(vec3(-2.5, -1.0, 0)) * scale(vec3(20)))  # type: ignore
     ball_transform = Transform(translate(vec3(2.5, 0, 0)))
     camera = OrbitCamera((6, 4, 5), (0, 0, 0), 45, 0.1, 100)
     ecs.spawn(
@@ -64,6 +64,11 @@ def setup(ecs: ECS):
         [mesh, ball_transform, default_layer, MaterialComponent(wood_material)],
         label="Ball",
     )
+    f16 = load_obj("./models/f16_vertex_color/f16.obj")
+    for entt in f16:
+        entt.append(Transform())
+        entt.append(default_layer)
+        ecs.spawn(entt)
     ecs.spawn([CameraComponent(camera), ActiveCamera()], label="Camera")
 
 
@@ -88,7 +93,7 @@ def gui(ecs: ECS):
         pass
 
 
-renderer = Renderer(30000, 90000, 128, (1024, 1024, 7), 48)
+renderer = Renderer(20000, 100000, 256, (1024, 1024, 32), 128)
 
 
 (
