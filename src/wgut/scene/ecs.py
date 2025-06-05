@@ -27,6 +27,11 @@ class Group:
     members: list[int]
 
 
+@dataclass
+class GroupMember:
+    group: int
+
+
 # TODO:
 # - Support "Not" in Query
 
@@ -39,24 +44,52 @@ class ECS:
 
     def spawn(self, components: list, label: str | None = None) -> Self:
         id = self.__next_id
+        self.__next_id += 1
         if label is None:
             label = f"Entity {id}"
 
-        if Entity not in self.__components:
-            self.__components[Entity] = {}
-        self.__components[Entity][id] = Entity(id, label)
+        self.__add_component(id, Entity(id, label))
 
         for component in components:
-            ty = type(component)
-            assert ty != Entity, "Entity Components are automatically added"
-            if ty not in self.__components:
-                self.__components[ty] = {}
-            self.__components[ty][id] = component
+            assert type(component) is not Entity, (
+                "Entity Components are automatically added"
+            )
+            self.__add_component(id, component)
 
+        return self
+
+    def spawn_group(self, members: list[list], label: str | None = None) -> Self:
+        gid = self.__next_id
         self.__next_id += 1
+        if label is None:
+            label = f"Group {gid}"
+
+        self.__add_component(gid, Entity(gid, label))
+
+        ids = []
+        for member in members:
+            id = self.__next_id
+            self.__next_id += 1
+            label = f"Entity {id}"
+            self.__add_component(id, Entity(id, label))
+            self.__add_component(id, GroupMember(gid))
+            for component in member:
+                assert type(component) is not Entity, (
+                    "Entity Components are automatically added"
+                )
+                self.__add_component(id, component)
+            ids.append(id)
+
+        self.__add_component(gid, Group(ids))
+
         return self
 
     def add_component(self, id: int | Entity, component) -> Self:
+        id = self.__entity_exists(id)
+        self.__add_component(id, component)
+        return self
+
+    def __entity_exists(self, id: int | Entity) -> int:
         if isinstance(id, Entity):
             id = Entity.id
 
@@ -64,15 +97,17 @@ class ECS:
             raise EntityNotFound()
         if id not in self.__components[Entity]:
             raise EntityNotFound()
+
+        return id
+
+    def __add_component(self, id: int, component):
         ty = type(component)
         if ty not in self.__components:
             self.__components[ty] = {}
         self.__components[ty][id] = component
-        return self
 
     def remove_component(self, id: int | Entity, ty: Type) -> Self:
-        if isinstance(id, Entity):
-            id = Entity.id
+        id = self.__entity_exists(id)
 
         if ty == Entity:
             print("Warning: Cannot remove 'Entity' component")
@@ -83,16 +118,18 @@ class ECS:
         if id not in self.__components[Entity]:
             raise EntityNotFound()
 
+        self.__remove_component(id, ty)
+        return self
+
+    def __remove_component(self, id: int, ty: Type):
         if ty in self.__components:
             if id in self.__components[ty]:
                 self.__components[ty].pop(id)
                 if len(self.__components[ty]) == 0:
                     self.__components.pop(ty)
-        return self
 
     def __getitem__(self, id: int | Entity) -> tuple[list[Any], ...]:
-        if isinstance(id, Entity):
-            id = Entity.id
+        id = self.__entity_exists(id)
 
         res = []
         for ty in self.__components.values():
@@ -101,14 +138,11 @@ class ECS:
         return tuple(res)
 
     def kill(self, id: int | Entity) -> Self:
-        if isinstance(id, Entity):
-            id = Entity.id
+        id = self.__entity_exists(id)
 
         for ty in list(self.__components):
-            if id in self.__components[ty]:
-                self.__components[ty].pop(id)
-                if len(self.__components[ty]) == 0:
-                    self.__components.pop(ty)
+            self.__remove_component(id, ty)
+
         return self
 
     def query(
@@ -189,3 +223,5 @@ if __name__ == "__main__":
 
     ecs.kill(0)
     ecs.kill(2)
+
+    ecs.dispatch("render")

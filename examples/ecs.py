@@ -27,7 +27,7 @@ default_layer = Layer("default")
 # - wireframe
 # - gizmo test
 # - frustum culling
-# - obj, ply, gltf loaders
+# - ply, gltf loaders
 # - spawn_group
 # - particle systems
 # - drop shadow
@@ -68,7 +68,16 @@ def setup(ecs: ECS):
     for entt in f16:
         entt.append(Transform())
         entt.append(default_layer)
-        ecs.spawn(entt)
+
+    ecs.spawn_group(f16)
+
+    f16 = load_obj("./models/f16/f16.obj")
+    for entt in f16:
+        entt.append(Transform(translate(vec3(0, 0, 2.5))))
+        entt.append(default_layer)
+
+    ecs.spawn_group(f16)
+
     ecs.spawn([CameraComponent(camera), ActiveCamera()], label="Camera")
 
 
@@ -93,7 +102,7 @@ def gui(ecs: ECS):
         pass
 
 
-renderer = Renderer(20000, 100000, 256, (1024, 1024, 32), 128)
+renderer = Renderer(30000, 150000, 512, (1024, 1024, 32), 256)
 
 
 (
