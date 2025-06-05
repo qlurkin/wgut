@@ -138,6 +138,17 @@ class ECS:
             self.__components[ty] = {}
         self.__components[ty][id] = component
 
+    def remove_component_from_group(self, group_id: int | Entity, ty: Type) -> Self:
+        gid = self.__entity_exists(group_id)
+        if Group not in self.__components:
+            raise EntityNotFound(gid)
+        if gid not in self.__components[Group]:
+            raise EntityNotFound(gid)
+        group = self.__components[Group][gid]
+        for id in group.members:
+            self.remove_component(id, ty)
+        return self
+
     def remove_component(self, id: int | Entity, ty: Type) -> Self:
         id = self.__entity_exists(id)
 

@@ -28,7 +28,6 @@ default_layer = Layer("default")
 # - gizmo test
 # - frustum culling
 # - ply, gltf loaders
-# - spawn_group
 # - particle systems
 # - drop shadow
 
