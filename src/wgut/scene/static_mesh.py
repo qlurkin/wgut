@@ -80,7 +80,7 @@ class StaticMesh:
             self.__bitangents,
         )
 
-    def get_indices(self):
+    def get_indices(self) -> array[int32]:
         return self.__indices
 
     def get_transformed_vertices(

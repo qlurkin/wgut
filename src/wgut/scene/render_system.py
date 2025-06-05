@@ -5,7 +5,6 @@ from wgut.camera import Camera
 from wgut.scene.ecs import ECS, QueryOneWithNoResult
 from wgut.scene.material import Material
 from wgut.scene.mesh import Mesh
-from wgut.scene.static_mesh import StaticMesh
 from wgut.scene.renderer import Renderer
 from wgut.scene.transform import Transform
 
