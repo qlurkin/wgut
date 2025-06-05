@@ -1,11 +1,9 @@
 import numpy as np
 from math import pi, atan2, acos
 from pyglm.glm import array, int32, normalize, vec2, vec3, vec4
-from ..mesh import (
-    Mesh,
-    compute_tangent_vectors,
-    compute_bitangent_vectors,
-)
+
+from wgut.scene.mesh import compute_bitangent_vectors, compute_tangent_vectors
+from ..static_mesh import StaticMesh
 
 
 def icosphere_positions_and_indices(order: int) -> tuple[array[vec3], array[int32]]:
@@ -179,14 +177,14 @@ def icosphere_with_uv(order: int) -> tuple[array[vec3], array[vec2], array[int32
     )
 
 
-def icosphere(order: int) -> Mesh:
+def icosphere(order: int) -> StaticMesh:
     positions, uvs, indices = icosphere_with_uv(order)
 
     normals = array(positions)
     tangents = compute_tangent_vectors(positions, uvs, normals, indices)
     bitangents = compute_bitangent_vectors(normals, tangents)
 
-    return Mesh(
+    return StaticMesh(
         positions.map(lambda p: vec4(p, 1.0)),  # type: ignore
         array(vec4(1.0)).repeat(len(positions)),
         uvs,

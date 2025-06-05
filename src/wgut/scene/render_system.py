@@ -5,6 +5,7 @@ from wgut.camera import Camera
 from wgut.scene.ecs import ECS, QueryOneWithNoResult
 from wgut.scene.material import Material
 from wgut.scene.mesh import Mesh
+from wgut.scene.static_mesh import StaticMesh
 from wgut.scene.renderer import Renderer
 from wgut.scene.transform import Transform
 
@@ -21,6 +22,11 @@ class CameraComponent:
 @dataclass
 class MaterialComponent:
     material: Material
+
+
+@dataclass
+class MeshComponent:
+    mesh: Mesh
 
 
 @dataclass
@@ -43,7 +49,7 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
         camera = cam_comp.camera
         layer_content = defaultdict(list)
         for mesh, material, transform, layer in ecs.query(
-            [Mesh, MaterialComponent, Transform, Layer]
+            [MeshComponent, MaterialComponent, Transform, Layer]
         ):
             layer_content[layer].append((mesh, transform, material))
 
@@ -52,7 +58,7 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
         for layer in layers:
             renderer.begin_frame()
             for mesh, transform, material in layer_content[layer]:
-                renderer.add_mesh(mesh, transform, material.material)
+                renderer.add_mesh(mesh.mesh, transform, material.material)
             renderer.end_frame(
                 screen, camera, clear_color=clear_color, clear_depth=True
             )

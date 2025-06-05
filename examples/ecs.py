@@ -8,6 +8,7 @@ from wgut.scene.render_system import (
     CameraComponent,
     Layer,
     MaterialComponent,
+    MeshComponent,
     RenderStat,
     render_system,
 )
@@ -56,11 +57,21 @@ def setup(ecs: ECS):
     ball_transform = Transform(translate(vec3(2.5, 0, 0)))
     camera = OrbitCamera((6, 4, 5), (0, 0, 0), 45, 0.1, 100)
     ecs.spawn(
-        [bunny_mesh, MaterialComponent(dummy_material), bunny_transform, default_layer],
+        [
+            bunny_mesh,
+            MaterialComponent(dummy_material),
+            bunny_transform,
+            default_layer,
+        ],
         label="Bunny",
     )
     ecs.spawn(
-        [mesh, ball_transform, default_layer, MaterialComponent(wood_material)],
+        [
+            MeshComponent(mesh),
+            ball_transform,
+            default_layer,
+            MaterialComponent(wood_material),
+        ],
         label="Ball",
     )
     id = ecs.spawn_group(load_obj("./models/f16_vertex_color/f16.obj"))

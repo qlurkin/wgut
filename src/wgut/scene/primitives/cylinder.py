@@ -1,7 +1,7 @@
 import math
 from pyglm.glm import array, int32, normalize, vec2, vec3, vec4
 
-from wgut.scene.mesh import Mesh
+from wgut.scene.static_mesh import StaticMesh
 
 
 # TODO: Fix center cap vertex
@@ -127,7 +127,7 @@ def cylinder(radius=1.0, height=2.0, segments=32):
         c = bottom_center_idx
         indices += [a, b, c]
 
-    return Mesh(
+    return StaticMesh(
         array(positions),
         array(vec4(1.0)).repeat(len(positions)),
         array(uvs),

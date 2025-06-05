@@ -1,8 +1,8 @@
 from pyglm.glm import array, int32, vec2, vec3, vec4
-from ..mesh import Mesh
+from ..static_mesh import StaticMesh
 
 
-def cube(size=1.0) -> Mesh:
+def cube(size=1.0) -> StaticMesh:
     hs = size / 2  # half-size
 
     faces = [
@@ -118,7 +118,7 @@ def cube(size=1.0) -> Mesh:
             base_index + 0,
         ]
 
-    return Mesh(
+    return StaticMesh(
         array(positions),
         array(vec4(1.0)).repeat(len(positions)),
         array(uvs),

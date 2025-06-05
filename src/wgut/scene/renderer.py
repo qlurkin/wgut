@@ -10,7 +10,7 @@ from wgut.builders.texturebuilder import TextureBuilder
 from wgut.core import load_image, write_buffer, write_texture
 from wgut.scene.material import Material
 from wgut.scene.transform import Transform
-from wgut.scene.mesh import Mesh
+from wgut.scene.static_mesh import StaticMesh
 from wgut.scene.mesh import get_vertex_buffer_descriptors
 from wgut.auto_render_pipeline import AutoRenderPipeline
 from wgut.builders.bufferbuilder import BufferBuilder
@@ -239,7 +239,7 @@ class Renderer:
         self.__meshes = {}
         self.__start_time = time.perf_counter()
 
-    def add_mesh(self, mesh: Mesh, transform: Transform, material: Material):
+    def add_mesh(self, mesh: StaticMesh, transform: Transform, material: Material):
         cls = type(material)
         if cls not in self.__meshes:
             if material.get_data_size() > self.__material_buffer_size:
@@ -254,7 +254,7 @@ class Renderer:
         self,
         pipeline: AutoRenderPipeline,
         output_texture: GPUTexture,
-        mesh: Mesh,
+        mesh: StaticMesh,
         transform: Transform,
         material: Material,
     ):

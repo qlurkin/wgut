@@ -1,12 +1,12 @@
 import math
 
 from pyglm.glm import array, cross, int32, vec2, vec3, vec4
-from ..mesh import Mesh
+from ..static_mesh import StaticMesh
 
 
 def torus(
     radius_major=1.0, radius_minor=0.3, segments_major=32, segments_minor=16
-) -> Mesh:
+) -> StaticMesh:
     positions = []
     normals = []
     tangents = []
@@ -60,7 +60,7 @@ def torus(
             indices += [a, b, d]
             indices += [b, c, d]
 
-    return Mesh(
+    return StaticMesh(
         array(positions),
         array(vec4(1.0)).repeat(len(positions)),
         array(uvs),

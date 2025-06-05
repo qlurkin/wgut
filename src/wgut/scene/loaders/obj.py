@@ -1,15 +1,15 @@
 from typing import Any
 from pyglm.glm import int32, vec2, vec3, vec4, array
 from wgut.scene.mesh import (
-    Mesh,
     compute_bitangent_vectors,
     compute_normal_vectors,
     compute_tangent_vectors,
 )
+from wgut.scene.static_mesh import StaticMesh
 import os
 from collections import namedtuple, defaultdict
 from wgut.scene.pbr_material import PbrMaterial
-from wgut.scene.render_system import MaterialComponent
+from wgut.scene.render_system import MaterialComponent, MeshComponent
 
 
 VertexKey = namedtuple("VertexKey", ["v", "vt", "vn", "vc"])
@@ -164,14 +164,16 @@ def load_obj(obj_path: str) -> list[list[Any]]:
             tangents = array(vec3(0.0)).repeat(len(positions))
             bitangents = array(vec3(0.0)).repeat(len(positions))
 
-        mesh = Mesh(
-            positions,
-            colors,
-            uvs,
-            normals,
-            tangents,
-            bitangents,
-            indices,
+        mesh = MeshComponent(
+            StaticMesh(
+                positions,
+                colors,
+                uvs,
+                normals,
+                tangents,
+                bitangents,
+                indices,
+            )
         )
 
         components: list[Any] = [mesh]

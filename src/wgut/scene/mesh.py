@@ -1,7 +1,5 @@
-from __future__ import annotations
+from typing import Protocol
 
-import numpy.typing as npt
-import numpy as np
 import wgpu
 from pyglm.glm import (
     cross,
@@ -13,70 +11,10 @@ from pyglm.glm import (
     vec2,
     array,
     mat4,
-    mat3,
     int32,
-    inverseTranspose,
 )
 
 from wgut.builders.vertexbufferdescriptorsbuilder import VertexBufferDescriptorsBuilder
-
-
-def vertex(
-    position: npt.NDArray,
-    color: npt.NDArray | None = None,
-    tex_coord: npt.NDArray | None = None,
-    normal: npt.NDArray | None = None,
-    tangent: npt.NDArray | None = None,
-    bitangent: npt.NDArray | None = None,
-) -> tuple[
-    array[vec4], array[vec4], array[vec2], array[vec3], array[vec3], array[vec3]
-]:
-    if position.ndim == 1:
-        position = position.reshape((1, len(position)))
-
-    vertex_count = position.shape[0]
-
-    if position.shape[1] == 3:
-        position = np.hstack([position, np.ones((vertex_count, 1), dtype=np.float32)])
-
-    if color is None:
-        color = np.ones((vertex_count, 4))
-
-    if color.ndim == 1:
-        color = np.full((vertex_count, 4), color)
-
-    if tex_coord is None:
-        tex_coord = np.zeros((vertex_count, 2))
-
-    if tex_coord.ndim == 1:
-        tex_coord = np.full((vertex_count, 2), tex_coord)
-
-    if normal is None:
-        normal = np.zeros((vertex_count, 3))
-
-    if normal.ndim == 1:
-        normal = np.full((vertex_count, 3), normal)
-
-    if tangent is None:
-        tangent = np.zeros((vertex_count, 3))
-
-    if tangent.ndim == 1:
-        tangent = np.full((vertex_count, 3), tangent)
-
-    if bitangent is None:
-        bitangent = np.zeros((vertex_count, 3))
-
-    if bitangent.ndim == 1:
-        bitangent = np.full((vertex_count, 3), bitangent)
-
-    return (
-        array([vec4(p) for p in position]),
-        array([vec4(c) for c in color]),
-        array([vec2(u) for u in tex_coord]),
-        array([vec3(n) for n in normal]),
-        array([vec3(t) for t in tangent]),
-        array([vec3(b) for b in bitangent]),
-    )
 
 
 def get_vertex_buffer_descriptors():
@@ -312,89 +250,9 @@ def compute_line_list(triangle_list: array[int32]) -> array[int32]:
     return array(res)
 
 
-# TODO:
-# - Add swap triangle orientation
-# - Add swap normals
-
-
-class Mesh:
-    def __init__(
-        self,
-        positions: array[vec4],
-        colors: array[vec4],
-        uvs: array[vec2],
-        normals: array[vec3],
-        tangents: array[vec3],
-        bitangents: array[vec3],
-        indices: array[int32],
-    ):
-        assert len(positions) == len(colors), (
-            "'colors' must be the same length as 'positions'"
-        )
-        assert len(positions) == len(uvs), (
-            "'uvs' must be the same length as 'positions'"
-        )
-        assert len(positions) == len(normals), (
-            "'normals' must be the same length as 'positions'"
-        )
-        assert len(positions) == len(tangents), (
-            "'tangents' must be the same length as 'positions'"
-        )
-        assert len(positions) == len(bitangents), (
-            "'bitangents' must be the same length as 'positions'"
-        )
-
-        self.__positions = positions
-        self.__colors = colors
-        self.__uvs = uvs
-        self.__normals = normals
-        self.__tangents = tangents
-        self.__bitangents = bitangents
-        self.__indices = indices
-
-    def get_positions(self):
-        return self.__positions
-
-    def get_colors(self):
-        return self.__colors
-
-    def get_uvs(self):
-        return self.__uvs
-
-    def get_normals(self):
-        return self.__normals
-
-    def get_tangents(self):
-        return self.__tangents
-
-    def get_bitangents(self):
-        return self.__bitangents
-
-    def get_vertices(self):
-        return (
-            self.__positions,
-            self.__colors,
-            self.__uvs,
-            self.__normals,
-            self.__tangents,
-            self.__bitangents,
-        )
-
-    def get_indices(self):
-        return self.__indices
-
+class Mesh(Protocol):
     def get_transformed_vertices(
         self, transformation_matrix: mat4
     ) -> tuple[
         array[vec4], array[vec4], array[vec2], array[vec3], array[vec3], array[vec3]
-    ]:
-        normal_matrix = inverseTranspose(mat3(transformation_matrix))
-
-        return (
-            transformation_matrix * self.__positions,
-            self.__colors,
-            self.__uvs,
-            normal_matrix * self.__normals,
-            normal_matrix * self.__tangents,
-            normal_matrix * self.__bitangents,
-        )  # type: ignore
+    ]: ...
