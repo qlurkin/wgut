@@ -2,7 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from wgpu import GPUTexture
 from wgut.camera import Camera
-from wgut.scene.ecs import ECS, EntityNotFound
+from wgut.scene.ecs import ECS, QueryOneWithNoResult
 from wgut.scene.material import Material
 from wgut.scene.mesh import Mesh
 from wgut.scene.renderer import Renderer
@@ -62,7 +62,7 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
         try:
             render_stat: RenderStat = ecs.query_one(RenderStat)
             render_stat.stats = stats
-        except EntityNotFound:
+        except QueryOneWithNoResult:
             ecs.spawn([RenderStat(stats)])
 
     ecs.on("render", render)

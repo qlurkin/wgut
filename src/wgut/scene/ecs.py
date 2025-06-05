@@ -17,9 +17,30 @@ class Entity:
     id: int
     label: str
 
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __hash__(self):
+        return hash(self.id)
+
 
 class EntityNotFound(Exception):
-    pass
+    def __init__(self, id: int | Entity):
+        if isinstance(id, Entity):
+            id = id.id
+        self.id = id
+
+    def __str__(self):
+        return f"Entity {self.id} Not Found"
+
+
+class QueryOneWithNoResult(Exception):
+    def __init__(self, types, without):
+        self.types = types
+        self.without = without
+
+    def __str__(self):
+        return f"Query with={self.types} and without={self.without} has no result"
 
 
 @dataclass
@@ -91,12 +112,12 @@ class ECS:
 
     def __entity_exists(self, id: int | Entity) -> int:
         if isinstance(id, Entity):
-            id = Entity.id
+            id = id.id
 
         if Entity not in self.__components:
-            raise EntityNotFound()
+            raise EntityNotFound(id)
         if id not in self.__components[Entity]:
-            raise EntityNotFound()
+            raise EntityNotFound(id)
 
         return id
 
@@ -112,11 +133,6 @@ class ECS:
         if ty == Entity:
             print("Warning: Cannot remove 'Entity' component")
             return self
-
-        if Entity not in self.__components:
-            raise EntityNotFound()
-        if id not in self.__components[Entity]:
-            raise EntityNotFound()
 
         self.__remove_component(id, ty)
         return self
@@ -182,7 +198,7 @@ class ECS:
     ) -> Any:
         for res in self.query(types, without):
             return res
-        raise EntityNotFound()
+        raise QueryOneWithNoResult(types, without)
 
     def on(self, event: str, system: System) -> Self:
         if event not in self.__systems:
