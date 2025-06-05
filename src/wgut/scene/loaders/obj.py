@@ -181,13 +181,22 @@ def load_obj(obj_path: str) -> list[list[Any]]:
             material = PbrMaterial(
                 albedo=mat_data.get("albedo", (1.0, 1.0, 1.0, 1.0)),
                 normal=mat_data.get("normal", None),
-                roughness=mat_data.get("roughness", 1.0),
+                roughness=mat_data.get("roughness", 0.8),
                 metalicity=mat_data.get("metallicity", 0.0),
                 emissivity=mat_data.get("emissivity", (0.0, 0.0, 0.0)),
                 occlusion=mat_data.get("occlusion", None),
             )
-            components.append(MaterialComponent(material))
+        else:
+            material = PbrMaterial(
+                albedo=(0.8, 0.8, 0.8, 1.0),
+                normal=None,
+                roughness=0.8,
+                metalicity=0.0,
+                emissivity=(0.0, 0.0, 0.0),
+                occlusion=None,
+            )
 
+        components.append(MaterialComponent(material))
         results.append(components)
 
     return results

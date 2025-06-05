@@ -64,19 +64,13 @@ def setup(ecs: ECS):
         [mesh, ball_transform, default_layer, MaterialComponent(wood_material)],
         label="Ball",
     )
-    f16 = load_obj("./models/f16_vertex_color/f16.obj")
-    for entt in f16:
-        entt.append(Transform())
-        entt.append(default_layer)
+    id = ecs.spawn_group(load_obj("./models/f16_vertex_color/f16.obj"))
+    ecs.add_component_to_group(id, Transform())
+    ecs.add_component_to_group(id, default_layer)
 
-    ecs.spawn_group(f16)
-
-    f16 = load_obj("./models/f16/f16.obj")
-    for entt in f16:
-        entt.append(Transform(translate(vec3(0, 0, 2.5))))
-        entt.append(default_layer)
-
-    ecs.spawn_group(f16)
+    id = ecs.spawn_group(load_obj("./models/f16/f16.obj"))
+    ecs.add_component_to_group(id, Transform(translate(vec3(0, 0, 2.5))))
+    ecs.add_component_to_group(id, default_layer)
 
     ecs.spawn([CameraComponent(camera), ActiveCamera()], label="Camera")
 

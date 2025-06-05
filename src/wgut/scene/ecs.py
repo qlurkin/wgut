@@ -63,7 +63,7 @@ class ECS:
         self.__next_id = 0
         self.__systems: dict[str, list[System]] = {}
 
-    def spawn(self, components: list, label: str | None = None) -> Self:
+    def spawn(self, components: list, label: str | None = None) -> int:
         id = self.__next_id
         self.__next_id += 1
         if label is None:
@@ -77,9 +77,9 @@ class ECS:
             )
             self.__add_component(id, component)
 
-        return self
+        return id
 
-    def spawn_group(self, members: list[list], label: str | None = None) -> Self:
+    def spawn_group(self, members: list[list], label: str | None = None) -> int:
         gid = self.__next_id
         self.__next_id += 1
         if label is None:
@@ -103,6 +103,17 @@ class ECS:
 
         self.__add_component(gid, Group(ids))
 
+        return gid
+
+    def add_component_to_group(self, group_id: int | Entity, component) -> Self:
+        gid = self.__entity_exists(group_id)
+        if Group not in self.__components:
+            raise EntityNotFound(gid)
+        if gid not in self.__components[Group]:
+            raise EntityNotFound(gid)
+        group = self.__components[Group][gid]
+        for id in group.members:
+            self.add_component(id, component)
         return self
 
     def add_component(self, id: int | Entity, component) -> Self:
