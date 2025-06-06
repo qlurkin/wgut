@@ -6,7 +6,6 @@ from wgut.builders.bufferbuilder import BufferBuilder
 from wgut.core import read_buffer
 from wgut.scene.ecs import ECS
 from wgut.scene.mesh import Mesh
-from wgut.chrono import start, stop
 
 
 class Particles:
@@ -71,7 +70,6 @@ class Particles:
         if index_count != self.__index_count:
             self.__indices = array(int32(0)).repeat(index_count)
 
-        start()
         for i, translation in enumerate(translations):
             self.__positions[
                 i * mesh_vertex_count : i * mesh_vertex_count + mesh_vertex_count
@@ -94,8 +92,6 @@ class Particles:
             self.__indices[
                 i * mesh_index_count : i * mesh_index_count + mesh_index_count
             ] = mesh_indices + i * mesh_vertex_count
-
-        print(stop())
 
         return (
             self.__positions,
