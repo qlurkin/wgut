@@ -1,6 +1,8 @@
 from imgui_bundle import imgui
 from pyglm.glm import array, scale, vec3, vec4
 from wgpu import GPUBuffer
+from wgut.auto_compute_pipeline import AutoComputePipeline
+from wgut.core import load_file
 from wgut.orbit_camera import OrbitCamera
 from wgut.scene.particles import Particles
 from wgut.scene.render_gui_system import render_gui_system
@@ -26,8 +28,11 @@ default_layer = Layer("default")
 def setup(ecs: ECS):
     mesh = icosphere(3)
 
+    computer = AutoComputePipeline(load_file("particles.wgsl"))
+
     def callback(ecs: ECS, buffer: GPUBuffer, delta_time: float):
-        pass
+        computer.set_buffer(0, 0, buffer)
+        computer.dispatch(1)
 
     particles = Particles(
         mesh,
@@ -36,6 +41,8 @@ def setup(ecs: ECS):
         ),
         callback,
     )
+
+    ecs.on("update", particles.update)
 
     material = BasicColorMaterial((1.0, 0.0, 0.0))
 
