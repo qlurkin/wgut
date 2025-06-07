@@ -4,6 +4,7 @@ from wgpu import GPUBuffer
 from wgut.auto_compute_pipeline import AutoComputePipeline
 from wgut.core import load_file
 from wgut.orbit_camera import OrbitCamera
+from wgut.scene.instance_mesh import InstanceMesh
 from wgut.scene.particles import Particles
 from wgut.scene.render_gui_system import render_gui_system
 from wgut.scene.render_system import (
@@ -35,12 +36,13 @@ def setup(ecs: ECS):
         computer.dispatch(1)
 
     particles = Particles(
-        mesh,
         array(
             vec4(1, 0, 1, 0), vec4(-1, 0, 1, 0), vec4(1, 0, -1, 0), vec4(-1, 0, -1, 0)
         ),
         callback,
     )
+
+    particle_mesh = InstanceMesh(mesh, particles.get_translations)
 
     ecs.on("update", particles.update)
 
@@ -49,7 +51,7 @@ def setup(ecs: ECS):
     ecs.spawn(
         [
             MaterialComponent(material),
-            MeshComponent(particles),
+            MeshComponent(particle_mesh),
             Transform(scale(vec3(0.2))),
             default_layer,
         ]
