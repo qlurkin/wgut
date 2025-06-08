@@ -14,13 +14,13 @@ class InstanceMesh:
         self.__instance_count = 0
         self.__vertex_count = 0
         self.__index_count = 0
-        self.__positions: array[vec4]
-        self.__colors: array[vec4]
-        self.__uvs: array[vec2]
-        self.__normals: array[vec3]
-        self.__tangents: array[vec3]
-        self.__bitangents: array[vec3]
-        self.__indices: array[int32]
+        self.__positions: array[vec4] = array.zeros(0, vec4)
+        self.__colors: array[vec4] = array.zeros(0, vec4)
+        self.__uvs: array[vec2] = array.zeros(0, vec2)
+        self.__normals: array[vec3] = array.zeros(0, vec3)
+        self.__tangents: array[vec3] = array.zeros(0, vec3)
+        self.__bitangents: array[vec3] = array.zeros(0, vec3)
+        self.__indices: array[int32] = array.zeros(0, int32)
 
     def get_transformed_vertices(
         self, transformation_matrix: mat4
