@@ -1,9 +1,13 @@
 import time
 from typing import Type
 from wgpu import BufferUsage, GPUTexture, LoadOp, TextureFormat, TextureUsage
-import numpy as np
 import random
-from pyglm.glm import array, float32, int32, vec4
+from pyglm.glm import (
+    array,
+    float32,
+    int32,
+    vec4,
+)
 
 from wgut.builders.commandbufferbuilder import CommandBufferBuilder
 from wgut.builders.texturebuilder import TextureBuilder
@@ -22,7 +26,8 @@ struct Camera {
     position: vec4<f32>,
 };
 
-// 4th component of color is intensity, 4th component of position equal to 0 means Direction Light. All four component of position to 0 means ambiant light.
+// 4th component of color is intensity, 4th component of position equal to 0 means Direction Light.
+// All four component of position to 0 means ambiant light.
 struct Light {
     position: vec4<f32>,
     color: vec4<f32>,
@@ -94,6 +99,7 @@ class Renderer:
         vertex_buffer_size: int,
         index_buffer_size: int,
         material_buffer_size: int,
+        light_buffer_size: int,
         texture_array_size: tuple[int, int, int],
         texture_ids_buffer_size: int | None = None,
     ):
@@ -202,9 +208,7 @@ class Renderer:
 
         self.__lights_buffer = (
             BufferBuilder()
-            .from_data(
-                np.array([-1.0, -1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0], dtype=np.float32)
-            )
+            .with_size(light_buffer_size * 4 * 4 * 2)
             .with_usage(BufferUsage.STORAGE | BufferUsage.COPY_DST)
             .build()
         )
@@ -337,6 +341,7 @@ class Renderer:
         self,
         output_texture: GPUTexture,
         camera: Camera,
+        lights: array[vec4],
         clear_color=True,
         clear_depth=True,
     ):
@@ -362,6 +367,8 @@ class Renderer:
         camera_data = camera_matrix.to_bytes() + camera_position.to_bytes()
 
         write_buffer(self.__camera_buffer, camera_data)
+
+        write_buffer(self.__lights_buffer, lights)
 
         for material_class in self.__meshes:
             pipeline = self.__pipelines[material_class]

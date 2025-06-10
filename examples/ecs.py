@@ -25,11 +25,11 @@ default_layer = Layer("default")
 # TODO:
 # - spawn light
 # - better perf gui
+# - ECS gui
 # - wireframe
 # - gizmo test
 # - frustum culling
 # - ply, gltf loaders
-# - particle systems
 # - drop shadow
 
 
@@ -106,7 +106,7 @@ def gui(ecs: ECS):
         pass
 
 
-renderer = Renderer(30000, 150000, 512, (1024, 1024, 32), 256)
+renderer = Renderer(30000, 150000, 512, 2, (1024, 1024, 32), 256)
 
 
 (

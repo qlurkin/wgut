@@ -1,5 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass
+from pyglm.glm import array, vec4
 from wgpu import GPUTexture
 from wgut.camera import Camera
 from wgut.scene.ecs import ECS, QueryOneWithNoResult
@@ -52,6 +53,8 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
         ):
             layer_content[layer].append((mesh, transform, material))
 
+        lights = array(vec4(-1, -1, 0, 0), vec4(1, 1, 1, 1))
+
         clear_color = True
         stats = {}
         for layer in layers:
@@ -59,7 +62,7 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
             for mesh, transform, material in layer_content[layer]:
                 renderer.add_mesh(mesh.mesh, transform, material.material)
             renderer.end_frame(
-                screen, camera, clear_color=clear_color, clear_depth=True
+                screen, camera, lights, clear_color=clear_color, clear_depth=True
             )
             clear_color = False
             stats[layer] = renderer.get_frame_stat()
