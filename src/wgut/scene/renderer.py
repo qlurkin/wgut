@@ -35,6 +35,7 @@ struct Light {
 
 @group(0) @binding(0) var<uniform> camera: Camera;
 @group(0) @binding(1) var<storage, read> lights: array<Light>;
+@group(0) @binding(2) var<uniform> light_count: i32;
 
 struct VertexInput {
     @location(0) position: vec4<f32>,
@@ -213,6 +214,13 @@ class Renderer:
             .build()
         )
 
+        self.__lights_count_buffer = (
+            BufferBuilder()
+            .with_size(4)
+            .with_usage(BufferUsage.UNIFORM | BufferUsage.COPY_DST)
+            .build()
+        )
+
         self.__camera_buffer = (
             BufferBuilder()
             .with_size(4 * 4 * 4 + 4 * 4)
@@ -230,6 +238,7 @@ class Renderer:
             pipeline.set_index_buffer(self.__index_buffer)
             pipeline.set_binding_buffer(0, 0, self.__camera_buffer)
             pipeline.set_binding_buffer(0, 1, self.__lights_buffer)
+            pipeline.set_binding_buffer(0, 2, self.__lights_count_buffer)
             material_class.set_bindings(
                 pipeline,
                 self.__material_buffer,
@@ -369,6 +378,7 @@ class Renderer:
         write_buffer(self.__camera_buffer, camera_data)
 
         write_buffer(self.__lights_buffer, lights)
+        write_buffer(self.__lights_count_buffer, array(int32(len(lights) // 2)))
 
         for material_class in self.__meshes:
             pipeline = self.__pipelines[material_class]

@@ -4,6 +4,7 @@ from pyglm.glm import array, vec4
 from wgpu import GPUTexture
 from wgut.camera import Camera
 from wgut.scene.ecs import ECS, QueryOneWithNoResult
+from wgut.scene.light import LightComponent
 from wgut.scene.material import Material
 from wgut.scene.mesh import Mesh
 from wgut.scene.renderer import Renderer
@@ -53,7 +54,14 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
         ):
             layer_content[layer].append((mesh, transform, material))
 
-        lights = array(vec4(-1, -1, 0, 0), vec4(1, 1, 1, 1))
+        # lights = array(vec4(-1, -1, 0, 0), vec4(1, 1, 1, 1))
+        lights_data = []
+        for light, transform in ecs.query([LightComponent, Transform]):
+            pos, color = light.light.get_data(transform.get_matrix())
+            lights_data.append(pos)
+            lights_data.append(color)
+
+        lights = array(lights_data)
 
         clear_color = True
         stats = {}

@@ -6,6 +6,9 @@ from pyglm.glm import (
     vec4,
 )
 
+from wgut.scene.light import LightComponent
+from wgut.scene.transform import Transform
+
 
 @dataclass
 class AmbiantLight:
@@ -16,11 +19,11 @@ class AmbiantLight:
         return array(vec4(self.direction, 0.0), vec4(self.color, self.intensity))  # type: ignore
 
     @staticmethod
-    def create_transform() -> mat4:
-        return mat4()
+    def create_transform() -> Transform:
+        return Transform(mat4())
 
     @staticmethod
     def create(color: vec3, intensity: float = 1.0) -> list:
         light = AmbiantLight(color, intensity)
         transform = AmbiantLight.create_transform()
-        return [light, transform]
+        return [LightComponent(light), transform]

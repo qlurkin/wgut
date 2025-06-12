@@ -116,7 +116,7 @@ def gui(ecs: ECS):
         pass
 
 
-renderer = Renderer(30000, 150000, 512, (1024, 1024, 32), 256)
+renderer = Renderer(30000, 150000, 512, 2, (1024, 1024, 32), 256)
 
 
 (

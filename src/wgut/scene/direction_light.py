@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pyglm.glm import (
+    acos,
     array,
     dot,
     identity,
@@ -14,6 +15,9 @@ from pyglm.glm import (
     cross,
 )
 
+from wgut.scene.light import LightComponent
+from wgut.scene.transform import Transform
+
 
 @dataclass
 class DirectionLight:
@@ -22,10 +26,11 @@ class DirectionLight:
 
     def get_data(self, transformation_matrix: mat4) -> array[vec4]:
         direction = normalize(mat3(transformation_matrix) * vec3(0, 0, -1))  # type: ignore
+        print(direction)
         return array(vec4(direction, 0.0), vec4(self.color, self.intensity))  # type: ignore
 
     @staticmethod
-    def create_transform(direction: vec3) -> mat4:
+    def create_transform(direction: vec3) -> Transform:
         v = vec3(0, 0, -1)
         direction = normalize(direction)
 
@@ -34,21 +39,17 @@ class DirectionLight:
 
         if length(cross_product) < 1e-6:
             if dot_product > 0:
-                return identity(mat4)
+                return Transform(identity(mat4))
             else:
-                orthogonal = vec3(1, 0, 0) if abs(v.x) < 0.9 else vec3(0, 1, 0)
-                axis = normalize(cross(v, orthogonal))
-                return rotate(pi(), axis)
+                axis = vec3(1, 0, 0)
+                return Transform(rotate(pi(), axis))
 
         k = normalize(cross_product)
-        K = mat3(0, -k.z, k.y, k.z, 0, -k.x, -k.y, k.x, 0)
 
-        i = identity(mat3)
-        R = i + K + K * K * ((1 - dot_product) / (length(cross_product) ** 2))
-        return mat4(R)
+        return Transform(rotate(acos(dot_product), k))
 
     @staticmethod
     def create(direction: vec3, color: vec3, intensity: float = 1.0) -> list:
         light = DirectionLight(color, intensity)
         transform = DirectionLight.create_transform(direction)
-        return [light, transform]
+        return [LightComponent(light), transform]

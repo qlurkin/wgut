@@ -19,11 +19,12 @@ from wgut.scene.pbr_material import PbrMaterial
 from wgut.scene.primitives.cube import cube
 from wgut.scene.primitives.icosphere import icosphere
 from wgut.scene.transform import Transform
+from wgut.scene.direction_light import DirectionLight
 
 default_layer = Layer("default")
 
 # TODO:
-# - spawn light
+# - spawn light -> must rethink how material shader is done
 # - better perf gui
 # - ECS gui
 # - wireframe
@@ -55,7 +56,7 @@ def setup(ecs: ECS):
     )
     bunny_transform = Transform(translate(vec3(-2.5, -1.0, 0)) * scale(vec3(20)))  # type: ignore
     ball_transform = Transform(translate(vec3(2.5, 0, 0)))
-    camera = OrbitCamera((6, 4, 5), (0, 0, 0), 45, 0.1, 100)
+    camera = OrbitCamera((0, 4, 6), (0, 0, 0), 45, 0.1, 100)
     ecs.spawn(
         [
             bunny_mesh,
@@ -82,6 +83,7 @@ def setup(ecs: ECS):
     ecs.add_component_to_group(id, Transform(translate(vec3(0, 0, 2.5))))
     ecs.add_component_to_group(id, default_layer)
 
+    ecs.spawn(DirectionLight.create(vec3(0, 0, -1), vec3(1.0)))
     ecs.spawn([CameraComponent(camera), ActiveCamera()], label="Camera")
 
 
