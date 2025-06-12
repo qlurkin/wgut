@@ -20,6 +20,7 @@ from wgut.scene.primitives.cube import cube
 from wgut.scene.primitives.icosphere import icosphere
 from wgut.scene.transform import Transform
 from wgut.scene.direction_light import DirectionLight
+from wgut.scene.ambiant_light import AmbiantLight
 
 default_layer = Layer("default")
 
@@ -83,7 +84,8 @@ def setup(ecs: ECS):
     ecs.add_component_to_group(id, Transform(translate(vec3(0, 0, 2.5))))
     ecs.add_component_to_group(id, default_layer)
 
-    ecs.spawn(DirectionLight.create(vec3(0, 0, -1), vec3(1.0)))
+    ecs.spawn(DirectionLight.create(vec3(0, 0, -1), vec3(1.0), 3))
+    ecs.spawn(AmbiantLight.create(vec3(1.0, 1.0, 1.0), 0.4))
     ecs.spawn([CameraComponent(camera), ActiveCamera()], label="Camera")
 
 

@@ -350,7 +350,7 @@ class Renderer:
         self,
         output_texture: GPUTexture,
         camera: Camera,
-        lights: array[vec4],
+        lights: array[vec4] | None,
         clear_color=True,
         clear_depth=True,
     ):
@@ -377,8 +377,11 @@ class Renderer:
 
         write_buffer(self.__camera_buffer, camera_data)
 
-        write_buffer(self.__lights_buffer, lights)
-        write_buffer(self.__lights_count_buffer, array(int32(len(lights) // 2)))
+        light_count = 0
+        if lights is not None:
+            write_buffer(self.__lights_buffer, lights)
+            light_count = len(lights) // 2
+        write_buffer(self.__lights_count_buffer, array(int32(light_count)))
 
         for material_class in self.__meshes:
             pipeline = self.__pipelines[material_class]

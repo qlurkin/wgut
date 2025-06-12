@@ -190,23 +190,35 @@ class PbrMaterial:
                 let occlusion = get_occlusion(in.uv, id);
 
                 let F0 = vec3<f32>(0.15); // Base Reflectance
-                let lightColor = lights[0].color.rgb * PI;
                 let alpha = roughness * roughness;
 
                 let N = normalize(normal.x * in.tangent + normal.y * in.bitangent + normal.z * in.normal);
-
-                var L = normalize(-lights[0].position.xyz);  // direction light
-                if(lights[0].position.w != 0.0) {
-                    L = normalize(lights[0].position.xyz - in.position.xyz); // point light
-                }
-
                 let V = normalize(camera.position.xyz - in.position.xyz);
-                let H = normalize(V + L);
 
-                let ambiantLightColor = vec3<f32>(0.40);
-                let ambiant = albedo * ambiantLightColor * occlusion;
+                var color = vec3<f32>(0.0);
 
-                return vec4<f32>(PBR(alpha, F0, N, L, V, H, albedo, lightColor, emissivity, metalicity) + ambiant, 1.0);
+                for(var i: i32 = 0; i < light_count; i++) {
+                    let lightColor = lights[i].color.rgb * lights[i].color.a;
+                    // ambiant light
+                    if(lights[i].position.x == 0.0 && lights[i].position.y == 0.0 && lights[i].position.z == 0.0 && lights[i].position.w == 0.0) {
+                        color += albedo * lightColor * occlusion;
+                    }
+                    else {
+                        var L = normalize(-lights[i].position.xyz);  // direction light
+                        if(lights[i].position.w != 0.0) {
+                            L = normalize(lights[i].position.xyz - in.position.xyz); // point light
+                        }
+                        let H = normalize(V + L);
+
+                        color += PBR(alpha, F0, N, L, V, H, albedo, lightColor, emissivity, metalicity);
+                    }
+                }
+                
+
+                // let ambiantLightColor = vec3<f32>(0.40);
+                // let ambiant = albedo * ambiantLightColor * occlusion;
+
+                return vec4<f32>(color, 1.0);
             }
         """
 

@@ -26,7 +26,6 @@ class DirectionLight:
 
     def get_data(self, transformation_matrix: mat4) -> array[vec4]:
         direction = normalize(mat3(transformation_matrix) * vec3(0, 0, -1))  # type: ignore
-        print(direction)
         return array(vec4(direction, 0.0), vec4(self.color, self.intensity))  # type: ignore
 
     @staticmethod
