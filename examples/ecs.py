@@ -1,7 +1,7 @@
-from imgui_bundle import imgui
 from pyglm.glm import scale, translate, vec3
 from wgut.orbit_camera import OrbitCamera
 from wgut.scene.loaders.obj import load_obj
+from wgut.scene.performance_monitor import performance_monitor
 from wgut.scene.render_gui_system import render_gui_system
 from wgut.scene.render_system import (
     ActiveCamera,
@@ -9,12 +9,11 @@ from wgut.scene.render_system import (
     Layer,
     MaterialComponent,
     MeshComponent,
-    RenderStat,
     render_system,
 )
 from wgut.scene.renderer import Renderer
 from wgut.scene.window_system import window_system
-from wgut.scene.ecs import ECS, EntityNotFound
+from wgut.scene.ecs import ECS
 from wgut.scene.pbr_material import PbrMaterial
 from wgut.scene.primitives.cube import cube
 from wgut.scene.primitives.icosphere import icosphere
@@ -25,8 +24,6 @@ from wgut.scene.ambiant_light import AmbiantLight
 default_layer = Layer("default")
 
 # TODO:
-# - spawn light -> must rethink how material shader is done
-# - better perf gui
 # - ECS gui
 # - wireframe
 # - gizmo test
@@ -95,21 +92,6 @@ def process_event(ecs: ECS, event):
         cam.camera.process_event(event)
 
 
-def gui(ecs: ECS):
-    try:
-        r_stat: RenderStat = ecs.query_one(RenderStat)
-        stat = r_stat.stats[default_layer]
-        imgui.begin("Render Stats", None)
-        imgui.text(f"Render Time: {stat['time']:.5f}s")
-        imgui.text(f"Draw count: {stat['draw']}")
-        imgui.text(f"Mesh count: {stat['mesh']}")
-        imgui.text(f"Triangle count: {stat['triangle']}")
-        imgui.text(f"Vertex count: {stat['vertex']}")
-        imgui.end()
-    except EntityNotFound:
-        pass
-
-
 renderer = Renderer(30000, 150000, 512, 2, (1024, 1024, 32), 256)
 
 
@@ -117,7 +99,7 @@ renderer = Renderer(30000, 150000, 512, 2, (1024, 1024, 32), 256)
     ECS()
     .on("setup", setup)
     .on("window_event", process_event)
-    .on("render_gui", gui)
+    .do(performance_monitor)
     .do(
         render_system,
         renderer,

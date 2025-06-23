@@ -1,4 +1,3 @@
-from imgui_bundle import imgui
 from pyglm.glm import array, float32, scale, vec3, vec4
 from wgpu import BufferUsage, GPUBuffer
 from wgut.auto_compute_pipeline import AutoComputePipeline
@@ -7,6 +6,7 @@ from wgut.core import load_file, write_buffer
 from wgut.orbit_camera import OrbitCamera
 from wgut.scene.instance_mesh import InstanceMesh
 from wgut.scene.particles import Particles
+from wgut.scene.performance_monitor import performance_monitor
 from wgut.scene.render_gui_system import render_gui_system
 from wgut.scene.render_system import (
     ActiveCamera,
@@ -14,12 +14,11 @@ from wgut.scene.render_system import (
     Layer,
     MaterialComponent,
     MeshComponent,
-    RenderStat,
     render_system,
 )
 from wgut.scene.renderer import Renderer
 from wgut.scene.window_system import window_system
-from wgut.scene.ecs import ECS, EntityNotFound
+from wgut.scene.ecs import ECS
 from wgut.scene.basic_color_material import BasicColorMaterial
 from wgut.scene.primitives.icosphere import icosphere
 from wgut.scene.transform import Transform
@@ -101,21 +100,6 @@ def process_event(ecs: ECS, event):
         cam.camera.process_event(event)
 
 
-def gui(ecs: ECS):
-    try:
-        r_stat: RenderStat = ecs.query_one(RenderStat)
-        stat = r_stat.stats[default_layer]
-        imgui.begin("Render Stats", None)
-        imgui.text(f"Render Time: {stat['time']:.5f}s")
-        imgui.text(f"Draw count: {stat['draw']}")
-        imgui.text(f"Mesh count: {stat['mesh']}")
-        imgui.text(f"Triangle count: {stat['triangle']}")
-        imgui.text(f"Vertex count: {stat['vertex']}")
-        imgui.end()
-    except EntityNotFound:
-        pass
-
-
 renderer = Renderer(30000, 150000, 512, 2, (1024, 1024, 32), 256)
 
 
@@ -123,7 +107,7 @@ renderer = Renderer(30000, 150000, 512, 2, (1024, 1024, 32), 256)
     ECS()
     .on("setup", setup)
     .on("window_event", process_event)
-    .on("render_gui", gui)
+    .do(performance_monitor)
     .do(
         render_system,
         renderer,
