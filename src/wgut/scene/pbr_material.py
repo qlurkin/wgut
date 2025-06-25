@@ -1,4 +1,5 @@
 from __future__ import annotations
+from imgui_bundle import imgui
 import numpy as np
 from numpy.typing import NDArray
 from wgpu import GPUBuffer, GPUTexture
@@ -299,3 +300,32 @@ class PbrMaterial:
         pipeline.set_binding_sampler(1, 1)
         pipeline.set_binding_buffer(1, 2, texture_ids)
         pipeline.set_binding_buffer(1, 3, material_buffer)
+
+    def __str__(self):
+        return "PbrMaterial"
+
+    def ecs_explorer_gui(self):
+        if self.__albedo_filename != "":
+            imgui.bullet_text(f"albedo: {self.__albedo_filename}")
+        else:
+            imgui.bullet_text(f"albedo: {self.__albedo_data}")
+        if self.__normal_filename != "":
+            imgui.bullet_text(f"normal: {self.__normal_filename}")
+        else:
+            imgui.bullet_text(f"normal: {self.__normal_data}")
+        if self.__roughness_filename != "":
+            imgui.bullet_text(f"roughness: {self.__roughness_filename}")
+        else:
+            imgui.bullet_text(f"roughness: {self.__roughness_data}")
+        if self.__metalicity_filename != "":
+            imgui.bullet_text(f"metalicity: {self.__metalicity_filename}")
+        else:
+            imgui.bullet_text(f"metalicity: {self.__metalicity_data}")
+        if self.__emissivity_filename != "":
+            imgui.bullet_text(f"emissivity: {self.__emissivity_filename}")
+        else:
+            imgui.bullet_text(f"emissivity: {self.__emissivity_data}")
+        if self.__occlusion_filename != "":
+            imgui.bullet_text(f"occlusion: {self.__occlusion_filename}")
+        else:
+            imgui.bullet_text(f"occlusion: {self.__occlusion_data}")

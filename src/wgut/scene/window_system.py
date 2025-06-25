@@ -21,6 +21,9 @@ class WindowSystemApp(Window):
     def process_event(self, event):
         self.__ecs.dispatch("window_event", event)
 
+    def __str__(self):
+        return "WindowSystemApp"
+
 
 def window_system(ecs: ECS, title="WGUT Window"):
     app = WindowSystemApp(ecs)

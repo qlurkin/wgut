@@ -1,5 +1,6 @@
 from pyglm.glm import scale, translate, vec3
 from wgut.orbit_camera import OrbitCamera
+from wgut.scene.ecs_explorer import ecs_explorer
 from wgut.scene.loaders.obj import load_obj
 from wgut.scene.performance_monitor import performance_monitor
 from wgut.scene.render_gui_system import render_gui_system
@@ -100,6 +101,7 @@ renderer = Renderer(30000, 150000, 512, 2, (1024, 1024, 32), 256)
     .on("setup", setup)
     .on("window_event", process_event)
     .do(performance_monitor)
+    .do(ecs_explorer)
     .do(
         render_system,
         renderer,

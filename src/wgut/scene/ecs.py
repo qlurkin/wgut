@@ -23,6 +23,9 @@ class Entity:
     def __hash__(self):
         return hash(self.id)
 
+    def __str__(self):
+        return f"[{self.id}] {self.label}"
+
 
 class EntityNotFound(Exception):
     def __init__(self, id: int | Entity):

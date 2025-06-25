@@ -1,5 +1,6 @@
 from typing import Self
-from pyglm.glm import mat4, identity, mat3, inverseTranspose
+from imgui_bundle import imgui
+from pyglm.glm import mat4, identity, mat3, inverseTranspose, vec3, vec4
 
 
 class Transform:
@@ -28,3 +29,19 @@ class Transform:
 
     def get_children(self) -> list[Self]:
         return list(self.__children)
+
+    def get_translation(self) -> vec3:
+        return self.__matrix * vec3(0, 0, 0)  # type: ignore
+
+    def __str__(self):
+        return "Transform"
+
+    def ecs_explorer_gui(self):
+        if imgui.collapsing_header("translation"):
+            translation = self.get_translation()
+            imgui.input_float("x", translation.x)
+            imgui.input_float("y", translation.y)
+            imgui.input_float("z", translation.z)
+
+        imgui.collapsing_header("rotation")
+        imgui.collapsing_header("scale")

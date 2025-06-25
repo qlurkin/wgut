@@ -98,3 +98,6 @@ class StaticMesh:
             normal_matrix * self.__tangents,
             normal_matrix * self.__bitangents,
         )  # type: ignore
+
+    def __str__(self):
+        return f"StaticMesh(vert={len(self.get_positions())}, ind={len(self.get_indices())})"

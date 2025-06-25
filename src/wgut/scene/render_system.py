@@ -19,25 +19,44 @@ class ActiveCamera:
 class CameraComponent:
     camera: Camera
 
+    def __str__(self):
+        return str(self.camera)
+
 
 @dataclass
 class MaterialComponent:
     material: Material
+
+    def __str__(self):
+        return str(self.material)
+
+    def ecs_explorer_gui(self):
+        if "ecs_explorer_gui" in dir(self.material):
+            self.material.ecs_explorer_gui()  # type: ignore
 
 
 @dataclass
 class MeshComponent:
     mesh: Mesh
 
+    def __str__(self):
+        return str(self.mesh)
+
 
 @dataclass
 class RenderStat:
     stats: dict
 
+    def __str__(self):
+        return "RenderStat"
+
 
 class Layer:
     def __init__(self, name: str = ""):
         self.name = name
+
+    def __str__(self):
+        return f"Layer(name={self.name})"
 
 
 def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
