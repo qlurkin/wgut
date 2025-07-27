@@ -1,11 +1,12 @@
 import math
-from pyglm.glm import array, int32, normalize, vec2, vec3, vec4
+import numpy as np
 
+from wgut.scene.mesh import vertex
 from wgut.scene.static_mesh import StaticMesh
 
 
 # TODO: Fix center cap vertex
-def cylinder(radius=1.0, height=2.0, segments=32):
+def cylinder(radius=1.0, height=2.0, segments=32) -> StaticMesh:
     positions = []
     normals = []
     uvs = []
@@ -29,16 +30,19 @@ def cylinder(radius=1.0, height=2.0, segments=32):
         x = math.cos(angle) * radius
         z = math.sin(angle) * radius
 
-        tangent = vec3(-math.sin(angle), 0, math.cos(angle))
-        bitangent = vec3(0, 1, 0)
-        normal = normalize(vec3(x, 0, z))
+        tangent = (-math.sin(angle), 0, math.cos(angle))
+        bitangent = (0, 1, 0)
+        normal = (x, 0, z)
+        length = math.sqrt(x * x + z * z)
+        normal = (x / length, 0, z / length)
+
         u = i / segments
 
         idx = len(positions)
 
-        positions.append(vec4(x, bottom_y, z, 1.0))
+        positions.append((x, bottom_y, z))
         normals.append(normal)
-        uvs.append(vec2(u, 0.0))
+        uvs.append((u, 0.0))
         tangents.append(tangent)
         bitangents.append(bitangent)
 
@@ -46,9 +50,9 @@ def cylinder(radius=1.0, height=2.0, segments=32):
 
         idx = len(positions)
 
-        positions.append(vec4(x, top_y, z, 1.0))
+        positions.append((x, top_y, z))
         normals.append(normal)
-        uvs.append(vec2(u, 1.0))
+        uvs.append((u, 1.0))
         tangents.append(tangent)
         bitangents.append(bitangent)
 
@@ -73,21 +77,21 @@ def cylinder(radius=1.0, height=2.0, segments=32):
 
         idx = len(positions)
 
-        positions.append(vec4(x, top_y, z, 1.0))
-        normals.append(vec3(0, 1, 0))
-        uvs.append(vec2(u, v))
-        tangents.append(vec3(1, 0, 0))
-        bitangents.append(vec3(0, 0, 1))
+        positions.append((x, top_y, z))
+        normals.append((0, 1, 0))
+        uvs.append((u, v))
+        tangents.append((1, 0, 0))
+        bitangents.append((0, 0, 1))
 
         cap_top_indices.append(idx)
 
     top_center_idx = len(positions)
 
-    positions.append(vec4(0, top_y, 0, 1.0))
-    normals.append(vec3(0, 1, 0))
-    uvs.append(vec2(0.5, 0.5))
-    tangents.append(vec3(1, 0, 0))
-    bitangents.append(vec3(0, 0, 1))
+    positions.append((0, top_y, 0))
+    normals.append((0, 1, 0))
+    uvs.append((0.5, 0.5))
+    tangents.append((1, 0, 0))
+    bitangents.append((0, 0, 1))
 
     for i in range(segments):
         a = cap_top_indices[i]
@@ -105,21 +109,21 @@ def cylinder(radius=1.0, height=2.0, segments=32):
 
         idx = len(positions)
 
-        positions.append(vec4(x, bottom_y, z, 1.0))
-        normals.append(vec3(0, -1, 0))
-        uvs.append(vec2(u, v))
-        tangents.append(vec3(1, 0, 0))
-        bitangents.append(vec3(0, 0, 1))
+        positions.append((x, bottom_y, z))
+        normals.append((0, -1, 0))
+        uvs.append((u, v))
+        tangents.append((1, 0, 0))
+        bitangents.append((0, 0, 1))
 
         cap_bottom_indices.append(idx)
 
     bottom_center_idx = len(positions)
 
-    positions.append(vec4(0, bottom_y, 0, 1.0))
-    normals.append(vec3(0, -1, 0))
-    uvs.append(vec2(0.5, 0.5))
-    tangents.append(vec3(1, 0, 0))
-    bitangents.append(vec3(0, 0, 1))
+    positions.append((0, bottom_y, 0))
+    normals.append((0, -1, 0))
+    uvs.append((0.5, 0.5))
+    tangents.append((1, 0, 0))
+    bitangents.append((0, 0, 1))
 
     for i in range(segments):
         a = cap_bottom_indices[i]
@@ -127,12 +131,12 @@ def cylinder(radius=1.0, height=2.0, segments=32):
         c = bottom_center_idx
         indices += [a, b, c]
 
-    return StaticMesh(
-        array(positions),
-        array(vec4(1.0)).repeat(len(positions)),
-        array(uvs),
-        array(normals),
-        array(tangents),
-        array(bitangents),
-        array.from_numbers(int32, *indices),
+    vertices = vertex(
+        np.array(positions, dtype=np.float32),
+        np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32),
+        np.array(uvs, dtype=np.float32),
+        np.array(normals, dtype=np.float32),
+        np.array(tangents, dtype=np.float32),
+        np.array(bitangents, dtype=np.float32),
     )
+    return StaticMesh(vertices, np.array(indices, dtype=np.int32))

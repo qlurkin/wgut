@@ -1,5 +1,4 @@
 import PIL.Image as img
-from pyglm.glm import array
 import wgpu
 import numpy.typing as npt
 import numpy as np
@@ -45,9 +44,7 @@ def read_buffer(buffer: wgpu.GPUBuffer) -> memoryview:
     return get_device().queue.read_buffer(buffer)
 
 
-def write_buffer(
-    buffer: wgpu.GPUBuffer, data: npt.NDArray | array | bytes, buffer_offset=0
-):
+def write_buffer(buffer: wgpu.GPUBuffer, data: npt.NDArray, buffer_offset=0):
     return get_device().queue.write_buffer(
         buffer=buffer, data=data, buffer_offset=buffer_offset
     )

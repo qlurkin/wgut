@@ -1,26 +1,25 @@
 import numpy as np
 from math import pi, atan2, acos
-from pyglm.glm import array, int32, normalize, vec2, vec3, vec4
-
-from wgut.scene.mesh import compute_bitangent_vectors, compute_tangent_vectors
+import numpy.typing as npt
+from wgut.scene.mesh import compute_bitangent_vectors, compute_tangent_vectors, vertex
 from ..static_mesh import StaticMesh
 
 
-def icosphere_positions_and_indices(order: int) -> tuple[array[vec3], array[int32]]:
+def icosphere_positions_and_indices(order: int) -> tuple[npt.NDArray, npt.NDArray]:
     f = (1.0 + np.sqrt(5.0)) / 2.0
     positions = [
-        vec3(-1, f, 0),
-        vec3(1, f, 0),
-        vec3(-1, -f, 0),
-        vec3(1, -f, 0),
-        vec3(0, -1, f),
-        vec3(0, 1, f),
-        vec3(0, -1, -f),
-        vec3(0, 1, -f),
-        vec3(f, 0, -1),
-        vec3(f, 0, 1),
-        vec3(-f, 0, -1),
-        vec3(-f, 0, 1),
+        np.array([-1, f, 0], dtype=np.float32),
+        np.array([1, f, 0], dtype=np.float32),
+        np.array([-1, -f, 0], dtype=np.float32),
+        np.array([1, -f, 0], dtype=np.float32),
+        np.array([0, -1, f], dtype=np.float32),
+        np.array([0, 1, f], dtype=np.float32),
+        np.array([0, -1, -f], dtype=np.float32),
+        np.array([0, 1, -f], dtype=np.float32),
+        np.array([f, 0, -1], dtype=np.float32),
+        np.array([f, 0, 1], dtype=np.float32),
+        np.array([-f, 0, -1], dtype=np.float32),
+        np.array([-f, 0, 1], dtype=np.float32),
     ]
 
     indices = [
@@ -128,19 +127,19 @@ def icosphere_positions_and_indices(order: int) -> tuple[array[vec3], array[int3
     for _ in range(order):
         indices = subdivide(indices)
 
-    # positions /= np.linalg.norm(positions, axis=1, keepdims=True)
+    positions /= np.linalg.norm(positions, axis=1, keepdims=True)
 
-    return array(positions).map(normalize), array.from_numbers(int32, *indices)
+    return positions, np.array(indices, dtype=np.uint32)
 
 
-def icosphere_with_uv(order: int) -> tuple[array[vec3], array[vec2], array[int32]]:
+def icosphere_with_uv(order: int) -> tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
     positions, indices = icosphere_positions_and_indices(order)
 
-    def compute_uv(pos: vec3):
+    def compute_uv(pos):
         x, y, z = pos
         u = (atan2(z, x) / (2 * pi)) % 1.0  # [0, 1)
         v = acos(y) / pi  # [0, 1]
-        return vec2(u, v)
+        return np.array([u, v], dtype=np.float32)
 
     vertex_map = {}
     final_positions = []
@@ -152,7 +151,7 @@ def icosphere_with_uv(order: int) -> tuple[array[vec3], array[vec2], array[int32
         tri_indices = []
         tri_uvs = [compute_uv(positions[v]) for v in tri]
 
-        us = [uv.x for uv in tri_uvs]
+        us = [uv[0] for uv in tri_uvs]
         if max(us) - min(us) > 0.5:
             for j in range(3):
                 if us[j] < 0.5:
@@ -160,7 +159,7 @@ def icosphere_with_uv(order: int) -> tuple[array[vec3], array[vec2], array[int32
 
         for j in range(3):
             v_idx = tri[j]
-            uv = vec2(tri_uvs[j])
+            uv = tuple(tri_uvs[j])
             key = (v_idx, uv)
             if key not in vertex_map:
                 vertex_map[key] = len(final_positions)
@@ -171,25 +170,29 @@ def icosphere_with_uv(order: int) -> tuple[array[vec3], array[vec2], array[int32
         final_indices.extend(tri_indices)
 
     return (
-        array(final_positions),
-        array(final_uvs),
-        array.from_numbers(int32, *final_indices),
+        np.array(final_positions, dtype=np.float32),
+        np.array(final_uvs, dtype=np.float32),
+        np.array(final_indices, dtype=np.uint32),
     )
 
 
 def icosphere(order: int) -> StaticMesh:
     positions, uvs, indices = icosphere_with_uv(order)
 
-    normals = array(positions)
+    normals = np.array(positions)
     tangents = compute_tangent_vectors(positions, uvs, normals, indices)
     bitangents = compute_bitangent_vectors(normals, tangents)
 
-    return StaticMesh(
-        positions.map(lambda p: vec4(p, 1.0)),  # type: ignore
-        array(vec4(1.0)).repeat(len(positions)),
+    vertices = vertex(
+        positions,
+        np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32),
         uvs,
         normals,
         tangents,
         bitangents,
+    )
+
+    return StaticMesh(
+        vertices,
         indices,
     )

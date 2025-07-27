@@ -1,9 +1,10 @@
 from typing import Any
-from pyglm.glm import int32, vec2, vec3, vec4, array
+import numpy as np
 from wgut.scene.mesh import (
     compute_bitangent_vectors,
     compute_normal_vectors,
     compute_tangent_vectors,
+    vertex,
 )
 from wgut.scene.static_mesh import StaticMesh
 import os
@@ -86,19 +87,19 @@ def load_obj(obj_path: str) -> list[list[Any]]:
                 current_material = line.strip().split()[1]
             elif line.startswith("v "):
                 tokens = list(map(float, line.strip().split()[1:]))
-                positions_raw.append(vec3(*tokens[:3]))
+                positions_raw.append(tokens[:3])
                 if len(tokens) == 6:
-                    colors_raw.append(vec4(tokens[3], tokens[4], tokens[5], 1.0))
+                    colors_raw.append([tokens[3], tokens[4], tokens[5], 1.0])
                 else:
-                    colors_raw.append(vec4(1.0))  # default white
+                    colors_raw.append([1.0, 1.0, 1.0, 1.0])  # default white
             elif line.startswith("vt "):
                 _, u, v = line.strip().split()
                 # obj uv origin at bottom-left of the texture
-                uvs_raw.append(vec2(float(u), 1 - float(v)))
+                uvs_raw.append([float(u), 1 - float(v)])
                 hasUV = True
             elif line.startswith("vn "):
                 _, nx, ny, nz = line.strip().split()
-                normals_raw.append(vec3(float(nx), float(ny), float(nz)))
+                normals_raw.append([float(nx), float(ny), float(nz)])
                 hasNormals = True
             elif line.startswith("f "):
                 face = line.strip().split()[1:]
@@ -139,39 +140,43 @@ def load_obj(obj_path: str) -> list[list[Any]]:
         color_array = []
 
         for key in vertices:
-            pos_array.append(vec4(positions_raw[key.v], 1.0))  # type: ignore
+            pos_array.append(positions_raw[key.v] + [1.0])  # type: ignore
             color_array.append(colors_raw[key.vc])
             if hasUV:
                 uv_array.append(uvs_raw[key.vt])
             if hasNormals:
                 norm_array.append(normals_raw[key.vn])
 
-        positions = array(pos_array)
-        colors = array(color_array)
-        indices = array.from_numbers(int32, *indices)
+        positions = np.array(pos_array, dtype=np.float32)
+        colors = np.array(color_array, dtype=np.float32)
+        indices = np.array(indices, dtype=np.int32)
 
         if hasNormals:
-            normals = array(norm_array)
+            normals = np.array(norm_array, dtype=np.float32)
         else:
             normals = compute_normal_vectors(positions, indices)
 
         if hasUV:
-            uvs = array(uv_array)
+            uvs = np.array(uv_array, dtype=np.float32)
             tangents = compute_tangent_vectors(positions, uvs, normals, indices)
             bitangents = compute_bitangent_vectors(normals, tangents)
         else:
-            uvs = array(vec2(0.0)).repeat(len(positions))
-            tangents = array(vec3(0.0)).repeat(len(positions))
-            bitangents = array(vec3(0.0)).repeat(len(positions))
+            uvs = np.zeros((len(positions), 2), dtype=np.float32)
+            tangents = np.zeros((len(positions), 3), dtype=np.float32)
+            bitangents = np.zeros((len(positions), 3), dtype=np.float32)
+
+        vertices = vertex(
+            positions,
+            colors,
+            uvs,
+            normals,
+            tangents,
+            bitangents,
+        )
 
         mesh = MeshComponent(
             StaticMesh(
-                positions,
-                colors,
-                uvs,
-                normals,
-                tangents,
-                bitangents,
+                vertices,
                 indices,
             )
         )

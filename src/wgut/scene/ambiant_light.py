@@ -1,10 +1,4 @@
 from dataclasses import dataclass
-from pyglm.glm import (
-    array,
-    mat4,
-    vec3,
-    vec4,
-)
 
 from wgut.scene.light import LightComponent
 from wgut.scene.transform import Transform

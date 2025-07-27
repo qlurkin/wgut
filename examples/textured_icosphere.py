@@ -1,4 +1,3 @@
-from pyglm.glm import array
 from wgpu import GPUTexture, VertexFormat
 from wgut import TextureBuilder, AutoRenderPipeline, Window, load_file
 from wgut.orbit_camera import OrbitCamera

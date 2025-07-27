@@ -2,12 +2,6 @@ import time
 from typing import Type
 from wgpu import BufferUsage, GPUTexture, LoadOp, TextureFormat, TextureUsage
 import random
-from pyglm.glm import (
-    array,
-    float32,
-    int32,
-    vec4,
-)
 
 from wgut.builders.commandbufferbuilder import CommandBufferBuilder
 from wgut.builders.texturebuilder import TextureBuilder
@@ -18,6 +12,8 @@ from wgut.scene.mesh import Mesh, get_vertex_buffer_descriptors
 from wgut.auto_render_pipeline import AutoRenderPipeline
 from wgut.builders.bufferbuilder import BufferBuilder
 from wgut.camera import Camera
+import numpy.typing as npt
+import numpy as np
 
 
 SHADER_START = """
@@ -92,6 +88,7 @@ VERTEX_DATA_SIZE = {
     BITANGENT_LOCATION: 4 * 3,
     MAT_ID_LOCATION: 4,
 }
+VERTEX_TOTAL_SIZE = sum(VERTEX_DATA_SIZE.values())
 
 
 class Renderer:
@@ -114,50 +111,12 @@ class Renderer:
 
         self.__vertex_buffer_descriptors = get_vertex_buffer_descriptors()
 
-        self.__vertex_buffers = []
-        self.__vertex_buffers.append(
+        self.__vertex_buffer = (
             BufferBuilder()
-            .with_size(vertex_buffer_size * 4 * 4)
+            .with_size(vertex_buffer_size * VERTEX_TOTAL_SIZE)
             .with_usage(BufferUsage.VERTEX | BufferUsage.COPY_DST)
             .build()
         )
-        self.__vertex_buffers.append(
-            BufferBuilder()
-            .with_size(vertex_buffer_size * 4 * 4)
-            .with_usage(BufferUsage.VERTEX | BufferUsage.COPY_DST)
-            .build()
-        )
-        self.__vertex_buffers.append(
-            BufferBuilder()
-            .with_size(vertex_buffer_size * 4 * 2)
-            .with_usage(BufferUsage.VERTEX | BufferUsage.COPY_DST)
-            .build()
-        )
-        self.__vertex_buffers.append(
-            BufferBuilder()
-            .with_size(vertex_buffer_size * 4 * 3)
-            .with_usage(BufferUsage.VERTEX | BufferUsage.COPY_DST)
-            .build()
-        )
-        self.__vertex_buffers.append(
-            BufferBuilder()
-            .with_size(vertex_buffer_size * 4 * 3)
-            .with_usage(BufferUsage.VERTEX | BufferUsage.COPY_DST)
-            .build()
-        )
-        self.__vertex_buffers.append(
-            BufferBuilder()
-            .with_size(vertex_buffer_size * 4 * 3)
-            .with_usage(BufferUsage.VERTEX | BufferUsage.COPY_DST)
-            .build()
-        )
-        self.__vertex_buffers.append(
-            BufferBuilder()
-            .with_size(vertex_buffer_size * 4)
-            .with_usage(BufferUsage.VERTEX | BufferUsage.COPY_DST)
-            .build()
-        )
-
         self.__index_buffer = (
             BufferBuilder()
             .with_size(index_buffer_size * 4)
@@ -233,8 +192,7 @@ class Renderer:
             shader_source = SHADER_START + material_class.get_fragment()
             pipeline = AutoRenderPipeline(shader_source).with_depth_texture()
             pipeline.set_vertex_buffer_descriptors(self.__vertex_buffer_descriptors)
-            for i in range(len(self.__vertex_buffers)):
-                pipeline.set_vertex_buffer(i, self.__vertex_buffers[i])
+            pipeline.set_vertex_buffer(0, self.__vertex_buffer)
             pipeline.set_index_buffer(self.__index_buffer)
             pipeline.set_binding_buffer(0, 0, self.__camera_buffer)
             pipeline.set_binding_buffer(0, 1, self.__lights_buffer)
@@ -273,14 +231,14 @@ class Renderer:
         vertex_data = mesh.get_transformed_vertices(transform.get_matrix())
         index_data = mesh.get_indices()
 
-        if len(vertex_data[0]) > self.__vertex_buffer_size:
+        if len(vertex_data) > self.__vertex_buffer_size:
             raise IndexError("Vertex Buffer Not Long Enough")
 
         if len(index_data) > self.__index_buffer_size:
             raise IndexError("index Buffer Not Long Enough")
 
         if (
-            self.__vertex_count + len(vertex_data[0]) > self.__vertex_buffer_size
+            self.__vertex_count + len(vertex_data) > self.__vertex_buffer_size
             or self.__index_count + len(index_data) > self.__index_buffer_size
             or (
                 material not in self.__material_index
@@ -327,30 +285,32 @@ class Renderer:
         else:
             material_index = self.__material_index[material]
 
-        vertex_data = vertex_data + (
-            array.from_numbers(float32, material_index).repeat(len(vertex_data[0])),
+        vertex_data = np.hstack(
+            [
+                vertex_data,
+                np.full((len(vertex_data), 1), material_index, dtype=np.float32),
+            ]
         )
 
         index_data = index_data + self.__vertex_count
 
-        for i in range(len(self.__vertex_buffers)):
-            buffer_offset = self.__vertex_count * VERTEX_DATA_SIZE[i]
-            write_buffer(self.__vertex_buffers[i], vertex_data[i], buffer_offset)
+        buffer_offset = self.__vertex_count * VERTEX_TOTAL_SIZE
+        write_buffer(self.__vertex_buffer, vertex_data, buffer_offset)
 
         buffer_offset = self.__index_count * 4
         write_buffer(self.__index_buffer, index_data, buffer_offset)
 
-        self.__vertex_count += len(vertex_data[0])
+        self.__vertex_count += len(vertex_data)
         self.__index_count += len(index_data)
         self.__frame_mesh_count += 1
         self.__frame_triangle_count += len(index_data) // 3
-        self.__frame_vertex_count += len(vertex_data[0])
+        self.__frame_vertex_count += len(vertex_data)
 
     def end_frame(
         self,
         output_texture: GPUTexture,
         camera: Camera,
-        lights: array[vec4] | None,
+        lights: npt.NDArray | None,  # shape(n, 8) -> position, color # dtype=float32
         clear_color=True,
         clear_depth=True,
     ):
@@ -370,18 +330,24 @@ class Renderer:
         view_matrix, proj_matrix = camera.get_matrices(
             output_texture.width / output_texture.height
         )
-        camera_position = vec4(camera.get_position(), 1.0)  # type: ignore
-        camera_matrix = proj_matrix * view_matrix
 
-        camera_data = camera_matrix.to_bytes() + camera_position.to_bytes()
+        camera_position = np.hstack([camera.get_position(), [1.0]]).astype(np.float32)
+        camera_matrix = np.array(proj_matrix @ view_matrix, dtype=np.float32)
+
+        # Must send transpose version of matrices, because GPU expect matrices in column major order
+        camera_data = np.vstack(
+            [np.ascontiguousarray(camera_matrix.T), camera_position]
+        )
 
         write_buffer(self.__camera_buffer, camera_data)
 
         light_count = 0
         if lights is not None:
             write_buffer(self.__lights_buffer, lights)
-            light_count = len(lights) // 2
-        write_buffer(self.__lights_count_buffer, array(int32(light_count)))
+            light_count = len(lights)
+        write_buffer(
+            self.__lights_count_buffer, np.array([light_count], dtype=np.int32)
+        )
 
         for material_class in self.__meshes:
             pipeline = self.__pipelines[material_class]
@@ -407,7 +373,7 @@ class Renderer:
         if len(self.__texture_ids) > 0:
             write_buffer(
                 self.__texture_ids_buffer,
-                array.from_numbers(int32, *self.__texture_ids),
+                np.array(self.__texture_ids, dtype=np.int32),
             )
 
         pipeline.render(

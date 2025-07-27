@@ -1,18 +1,9 @@
 from typing import Protocol
 
 import wgpu
-from pyglm.glm import (
-    cross,
-    dot,
-    length,
-    normalize,
-    vec4,
-    vec3,
-    vec2,
-    array,
-    mat4,
-    int32,
-)
+import numpy.typing as npt
+import numpy as np
+
 
 from wgut.builders.vertexbufferdescriptorsbuilder import VertexBufferDescriptorsBuilder
 
@@ -22,92 +13,44 @@ def get_vertex_buffer_descriptors():
         VertexBufferDescriptorsBuilder()
         .with_vertex_descriptor(
             {
-                "array_stride": 4 * 4,
+                "array_stride": 4 * (4 + 4 + 2 + 3 + 3 + 3 + 1),
                 "step_mode": wgpu.VertexStepMode.vertex,
                 "attributes": [
                     {
                         "format": wgpu.VertexFormat.float32x4,
                         "offset": 0,
                         "shader_location": 0,
-                    }
-                ],
-            }
-        )
-        .with_vertex_descriptor(
-            {
-                "array_stride": 4 * 4,
-                "step_mode": wgpu.VertexStepMode.vertex,
-                "attributes": [
+                    },
                     {
                         "format": wgpu.VertexFormat.float32x4,
-                        "offset": 0,
+                        "offset": 4 * 4,
                         "shader_location": 1,
-                    }
-                ],
-            }
-        )
-        .with_vertex_descriptor(
-            {
-                "array_stride": 4 * 2,
-                "step_mode": wgpu.VertexStepMode.vertex,
-                "attributes": [
+                    },
                     {
                         "format": wgpu.VertexFormat.float32x2,
-                        "offset": 0,
+                        "offset": (4 + 4) * 4,
                         "shader_location": 2,
-                    }
-                ],
-            }
-        )
-        .with_vertex_descriptor(
-            {
-                "array_stride": 4 * 3,
-                "step_mode": wgpu.VertexStepMode.vertex,
-                "attributes": [
+                    },
                     {
                         "format": wgpu.VertexFormat.float32x3,
-                        "offset": 0,
+                        "offset": (4 + 4 + 2) * 4,
                         "shader_location": 3,
-                    }
-                ],
-            }
-        )
-        .with_vertex_descriptor(
-            {
-                "array_stride": 4 * 3,
-                "step_mode": wgpu.VertexStepMode.vertex,
-                "attributes": [
+                    },
                     {
                         "format": wgpu.VertexFormat.float32x3,
-                        "offset": 0,
+                        "offset": (4 + 4 + 2 + 3) * 4,
                         "shader_location": 4,
-                    }
-                ],
-            }
-        )
-        .with_vertex_descriptor(
-            {
-                "array_stride": 4 * 3,
-                "step_mode": wgpu.VertexStepMode.vertex,
-                "attributes": [
+                    },
                     {
                         "format": wgpu.VertexFormat.float32x3,
-                        "offset": 0,
+                        "offset": (4 + 4 + 2 + 3 + 3) * 4,
                         "shader_location": 5,
-                    }
-                ],
-            }
-        )
-        .with_vertex_descriptor(
-            {
-                "array_stride": 4,
-                "step_mode": wgpu.VertexStepMode.vertex,
-                "attributes": [
+                    },
                     {
                         "format": wgpu.VertexFormat.float32,
-                        "offset": 0,
+                        "offset": (4 + 4 + 2 + 3 + 3 + 3) * 4,
                         "shader_location": 6,
-                    }
+                    },
                 ],
             }
         )
@@ -115,41 +58,41 @@ def get_vertex_buffer_descriptors():
     )
 
 
-def compute_triangle_normal(p1: vec3, p2: vec3, p3: vec3) -> vec3:
+def compute_triangle_normal(
+    p1: npt.NDArray, p2: npt.NDArray, p3: npt.NDArray
+) -> npt.NDArray:
     p_1_2 = p2 - p1
     p_1_3 = p3 - p1
 
-    res = cross(p_1_2, p_1_3)
-    return normalize(res)
+    res = np.cross(p_1_2, p_1_3)
+    return res / np.linalg.norm(res)
 
 
 def compute_triangle_tangent(
-    p1: vec3,
-    uv1: vec2,
-    p2: vec3,
-    uv2: vec2,
-    p3: vec3,
-    uv3: vec2,
-) -> tuple[vec3, vec3]:
+    p1: npt.NDArray,
+    uv1: npt.NDArray,
+    p2: npt.NDArray,
+    uv2: npt.NDArray,
+    p3: npt.NDArray,
+    uv3: npt.NDArray,
+) -> tuple[npt.NDArray, npt.NDArray]:
     p_1_2 = p2 - p1
     p_1_3 = p3 - p1
 
     tc_1_2 = uv2 - uv1
     tc_1_3 = uv3 - uv1
 
-    tangent = tc_1_3.y * p_1_2 - tc_1_2.y * p_1_3
-    tangent = normalize(tangent)
+    tangent = tc_1_3[1] * p_1_2 - tc_1_2[1] * p_1_3
+    tangent /= np.linalg.norm(tangent)
 
-    bitangent = -tc_1_3.x * p_1_2 + tc_1_2.x * p_1_3
-    bitangent = normalize(bitangent)
+    bitangent = -tc_1_3[0] * p_1_2 + tc_1_2[0] * p_1_3
+    bitangent /= np.linalg.norm(bitangent)
 
     return tangent, bitangent
 
 
-def compute_normal_vectors(
-    positions: array[vec3] | array[vec4], indices: array[int32]
-) -> array[vec3]:
-    normals = array(vec3(0.0)).repeat(len(positions))
+def compute_normal_vectors(positions: npt.NDArray, indices: npt.NDArray) -> npt.NDArray:
+    normals = np.zeros((positions.shape[0], 3))
 
     for i in range(0, len(indices), 3):
         index1 = indices[i]
@@ -157,24 +100,21 @@ def compute_normal_vectors(
         index3 = indices[i + 2]
 
         normal = compute_triangle_normal(
-            positions[index1].xyz, positions[index2].xyz, positions[index3].xyz
+            positions[index1][:3], positions[index2][:3], positions[index3][:3]
         )
 
         normals[index1] += normal
         normals[index2] += normal
         normals[index3] += normal
 
-    normals = normals.map(normalize)
+    normals /= np.linalg.norm(normals, axis=1, keepdims=True)
     return normals
 
 
 def compute_tangent_vectors(
-    positions: array[vec3] | array[vec4],
-    uvs: array[vec2],
-    normals: array[vec3],
-    indices: array[int32],
-) -> array[vec3]:
-    tangents = array(vec3(0.0)).repeat(len(positions))
+    positions: npt.NDArray, uvs: npt.NDArray, normals: npt.NDArray, indices: npt.NDArray
+) -> npt.NDArray:
+    tangents = np.zeros((len(positions), 3)).astype(np.float32)
 
     for i in range(0, len(indices), 3):
         index1 = indices[i]
@@ -182,11 +122,11 @@ def compute_tangent_vectors(
         index3 = indices[i + 2]
 
         tangent, _ = compute_triangle_tangent(
-            positions[index1].xyz,
+            positions[index1][:3],
             uvs[index1],
-            positions[index2].xyz,
+            positions[index2][:3],
             uvs[index2],
-            positions[index3].xyz,
+            positions[index3][:3],
             uvs[index3],
         )
 
@@ -196,11 +136,11 @@ def compute_tangent_vectors(
 
     for i in range(len(tangents)):
         t = tangents[i]
-        norm = length(t)
+        norm = np.linalg.norm(t)
         if norm != 0:
-            t /= norm
-            t -= dot(normals[i], t) * normals[i]
-            t = normalize(t)
+            t /= np.linalg.norm(t)
+            t -= (normals[i] @ t) * normals[i]
+            t /= np.linalg.norm(t)
         else:
             print("undefined tangent at position", positions[i])
             t = normals[i]
@@ -211,21 +151,21 @@ def compute_tangent_vectors(
 
 
 def compute_bitangent_vectors(
-    normals: array[vec3], tangents: array[vec3]
-) -> array[vec3]:
+    normals: npt.NDArray, tangents: npt.NDArray
+) -> npt.NDArray:
     bitangents = []
     for i in range(len(normals)):
-        if normals[i] == tangents[i]:
-            bitangents.append(vec3(normals[i]))
+        if np.array_equal(normals[i], tangents[i]):
+            bitangents.append(normals[i].copy())
             print(
                 f"degenerate tangent space for normal {normals[i]} and tangent {tangents[i]}"
             )
         else:
-            bitangents.append(cross(normals[i], tangents[i]))
-    return array(bitangents)
+            bitangents.append(np.cross(normals[i], tangents[i]))
+    return np.array(bitangents, dtype=np.float32)
 
 
-def compute_line_list(triangle_list: array[int32]) -> array[int32]:
+def compute_line_list(triangle_list: npt.NDArray) -> npt.NDArray:
     lines = set()
 
     def add_line(i1: int, i2: int):
@@ -247,14 +187,65 @@ def compute_line_list(triangle_list: array[int32]) -> array[int32]:
         res.append(line[0])
         res.append(line[1])
 
-    return array(res)
+    return np.array(res)
+
+
+def vertex(
+    position: npt.NDArray,
+    color: npt.NDArray | None = None,
+    tex_coord: npt.NDArray | None = None,
+    normal: npt.NDArray | None = None,
+    tangent: npt.NDArray | None = None,
+    bitangent: npt.NDArray | None = None,
+) -> npt.NDArray:
+    if position.ndim == 1:
+        position = position.reshape((1, len(position)))
+
+    vertex_count = position.shape[0]
+
+    if position.shape[1] == 3:
+        position = np.hstack([position, np.ones((vertex_count, 1), dtype=np.float32)])
+
+    if color is None:
+        color = np.ones((vertex_count, 4))
+
+    if color.ndim == 1:
+        color = np.full((vertex_count, 4), color)
+
+    if tex_coord is None:
+        tex_coord = np.zeros((vertex_count, 2))
+
+    if tex_coord.ndim == 1:
+        tex_coord = np.full((vertex_count, 2), tex_coord)
+
+    if normal is None:
+        normal = np.zeros((vertex_count, 3))
+
+    if normal.ndim == 1:
+        normal = np.full((vertex_count, 3), normal)
+
+    if tangent is None:
+        tangent = np.zeros((vertex_count, 3))
+
+    if tangent.ndim == 1:
+        tangent = np.full((vertex_count, 3), tangent)
+
+    if bitangent is None:
+        bitangent = np.zeros((vertex_count, 3))
+
+    if bitangent.ndim == 1:
+        bitangent = np.full((vertex_count, 3), bitangent)
+
+    res = np.hstack([position, color, tex_coord, normal, tangent, bitangent])
+    if res.dtype != np.float32:
+        print("Warning: Vertex Data not in Float32 => Casting")
+        res = np.array(res, dtype=np.float32)
+    return res
 
 
 class Mesh(Protocol):
     def get_transformed_vertices(
-        self, transformation_matrix: mat4
-    ) -> tuple[
-        array[vec4], array[vec4], array[vec2], array[vec3], array[vec3], array[vec3]
-    ]: ...
+        self, transformation_matrix: npt.NDArray
+    ) -> npt.NDArray: ...
 
-    def get_indices(self) -> array[int32]: ...
+    def get_indices(self) -> npt.NDArray: ...

@@ -1,20 +1,21 @@
 import numpy as np
-from pyglm.glm import acos, length, lookAt, mat4, perspective, vec3
-from math import atan2, pi
+from numpy.typing import NDArray
+import wgut.cgmath as cm
+from math import pi
 
 
-def cartesian_to_spherical(pos: vec3) -> tuple[float, float, float]:
-    r = length(pos)
-    theta = acos(pos[1] / r) if r != 0 else 0.0  # Inclinaison [0, π]
-    phi = atan2(pos[2], pos[0])  # Azimut [-π, π]
-    return r, theta, phi
+def cartesian_to_spherical(pos: NDArray) -> tuple[float, float, float]:
+    r = np.linalg.norm(pos)
+    theta = np.arccos(pos[1] / r) if r != 0 else 0.0  # Inclinaison [0, π]
+    phi = np.arctan2(pos[2], pos[0])  # Azimut [-π, π]
+    return r.astype(float), theta, phi
 
 
-def spherical_to_cartesian(r: float, theta: float, phi: float) -> vec3:
+def spherical_to_cartesian(r: float, theta: float, phi: float) -> NDArray:
     x = r * np.sin(theta) * np.cos(phi)
     y = r * np.cos(theta)
     z = r * np.sin(theta) * np.sin(phi)
-    return vec3([x, y, z])
+    return np.array([x, y, z])
 
 
 class OrbitCamera:
@@ -26,8 +27,8 @@ class OrbitCamera:
         near: float,
         far: float,
     ):
-        self.__target = vec3(target)
-        centered_position = vec3(position) - self.__target
+        self.__target = np.array(target)
+        centered_position: NDArray = np.array(position) - self.__target
 
         self.__radius, self.__theta, self.__phi = cartesian_to_spherical(
             centered_position
@@ -40,16 +41,16 @@ class OrbitCamera:
         self.__move_start = (0.0, 0.0)
         self.__pointer_start = (0.0, 0.0)
 
-    def get_matrices(self, ratio: float) -> tuple[mat4, mat4]:
+    def get_matrices(self, ratio: float) -> tuple[NDArray, NDArray]:
         position = self.get_position()
         # view_matrix = cm.look_at(position, self.__target, [0, 1, 0])
-        view_matrix = lookAt(position, self.__target, vec3(0, 1, 0))
+        view_matrix = cm.look_at(position, self.__target, [0, 1, 0])
         # proj_matrix = cm.perspective(self.__fovy, ratio, self.__near, self.__far)
-        proj_matrix = perspective(self.__fovy, ratio, self.__near, self.__far)
+        proj_matrix = cm.perspective(self.__fovy, ratio, self.__near, self.__far)
 
         return view_matrix, proj_matrix
 
-    def get_position(self) -> vec3:
+    def get_position(self) -> NDArray:
         return self.__target + spherical_to_cartesian(
             self.__radius, self.__theta, self.__phi
         )

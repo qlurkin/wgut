@@ -1,19 +1,4 @@
 from dataclasses import dataclass
-from pyglm.glm import (
-    acos,
-    array,
-    dot,
-    identity,
-    length,
-    mat3,
-    mat4,
-    normalize,
-    pi,
-    rotate,
-    vec3,
-    vec4,
-    cross,
-)
 
 from wgut.scene.light import LightComponent
 from wgut.scene.transform import Transform

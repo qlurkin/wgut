@@ -35,7 +35,9 @@ class MyApp(Window):
         )
         self.material3 = BasicColorMaterial((1.0, 0.0, 0.0))
 
-        self.renderer = Renderer(10000, 50000, 128, (1024, 1024, 7), 48)
+        self.lights = 
+
+        self.renderer = Renderer(10000, 50000, 128, 2, (1024, 1024, 7), 48)
 
         self.camera = OrbitCamera((6, 4, 5), (0, 0, 0), 45, 0.1, 100)
 
@@ -60,7 +62,7 @@ class MyApp(Window):
         self.renderer.add_mesh(self.mesh, translation0, self.material1)
         self.renderer.add_mesh(self.mesh, translation1, self.material2)
         self.renderer.add_mesh(self.mesh, translation2, self.material3)
-        self.renderer.end_frame(screen, self.camera)
+        self.renderer.end_frame(screen, self.camera, self.lights)
 
         self.imgui_renderer.render()
 
