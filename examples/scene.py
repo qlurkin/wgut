@@ -1,6 +1,5 @@
 # imgui imports first
 from imgui_bundle import imgui
-from pyglm.glm import translate, vec3
 from wgpu.utils.imgui import ImguiRenderer
 from wgpu import GPUTexture
 from wgut import Window, get_device
@@ -10,6 +9,7 @@ from wgut.scene.transform import Transform
 from wgut.scene.pbr_material import PbrMaterial
 from wgut.scene.basic_color_material import BasicColorMaterial
 from wgut.orbit_camera import OrbitCamera
+import numpy as np
 
 
 class MyApp(Window):
@@ -35,7 +35,15 @@ class MyApp(Window):
         )
         self.material3 = BasicColorMaterial((1.0, 0.0, 0.0))
 
-        self.lights = 
+        self.lights = np.array(
+            [
+                [0, 0, 0, 0],  # means ambiant light
+                [1, 1, 1, 0.4],  # color and intensity
+                [0, 0, -1, 0],  # means direction light
+                [1, 1, 1, 3],  # color and intensity
+            ],
+            dtype=np.float32,
+        )
 
         self.renderer = Renderer(10000, 50000, 128, 2, (1024, 1024, 7), 48)
 
@@ -54,15 +62,29 @@ class MyApp(Window):
         self.frame_time = delta_time
 
     def render(self, screen: GPUTexture):
-        translation0 = Transform(translate(vec3(0, 0, 2.5)))
-        translation1 = Transform(translate(vec3(2.5, 0, 0)))
-        translation2 = Transform(translate(vec3(-2.5, 0, 0)))
+        translation0 = Transform().set_translation([0, 0, 2.5])
+        translation1 = Transform().set_translation([2.5, 0, 0])
+        translation2 = Transform().set_translation([-2.5, 0, 0])
 
         self.renderer.begin_frame()
         self.renderer.add_mesh(self.mesh, translation0, self.material1)
         self.renderer.add_mesh(self.mesh, translation1, self.material2)
         self.renderer.add_mesh(self.mesh, translation2, self.material3)
-        self.renderer.end_frame(screen, self.camera, self.lights)
+
+        view_matrix, proj_matrix = self.camera.get_matrices(
+            screen.width / screen.height
+        )
+
+        camera_position = np.hstack([self.camera.get_position(), [1.0]]).astype(
+            np.float32
+        )
+        camera_matrix = np.array(proj_matrix @ view_matrix, dtype=np.float32)
+        self.renderer.end_frame(
+            screen,
+            camera_matrix,
+            camera_position,
+            self.lights,
+        )
 
         self.imgui_renderer.render()
 

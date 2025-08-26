@@ -11,7 +11,6 @@ from wgut.scene.transform import Transform
 from wgut.scene.mesh import Mesh, get_vertex_buffer_descriptors
 from wgut.auto_render_pipeline import AutoRenderPipeline
 from wgut.builders.bufferbuilder import BufferBuilder
-from wgut.camera import Camera
 import numpy.typing as npt
 import numpy as np
 
@@ -309,7 +308,8 @@ class Renderer:
     def end_frame(
         self,
         output_texture: GPUTexture,
-        camera: Camera,
+        camera_matrix: npt.NDArray,
+        camera_position: npt.NDArray,
         lights: npt.NDArray | None,  # shape(n, 8) -> position, color # dtype=float32
         clear_color=True,
         clear_depth=True,
@@ -327,12 +327,12 @@ class Renderer:
         ):
             self.__depth_texture = TextureBuilder().build_depth(output_texture.size)
 
-        view_matrix, proj_matrix = camera.get_matrices(
-            output_texture.width / output_texture.height
-        )
+        # view_matrix, proj_matrix = camera.get_matrices(
+        #     output_texture.width / output_texture.height
+        # )
 
-        camera_position = np.hstack([camera.get_position(), [1.0]]).astype(np.float32)
-        camera_matrix = np.array(proj_matrix @ view_matrix, dtype=np.float32)
+        # camera_position = np.hstack([camera.get_position(), [1.0]]).astype(np.float32)
+        # camera_matrix = np.array(proj_matrix @ view_matrix, dtype=np.float32)
 
         # Must send transpose version of matrices, because GPU expect matrices in column major order
         camera_data = np.vstack(

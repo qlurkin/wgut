@@ -1,15 +1,16 @@
 from dataclasses import dataclass
-
+import numpy.typing as npt
+import numpy as np
 from wgut.scene.light import LightComponent
 from wgut.scene.transform import Transform
 
 
 @dataclass
 class DirectionLight:
-    color: vec3
+    color: npt.NDArray
     intensity: float
 
-    def get_data(self, transformation_matrix: mat4) -> array[vec4]:
+    def get_data(self, transformation_matrix: npt.NDArray) -> npt.NDArray:
         direction = normalize(mat3(transformation_matrix) * vec3(0, 0, -1))  # type: ignore
         return array(vec4(direction, 0.0), vec4(self.color, self.intensity))  # type: ignore
 

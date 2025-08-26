@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from typing import Protocol
+import numpy.typing as npt
 
 
 class Light(Protocol):
-    def get_data(self, transformation_matrix: mat4) -> array[vec4]: ...
+    def get_data(self, transformation_matrix: npt.NDArray) -> npt.NDArray: ...
 
 
 @dataclass

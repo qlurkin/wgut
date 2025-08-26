@@ -16,28 +16,28 @@ class Transform:
 
     def from_translation_rotation_scale(
         self,
-        translation: npt.NDArray,
-        rotation: npt.NDArray,
-        scale: npt.NDArray,
+        translation: npt.ArrayLike,
+        rotation: npt.ArrayLike,
+        scale: npt.ArrayLike,
     ) -> Self:
-        R_with_scale = rotation * scale
-        res = np.hstack([R_with_scale, translation])
+        R_with_scale = np.array(rotation) * np.array(scale)
+        res = np.hstack([R_with_scale, np.array([translation]).T])
         self.__matrix = np.vstack([res, np.array([0, 0, 0, 1])], dtype=np.float32)
         return self
 
-    def set_translation(self, translation: npt.NDArray) -> Self:
+    def set_translation(self, translation: npt.ArrayLike) -> Self:
         R = self.get_rotation_matrix()
         S = self.get_scale()
         self.from_translation_rotation_scale(translation, R, S)
         return self
 
-    def set_rotation(self, rotation_matrix: npt.NDArray) -> Self:
+    def set_rotation(self, rotation_matrix: npt.ArrayLike) -> Self:
         T = self.get_translation()
         S = self.get_scale()
         self.from_translation_rotation_scale(T, rotation_matrix, S)
         return self
 
-    def set_scale(self, scale: npt.NDArray) -> Self:
+    def set_scale(self, scale: npt.ArrayLike) -> Self:
         T = self.get_translation()
         R = self.get_rotation_matrix()
         self.from_translation_rotation_scale(T, R, scale)

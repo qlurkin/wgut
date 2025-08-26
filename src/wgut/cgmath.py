@@ -24,6 +24,16 @@ def normalize(v: ntp.ArrayLike) -> ntp.NDArray:
     return v / length
 
 
+def from_homogenous(v: ntp.ArrayLike) -> ntp.NDArray:
+    v = vec(v)
+    return v[:-1] / v[-1]
+
+
+def to_homogenous(v: ntp.ArrayLike) -> ntp.NDArray:
+    v = vec(v)
+    return np.hstack([v, [1.0]], dtype=np.float32)
+
+
 def look_at(
     eye: ntp.ArrayLike, target: ntp.ArrayLike, up: ntp.ArrayLike
 ) -> ntp.NDArray:
