@@ -4,6 +4,8 @@ import numpy as np
 import numpy.typing as npt
 from scipy.spatial.transform import Rotation
 
+from wgut.cgmath import rotation_matrix_from_axis_and_angle
+
 
 class Transform:
     def __init__(
@@ -20,7 +22,12 @@ class Transform:
         rotation: npt.ArrayLike,
         scale: npt.ArrayLike,
     ) -> Self:
-        R_with_scale = np.array(rotation) * np.array(scale)
+        scale = np.array(scale)
+        if scale.size == 1:
+            scale = np.array([scale, scale, scale])
+        if scale.size == 3:
+            scale = np.diag(scale)
+        R_with_scale = np.array(rotation) * scale
         res = np.hstack([R_with_scale, np.array([translation]).T])
         self.__matrix = np.vstack([res, np.array([0, 0, 0, 1])], dtype=np.float32)
         return self
@@ -31,10 +38,17 @@ class Transform:
         self.from_translation_rotation_scale(translation, R, S)
         return self
 
-    def set_rotation(self, rotation_matrix: npt.ArrayLike) -> Self:
+    def set_rotation_matrix(self, rotation_matrix: npt.ArrayLike) -> Self:
         T = self.get_translation()
         S = self.get_scale()
         self.from_translation_rotation_scale(T, rotation_matrix, S)
+        return self
+
+    def set_rotation_angle_and_axis(self, angle: float, axis: npt.ArrayLike) -> Self:
+        T = self.get_translation()
+        S = self.get_scale()
+        R = rotation_matrix_from_axis_and_angle(axis, angle)
+        self.from_translation_rotation_scale(T, R, S)
         return self
 
     def set_scale(self, scale: npt.ArrayLike) -> Self:

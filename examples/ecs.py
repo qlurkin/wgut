@@ -1,4 +1,3 @@
-from pyglm.glm import scale, translate, vec3
 from wgut.orbit_camera import OrbitCamera
 from wgut.scene.ecs_explorer import ecs_explorer
 from wgut.scene.loaders.obj import load_obj
@@ -53,8 +52,8 @@ def setup(ecs: ECS):
         (0.0, 0.0, 0.0),
         None,
     )
-    bunny_transform = Transform(translate(vec3(-2.5, -1.0, 0)) * scale(vec3(20)))  # type: ignore
-    ball_transform = Transform(translate(vec3(2.5, 0, 0)))
+    bunny_transform = Transform().set_translation([-2.5, -1.0, 0]).set_scale(20)
+    ball_transform = Transform().set_translation([2.5, 0, 0])
     camera = OrbitCamera((0, 4, 6), (0, 0, 0), 45, 0.1, 100)
     ecs.spawn(
         [
@@ -79,11 +78,11 @@ def setup(ecs: ECS):
     ecs.add_component_to_group(id, default_layer)
 
     id = ecs.spawn_group(load_obj("./models/f16/f16.obj"))
-    ecs.add_component_to_group(id, Transform(translate(vec3(0, 0, 2.5))))
+    ecs.add_component_to_group(id, Transform().set_translation([0, 0, 2.5]))
     ecs.add_component_to_group(id, default_layer)
 
-    ecs.spawn(DirectionLight.create(vec3(0, 0, -1), vec3(1.0), 3))
-    ecs.spawn(AmbiantLight.create(vec3(1.0, 1.0, 1.0), 0.4))
+    ecs.spawn(DirectionLight.create((0, 0, -1), (1, 1, 1), 3))
+    ecs.spawn(AmbiantLight.create((1, 1, 1), 0.4))
     ecs.spawn([CameraComponent(camera), ActiveCamera()], label="Camera")
 
 

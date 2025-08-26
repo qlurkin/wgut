@@ -3,25 +3,43 @@ import numpy.typing as ntp
 import math
 
 
-def vec(x: ntp.ArrayLike) -> ntp.NDArray:
-    if not isinstance(x, np.ndarray):
-        x = np.array(x, dtype=np.float32)
-    if x.ndim != 1:
+def vec(*x: ntp.ArrayLike) -> ntp.NDArray:
+    v = np.hstack(x).astype(np.float32)
+    if v.ndim != 1:
+        print(x)
+        print(v)
         raise ValueError("Vec must have 1 dimention")
-    return x
+    return v
 
 
-def vec3(x: ntp.ArrayLike) -> ntp.NDArray:
-    x = vec(x)
-    if x.size != 3:
-        raise ValueError("Vec3 must be of size 3")
-    return x
+def vecn(n: int, *x: ntp.ArrayLike) -> ntp.NDArray:
+    v = vec(*x)
+    if v.size == 1:
+        v = np.full(n, v[0], dtype=np.float32)
+    if v.size != n:
+        raise ValueError(f"Vec{n} must be of size {n}")
+    return v
+
+
+def vec2(*x: ntp.ArrayLike) -> ntp.NDArray:
+    return vecn(2, *x)
+
+
+def vec3(*x: ntp.ArrayLike) -> ntp.NDArray:
+    return vecn(3, *x)
+
+
+def vec4(*x: ntp.ArrayLike) -> ntp.NDArray:
+    return vecn(4, *x)
+
+
+def length(v: ntp.ArrayLike) -> float:
+    return float(np.linalg.norm(v))
 
 
 def normalize(v: ntp.ArrayLike) -> ntp.NDArray:
     v = vec(v)
-    length = np.linalg.norm(v)
-    return v / length
+    return v / length(v)
 
 
 def from_homogenous(v: ntp.ArrayLike) -> ntp.NDArray:
@@ -75,3 +93,26 @@ def perspective(fovy_deg: float, aspect: float, near: float, far: float) -> ntp.
                      [   0,    0, c2r2, c3r2],
                      [   0,    0,   -1,    0]], dtype=np.float32)
     # fmt: on
+
+
+def rotation_matrix_from_axis_and_angle(
+    axis: ntp.ArrayLike, angle: ntp.ArrayLike
+) -> ntp.NDArray:
+    axis = normalize(axis)
+
+    x, y, z = axis
+    c = np.cos(angle)
+    s = np.sin(angle)
+    C = 1 - c
+
+    R = np.array(
+        [
+            [c + x * x * C, x * y * C - z * s, x * z * C + y * s, 0],
+            [y * x * C + z * s, c + y * y * C, y * z * C - x * s, 0],
+            [z * x * C - y * s, z * y * C + x * s, c + z * z * C, 0],
+            [0, 0, 0, 1],
+        ],
+        dtype=np.float32,
+    )
+
+    return R

@@ -1,6 +1,5 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from pyglm.glm import array
 from wgpu import GPUTexture
 from wgut.camera import Camera
 from wgut.scene.ecs import ECS, QueryOneWithNoResult
@@ -9,6 +8,7 @@ from wgut.scene.material import Material
 from wgut.scene.mesh import Mesh
 from wgut.scene.renderer import Renderer
 from wgut.scene.transform import Transform
+import numpy as np
 
 
 class ActiveCamera:
@@ -67,6 +67,11 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
         cam_comp: CameraComponent
         cam_comp, _ = ecs.query_one([CameraComponent, ActiveCamera])
         camera = cam_comp.camera
+        view_matrix, proj_matrix = camera.get_matrices(screen.width / screen.height)
+
+        camera_position = np.hstack([camera.get_position(), [1.0]]).astype(np.float32)
+        camera_matrix = np.array(proj_matrix @ view_matrix, dtype=np.float32)
+
         layer_content = defaultdict(list)
         for mesh, material, transform, layer in ecs.query(
             [MeshComponent, MaterialComponent, Transform, Layer]
@@ -82,7 +87,7 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
 
         lights = None
         if len(lights_data) != 0:
-            lights = array(lights_data)
+            lights = np.array(lights_data)
 
         clear_color = True
         stats = {}
@@ -91,7 +96,12 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
             for mesh, transform, material in layer_content[layer]:
                 renderer.add_mesh(mesh.mesh, transform, material.material)
             renderer.end_frame(
-                screen, camera, lights, clear_color=clear_color, clear_depth=True
+                screen,
+                camera_matrix,
+                camera_position,
+                lights,
+                clear_color=clear_color,
+                clear_depth=True,
             )
             clear_color = False
             stats[layer] = renderer.get_frame_stat()
