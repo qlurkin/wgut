@@ -1,7 +1,7 @@
-from pyglm.glm import array, float32, scale, vec3, vec4
 from wgpu import BufferUsage, GPUBuffer
 from wgut.auto_compute_pipeline import AutoComputePipeline
 from wgut.builders.bufferbuilder import BufferBuilder
+from wgut.cgmath import vec4
 from wgut.core import load_file, write_buffer
 from wgut.orbit_camera import OrbitCamera
 from wgut.scene.instance_mesh import InstanceMesh
@@ -23,6 +23,7 @@ from wgut.scene.basic_color_material import BasicColorMaterial
 from wgut.scene.primitives.icosphere import icosphere
 from wgut.scene.transform import Transform
 import random
+import numpy as np
 
 default_layer = Layer("default")
 
@@ -50,7 +51,7 @@ def setup(ecs: ECS):
 
     velocities_buffer = (
         BufferBuilder()
-        .from_data(array(velocities))
+        .from_data(np.array(velocities))
         .with_usage(BufferUsage.STORAGE)
         .build()
     )
@@ -63,14 +64,14 @@ def setup(ecs: ECS):
     )
 
     def callback(ecs: ECS, buffer: GPUBuffer, delta_time: float):
-        write_buffer(dt_buffer, array(float32(delta_time)))
+        write_buffer(dt_buffer, np.array(delta_time, dtype=np.float32))
         computer.set_buffer(0, 0, buffer)
         computer.set_buffer(0, 1, velocities_buffer)
         computer.set_buffer(0, 2, dt_buffer)
         computer.dispatch(1)
 
     particles = Particles(
-        array(positions),
+        np.array(positions),
         callback,
     )
 
@@ -84,7 +85,7 @@ def setup(ecs: ECS):
         [
             MaterialComponent(material),
             MeshComponent(particle_mesh),
-            Transform(scale(vec3(0.2))),
+            Transform().set_scale(0.2),
             default_layer,
         ]
     )

@@ -37,9 +37,9 @@ class MyApp(Window):
         )
 
         # Must send transpose version of matrices, because GPU expect matrices in column major order
-        camera_data = array(view_matrix, proj_matrix)
+        camera_data = np.array([view_matrix.T, proj_matrix.T])
 
-        self.pipeline.set_binding_array(0, 0, camera_data.to_bytes())
+        self.pipeline.set_binding_array(0, 0, camera_data)
 
         self.pipeline.render(screen, self.indices_count)
 

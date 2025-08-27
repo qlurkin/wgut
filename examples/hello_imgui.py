@@ -1,6 +1,5 @@
 # imgui imports first
 from imgui_bundle import imgui
-from pyglm.glm import lookAt, perspective
 from wgpu.utils.imgui import ImguiRenderer
 
 from wgpu import BufferUsage, GPUTexture, IndexFormat, ShaderStage, VertexFormat
@@ -19,6 +18,7 @@ from wgut import (
     load_file,
 )
 import numpy as np
+import wgut.cgmath as cm
 
 
 class MyApp(Window):
@@ -27,10 +27,11 @@ class MyApp(Window):
         self.depth_texture = TextureBuilder().build_depth(canvas.get_physical_size())
         width, height = self.get_canvas().get_logical_size()
 
-        view_matrix = lookAt([3, 2, 4], [0, 0, 0], [0, 1, 0])
-        proj_matrix = perspective(45, width / height, 0.1, 100)
+        view_matrix = cm.look_at([3, 2, 4], [0, 0, 0], [0, 1, 0])
+        proj_matrix = cm.perspective(45, width / height, 0.1, 100)
 
-        camera_data = view_matrix.to_bytes() + proj_matrix.to_bytes()
+        # Must send transpose version of matrices, because GPU expect matrices in column major order
+        camera_data = np.array([view_matrix.T, proj_matrix.T])
 
         write_buffer(self.camera_buffer, camera_data)
 
