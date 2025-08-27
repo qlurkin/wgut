@@ -313,12 +313,12 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "glfw", specifier = ">=2.8.0" },
+    { name = "glfw", specifier = "==2.8.0" },
     { name = "imgui-bundle", specifier = "==1.6.2" },
     { name = "numpy", specifier = ">=2.2.1" },
     { name = "pillow", specifier = ">=11.1.0" },
     { name = "scipy", specifier = ">=1.15.2" },
-    { name = "tree-sitter", specifier = ">=0.24.0" },
-    { name = "tree-sitter-wgsl-bevy", specifier = ">=0.1.3" },
-    { name = "wgpu", specifier = ">=0.19.3" },
+    { name = "tree-sitter", specifier = "==0.24.0" },
+    { name = "tree-sitter-wgsl-bevy", specifier = "==0.1.3" },
+    { name = "wgpu", specifier = "==0.19.3" },
 ]
