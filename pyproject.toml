@@ -7,7 +7,7 @@ authors = [{ name = "Quentin Lurkin", email = "qlurkin@gmail.com" }]
 requires-python = ">=3.13"
 dependencies = [
   "glfw>=2.8.0",
-  "imgui-bundle>=1.6.2",
+  "imgui-bundle==1.6.2",
   "numpy>=2.2.1",
   "pillow>=11.1.0",
   "scipy>=1.15.2",
