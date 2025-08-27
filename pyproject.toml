@@ -10,7 +10,6 @@ dependencies = [
   "imgui-bundle>=1.6.2",
   "numpy>=2.2.1",
   "pillow>=11.1.0",
-  "pyglm>=2.8.2",
   "scipy>=1.15.2",
   "tree-sitter>=0.24.0",
   "tree-sitter-wgsl-bevy>=0.1.3",

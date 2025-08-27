@@ -1,4 +1,3 @@
-from pyglm.glm import array
 from wgut.reflection import Reflection
 from wgut.builders import (
     BufferBuilder,
@@ -83,7 +82,7 @@ class AutoRenderPipeline:
         self,
         group: int,
         binding: int,
-        arr: npt.NDArray | bytes | array,
+        arr: npt.NDArray | bytes,
         additional_usages: BufferUsage | int = 0,
     ) -> GPUBuffer:
         builder = BufferBuilder().from_data(arr)

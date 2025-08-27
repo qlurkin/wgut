@@ -1,5 +1,4 @@
 from __future__ import annotations
-from pyglm.glm import array
 import wgpu
 
 from .builderbase import BuilderBase
@@ -16,9 +15,7 @@ class BufferBuilder(BuilderBase):
         self.size = None
         self.usages = None
 
-    def from_data(self, data: npt.NDArray | bytes | array | memoryview) -> Self:
-        if isinstance(data, array):
-            data = data.to_bytes()
+    def from_data(self, data: npt.NDArray | bytes | memoryview) -> Self:
         size = 0
         if isinstance(data, bytes):
             size = len(data)
