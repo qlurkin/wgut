@@ -1,15 +1,18 @@
 from typing import Type
 from numpy.typing import NDArray
 from wgpu import (
+    AddressMode,
     BufferBindingType,
     BufferUsage,
     CompareFunction,
     CullMode,
+    FilterMode,
     FrontFace,
     GPURenderPassEncoder,
     GPUTexture,
     IndexFormat,
     LoadOp,
+    MipmapFilterMode,
     PrimitiveTopology,
     ShaderStage,
     StoreOp,
@@ -75,17 +78,6 @@ fn vs_main(in: VertexInput) -> VertexOutput {
     out.bitangent = in.bitangent;
     out.mat_id = in.mat_id;
     return out;
-}
-
-@fragment
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    let mat_id = i32(in.mat_id);
-    let V = normalize(camera.position.xyz - in.position.xyz);
-    var color = vec3<f32>(0.0);
-    for(var i: i32 = 0; i < light_count; i++) {
-        color += FRAGMENT(in.normal, in.tangent, in.bitangent, V, lights[i], in.color, in.uv, mat_id);
-    }
-    return vec4<f32>(color, 1.0);
 }
 
 """
@@ -276,6 +268,34 @@ class Renderer:
             ],
         )
 
+        self.__sampler = get_device().create_sampler(
+            address_mode_u=AddressMode.repeat,  # type: ignore
+            address_mode_v=AddressMode.repeat,  # type: ignore
+            address_mode_w=AddressMode.repeat,  # type: ignore
+            mag_filter=FilterMode.nearest,  # type: ignore
+            min_filter=FilterMode.nearest,  # type: ignore
+            mipmap_filter=MipmapFilterMode.nearest,  # type: ignore
+        )
+
+        self.__white_texture = get_device().create_texture(
+            size=[1, 1],
+            format=TextureFormat.rgba8unorm,  # type: ignore
+            usage=TextureUsage.TEXTURE_BINDING | TextureUsage.COPY_DST,  # type: ignore
+        )
+        get_device().queue.write_texture(
+            {
+                "texture": self.__white_texture,
+                "mip_level": 0,
+                "origin": (0, 0, 0),
+            },
+            np.array([[[255, 255, 255, 255]]], dtype=np.uint8),
+            {
+                "offset": 0,
+                "bytes_per_row": 4,
+            },
+            (1, 1),
+        )
+
     def __begin_batch(self, material_class: Type, output_texture: GPUTexture):
         self.__current_batch_material_class = material_class
         self.__current_batch_output_texture = output_texture
@@ -296,6 +316,8 @@ class Renderer:
         if material not in self.__current_batch_textures_index:
             new_textures_count = 0
             for texture in textures:
+                if texture is None:
+                    texture = self.__white_texture
                 if texture not in self.__current_batch_textures_index:
                     new_textures_count += 1
             if (
@@ -319,6 +341,8 @@ class Renderer:
             mat_id = len(self.__current_batch_materials_index)
             tex_ids = []
             for texture in textures:
+                if texture is None:
+                    texture = self.__white_texture
                 if texture not in self.__current_batch_textures_index:
                     tex_id = len(self.__current_batch_textures)
                     self.__current_batch_textures_index[texture] = tex_id
@@ -390,6 +414,26 @@ class Renderer:
                     "depth_store_op": StoreOp.store,
                 }
             ],
+        )
+
+        group_1_entries = [
+            {
+                "binding": 0,
+                "resource": self.__sampler,
+            }
+        ]
+
+        for i in range(1, self.__batch_max_texture_count + 1):
+            group_1_entries.append(
+                {
+                    "binding": i,
+                    "ressource": self.__current_batch_textures[i].create_view(),
+                }
+            )
+
+        bind_group_1 = get_device().create_bind_group(
+            layout=self.__bind_group_layouts[0],
+            entries=group_1_entries,
         )
 
         render_pass.set_pipeline(self.__pipelines[self.__current_batch_material_class])
