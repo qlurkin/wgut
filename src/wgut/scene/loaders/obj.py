@@ -9,8 +9,8 @@ from wgut.scene.mesh import (
 from wgut.scene.static_mesh import StaticMesh
 import os
 from collections import namedtuple, defaultdict
-from wgut.scene.pbr_material import PbrMaterial
-from wgut.scene.render_system import MaterialComponent, MeshComponent
+from wgut.scene.pbr_material2 import PbrMaterial
+from wgut.scene.render_system2 import MaterialComponent, MeshComponent
 
 
 VertexKey = namedtuple("VertexKey", ["v", "vt", "vn", "vc"])
@@ -24,10 +24,10 @@ def parse_mtl_file(mtl_path: str) -> dict:
 
     def parse_color(tokens):
         if len(tokens) == 4:
-            return tuple(map(float, tokens))  # RGBA
+            return tuple(map(float, tokens[:3]))  # RGBA
         elif len(tokens) == 3:
-            return tuple(map(float, tokens)) + (1.0,)
-        return (1.0, 1.0, 1.0, 1.0)
+            return tuple(map(float, tokens))
+        return (1.0, 1.0, 1.0)
 
     with open(mtl_path, "r") as f:
         for line in f:
@@ -186,7 +186,7 @@ def load_obj(obj_path: str) -> list[list[Any]]:
         if material_name in materials:
             mat_data = materials[material_name]
             material = PbrMaterial(
-                albedo=mat_data.get("albedo", (1.0, 1.0, 1.0, 1.0)),
+                albedo=mat_data.get("albedo", (1.0, 1.0, 1.0)),
                 normal=mat_data.get("normal", None),
                 roughness=mat_data.get("roughness", 0.8),
                 metalicity=mat_data.get("metallicity", 0.0),
@@ -195,7 +195,7 @@ def load_obj(obj_path: str) -> list[list[Any]]:
             )
         else:
             material = PbrMaterial(
-                albedo=(0.8, 0.8, 0.8, 1.0),
+                albedo=(0.8, 0.8, 0.8),
                 normal=None,
                 roughness=0.8,
                 metalicity=0.0,
