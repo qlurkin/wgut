@@ -22,7 +22,7 @@ from wgpu import (
 from wgut.scene.material2 import Material
 from wgut.scene.mesh import Mesh, get_vertex_buffer_descriptors
 from wgut.scene.transform import Transform
-from ..core import get_device
+from ..core import get_device, write_buffer, write_texture
 import time
 import numpy as np
 
@@ -160,15 +160,15 @@ class Renderer:
         self.__vertex_buffer_descriptors = get_vertex_buffer_descriptors()
 
         shader_textures_bindings = "@group(1) @binding(0) var samplr: sampler;\n"
-        for i in range(self.__batch_max_texture_count):
+        for i in range(1, self.__batch_max_texture_count + 1):
             shader_textures_bindings += (
                 f"@group(1) @binding({i}) var texture{i}: texture_2d<f32>;\n"
             )
 
         shader_sample_function = ""
-        for i in range(self.__batch_max_texture_count):
+        for i in range(1, self.__batch_max_texture_count + 1):
             shader_sample_function += f"    if(id == {i}) {{ return textureSample(texture{i}, samplr, uv); }}\n"
-        shader_sample_function = f"fn sample(id: i32, uv: vec2<f32>) -> vec3<f32> {{\n{shader_sample_function}}}\n"
+        shader_sample_function = f"fn sample(id: i32, uv: vec2<f32>) -> vec4<f32> {{\n{shader_sample_function}    return vec4<f32>(0.0, 0.0, 0.0, 1.0);\n}}\n"
 
         self.__shader_header = (
             SHADER_HEADER + shader_textures_bindings + shader_sample_function
@@ -344,20 +344,27 @@ class Renderer:
                 if texture is None:
                     texture = self.__white_texture
                 if texture not in self.__current_batch_textures_index:
-                    tex_id = len(self.__current_batch_textures)
+                    tex_id = len(self.__current_batch_textures) + 1
                     self.__current_batch_textures_index[texture] = tex_id
                     self.__current_batch_textures.append(texture)
                 tex_ids.append(self.__current_batch_textures_index[texture])
 
             mat_data = material.get_data(tex_ids)
             if len(mat_data) > 0:
-                get_device().queue.write_buffer(
-                    buffer=self.__material_data_buffer,
-                    data=mat_data,
-                    buffer_offset=mat_id * material.get_data_size(),
+                write_buffer(
+                    self.__material_data_buffer,
+                    mat_data,
+                    mat_id * material.get_data_size(),
                 )
+                # get_device().queue.write_buffer(
+                #     buffer=self.__material_data_buffer,
+                #     data=mat_data,
+                #     buffer_offset=mat_id * material.get_data_size(),
+                # )
             self.__current_batch_materials_index[material] = mat_id
         mat_id = self.__current_batch_materials_index[material]
+
+        print(mat_id)
 
         vertex_data = np.hstack(
             [
@@ -365,14 +372,14 @@ class Renderer:
                 np.full((len(vertex_data), 1), mat_id, dtype=np.float32),
             ]
         )
-        get_device().queue.write_buffer(
+        write_buffer(
             buffer=self.__vertex_buffer,
             data=vertex_data,
             buffer_offset=self.__vertex_count * self.__vertex_size,
         )
 
         index_data = index_data + self.__vertex_count
-        get_device().queue.write_buffer(
+        write_buffer(
             buffer=self.__index_buffer,
             data=index_data,
             buffer_offset=self.__index_count * self.__index_size,
@@ -407,13 +414,11 @@ class Renderer:
                     "store_op": StoreOp.store,
                 }
             ],
-            depth_stencil_attachment=[
-                {
-                    "view": self.__depth_texture.create_view(),
-                    "depth_load_op": LoadOp.load,
-                    "depth_store_op": StoreOp.store,
-                }
-            ],
+            depth_stencil_attachment={
+                "view": self.__depth_texture.create_view(),
+                "depth_load_op": LoadOp.load,
+                "depth_store_op": StoreOp.store,
+            },
         )
 
         group_1_entries = [
@@ -423,16 +428,26 @@ class Renderer:
             }
         ]
 
-        for i in range(1, self.__batch_max_texture_count + 1):
+        for i in range(len(self.__current_batch_textures)):
             group_1_entries.append(
                 {
-                    "binding": i,
-                    "ressource": self.__current_batch_textures[i].create_view(),
+                    "binding": i + 1,
+                    "resource": self.__current_batch_textures[i].create_view(),
+                }
+            )
+
+        for i in range(
+            len(self.__current_batch_textures), self.__batch_max_texture_count
+        ):
+            group_1_entries.append(
+                {
+                    "binding": i + 1,
+                    "resource": self.__white_texture.create_view(),
                 }
             )
 
         bind_group_1 = get_device().create_bind_group(
-            layout=self.__bind_group_layouts[0],
+            layout=self.__bind_group_layouts[1],
             entries=group_1_entries,
         )
 
@@ -447,6 +462,7 @@ class Renderer:
         render_pass.end()
 
         get_device().queue.submit([command_encoder.finish()])
+        self.__frame_draw_count += 1
 
         self.__flush()
 
@@ -507,17 +523,13 @@ class Renderer:
         camera_data = np.vstack(
             [np.ascontiguousarray(camera_matrix.T), camera_position]
         )
-        get_device().queue.write_buffer(
-            buffer=self.__camera_buffer, data=camera_data, buffer_offset=0
-        )
+        write_buffer(buffer=self.__camera_buffer, data=camera_data)
 
         light_count = 0
         if lights is not None:
-            get_device().queue.write_buffer(
-                buffer=self.__lights_buffer, data=lights, buffer_offset=0
-            )
+            write_buffer(buffer=self.__lights_buffer, data=lights)
             light_count = len(lights)
-        get_device().queue.write_buffer(
+        write_buffer(
             buffer=self.__lights_count_buffer,
             data=np.array([light_count], dtype=np.int32),
         )
@@ -527,9 +539,7 @@ class Renderer:
                 self.__pipelines[material_class] = self.__create_pipeline(
                     material_class, output_texture.format
                 )
-            pipeline = self.__pipelines[material_class]
-            pipeline.set_depth_texture(self.__depth_texture)
-            self.__begin_batch(pipeline, output_texture)
+            self.__begin_batch(material_class, output_texture)
             for mesh, transform, material in self.__meshes[material_class]:
                 self.__batch(mesh, transform, material)
             self.__end_batch()
@@ -621,14 +631,13 @@ class Renderer:
         command_encoder = get_device().create_command_encoder()
 
         render_pass = command_encoder.begin_render_pass(
-            depth_stencil_attachment=[
-                {
-                    "view": self.__depth_texture.create_view(),
-                    "depth_clear_value": 1.0,
-                    "depth_load_op": LoadOp.clear,
-                    "depth_store_op": StoreOp.store,
-                }
-            ],
+            color_attachments=[],
+            depth_stencil_attachment={
+                "view": self.__depth_texture.create_view(),
+                "depth_clear_value": 1.0,
+                "depth_load_op": LoadOp.clear,
+                "depth_store_op": StoreOp.store,
+            },
         )
         render_pass.end()
 
