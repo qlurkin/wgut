@@ -364,8 +364,6 @@ class Renderer:
             self.__current_batch_materials_index[material] = mat_id
         mat_id = self.__current_batch_materials_index[material]
 
-        print(mat_id)
-
         vertex_data = np.hstack(
             [
                 vertex_data,

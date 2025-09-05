@@ -228,8 +228,6 @@ class PbrMaterial:
         #     // implicit padding of 12 bytes
         # }
 
-        print(tex_ids)
-
         res = b""
         res += self.__albedo_value.tobytes()
         res += np.int32(tex_ids[0]).tobytes()
