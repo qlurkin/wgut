@@ -97,7 +97,7 @@ fn PBR(alpha: f32, F0: vec3<f32>, N: vec3<f32>, L: vec3<f32>, V: vec3<f32>, H: v
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let mat_id = i32(in.mat_id);
 
-    let albedo = sample(mat_data[mat_id].albedo_tex, in.uv).rgb * mat_data[mat_id].albedo_color;
+    let albedo = pow(sample(mat_data[mat_id].albedo_tex, in.uv).rgb * mat_data[mat_id].albedo_color, vec3<f32>(2.2)); // gamma correction
     let emissivity = sample(mat_data[mat_id].emissivity_tex, in.uv).rgb * mat_data[mat_id].emissivity_color;
     let normal = 2.0 * sample(mat_data[mat_id].normal_tex, in.uv).rgb * mat_data[mat_id].normal_value - 1.0;
     let roughness = sample(mat_data[mat_id].roughness_tex, in.uv).x * mat_data[mat_id].roughness_value;
@@ -156,7 +156,7 @@ class PbrMaterial:
         self.__has_none_texture = False
 
         self.__albedo_texture, self.__albedo_value = self.create_texture(
-            albedo, TextureFormat.rgba8unorm_srgb, [1, 1, 1]
+            albedo, TextureFormat.rgba8unorm, [1, 1, 1]
         )
         self.__normal_texture, self.__normal_value = self.create_texture(
             normal, TextureFormat.rgba8unorm, [1, 1, 1]

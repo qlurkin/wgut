@@ -73,11 +73,9 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
         camera_matrix = np.array(proj_matrix @ view_matrix, dtype=np.float32)
 
         layer_content = defaultdict(list)
-        print("------------------------------")
         for mesh, material, transform, layer in ecs.query(
             [MeshComponent, MaterialComponent, Transform, Layer]
         ):
-            print((mesh, material, transform, layer))
             layer_content[layer].append((mesh, transform, material))
 
         lights_data = []
