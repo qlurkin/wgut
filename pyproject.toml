@@ -1,6 +1,6 @@
 [project]
 name = "wgut"
-version = "0.1.3"
+version = "0.1.4"
 description = "WebGPU Utility Toolkit: Play with wgpu"
 readme = "README.md"
 authors = [{ name = "Quentin Lurkin", email = "qlurkin@gmail.com" }]
@@ -17,4 +17,9 @@ dependencies = [
 ]
 classifiers = ["License :: OSI Approved :: MIT License"]
 
+[build-system]
+requires = ["uv_build>=0.8.15,<0.9.0"]
+build-backend = "uv_build"
 
+[tool.uv.build-backend]
+source-include = ["*.wgsl"]
