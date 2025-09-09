@@ -92,3 +92,7 @@ def load_file(filename):
         content = file.read()
 
     return content
+
+
+def submit_command(command_encoder: wgpu.GPUCommandEncoder):
+    get_device().queue.submit([command_encoder.finish()])

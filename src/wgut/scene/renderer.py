@@ -21,7 +21,7 @@ from wgpu import (
 
 from wgut.scene.mesh import Mesh, get_vertex_buffer_descriptors
 from wgut.scene.transform import Transform
-from ..core import get_device, load_image, write_buffer, write_texture
+from ..core import get_device, load_image, submit_command, write_buffer, write_texture
 import time
 import numpy as np
 from pathlib import Path
@@ -483,7 +483,7 @@ class Renderer:
         render_pass.draw_indexed(self.__index_count)
         render_pass.end()
 
-        get_device().queue.submit([command_encoder.finish()])
+        submit_command(command_encoder)
         self.__frame_draw_count += 1
 
         self.__flush()
@@ -632,7 +632,7 @@ class Renderer:
         )
         render_pass.end()
 
-        get_device().queue.submit([command_encoder.finish()])
+        submit_command(command_encoder)
 
     def clear_depth(self):
         if self.__depth_texture is None:
@@ -651,7 +651,7 @@ class Renderer:
         )
         render_pass.end()
 
-        get_device().queue.submit([command_encoder.finish()])
+        submit_command(command_encoder)
 
     def get_frame_stat(self) -> dict:
         return self.__frame_stat
