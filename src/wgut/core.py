@@ -50,15 +50,24 @@ def write_buffer(buffer: wgpu.GPUBuffer, data: npt.NDArray | bytes, buffer_offse
     )
 
 
-def write_texture(texture: wgpu.GPUTexture, image: img.Image, index=0):
+def write_texture(
+    texture: wgpu.GPUTexture, image: img.Image | bytes | npt.NDArray, index=0
+):
     size = texture.size[:2]
-    if image.size != size:
-        print(f"WARNING: Resize Image from {image.size} to {size}")
-        image = image.resize(size)
-    data = np.asarray(image)
-    if image.mode == "RGB":
-        # Add 'A' to get RGBA
-        data = np.dstack((data, np.full(data.shape[:-1], 255, dtype=np.uint8)))
+    if isinstance(image, img.Image):
+        if image.size != size:
+            print(f"WARNING: Resize Image from {image.size} to {size}")
+            image = image.resize(size)
+        data = np.asarray(image)
+        if image.mode == "RGB":
+            # Add 'A' to get RGBA
+            data = np.dstack((data, np.full(data.shape[:-1], 255, dtype=np.uint8)))
+    else:
+        data = image
+
+    if not isinstance(data, bytes):
+        data = data.tobytes()
+
     get_device().queue.write_texture(
         {
             "texture": texture,
@@ -68,7 +77,7 @@ def write_texture(texture: wgpu.GPUTexture, image: img.Image, index=0):
         data,
         {
             "offset": 0,
-            "bytes_per_row": data.strides[0],
+            "bytes_per_row": len(data) // size[1],
         },
         size,
     )
