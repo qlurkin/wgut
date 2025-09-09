@@ -9,8 +9,8 @@ from wgut.scene.mesh import (
 from wgut.scene.static_mesh import StaticMesh
 import os
 from collections import namedtuple, defaultdict
-from wgut.scene.renderer3 import Material
-from wgut.scene.render_system3 import MaterialComponent, MeshComponent
+from wgut.scene.renderer import Material
+from wgut.scene.render_system import MaterialComponent, MeshComponent
 
 
 VertexKey = namedtuple("VertexKey", ["v", "vt", "vn", "vc"])

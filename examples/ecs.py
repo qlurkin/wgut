@@ -11,10 +11,9 @@ from wgut.scene.render_system import (
     MeshComponent,
     render_system,
 )
-from wgut.scene.renderer import Renderer
+from wgut.scene.renderer import Renderer, Material
 from wgut.scene.window_system import window_system
 from wgut.scene.ecs import ECS
-from wgut.scene.pbr_material import PbrMaterial
 from wgut.scene.primitives.cube import cube
 from wgut.scene.primitives.icosphere import icosphere
 from wgut.scene.transform import Transform
@@ -36,21 +35,14 @@ def setup(ecs: ECS):
     mesh = cube()
     mesh = icosphere(3)
     bunny_mesh = load_obj("./models/bunny.obj")[0][0]
-    wood_material = PbrMaterial(
-        "./textures/Wood_025_basecolor.jpg",
-        "./textures/Wood_025_normal.jpg",
-        "./textures/Wood_025_roughness.jpg",
-        0.0,
-        (0.0, 0.0, 0.0),
-        None,
+    wood_material = Material(
+        albedo="./textures/Wood_025_basecolor.jpg",
+        normal="./textures/Wood_025_normal.jpg",
+        roughness="./textures/Wood_025_roughness.jpg",
     )
-    dummy_material = PbrMaterial(
-        "./textures/texel_checker.png",
-        None,
-        0.65,
-        0.0,
-        (0.0, 0.0, 0.0),
-        None,
+    dummy_material = Material(
+        albedo="./textures/texel_checker.png",
+        roughness=0.65,
     )
     bunny_transform = Transform().set_translation([-2.5, -1.0, 0]).set_scale(20)
     ball_transform = Transform().set_translation([2.5, 0, 0])
@@ -92,8 +84,7 @@ def process_event(ecs: ECS, event):
         cam.camera.process_event(event)
 
 
-renderer = Renderer(30000, 150000, 512, 2, (1024, 1024, 32), 256)
-
+renderer = Renderer(30000, 150000, 4, 512, 32)
 
 (
     ECS()

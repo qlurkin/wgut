@@ -1,6 +1,6 @@
 from imgui_bundle import imgui, implot
 from wgut.scene.ecs import ECS, EntityNotFound
-from wgut.scene.render_system3 import RenderStat
+from wgut.scene.render_system import RenderStat
 import numpy as np
 
 frame_times = []
