@@ -1,13 +1,18 @@
 import numpy as np
 import time
-import wgpu
+from wgpu import (
+    BufferBindingType,
+    BufferUsage,
+    GPUCommandEncoder,
+    GPUComputePassEncoder,
+    ShaderStage,
+)
 from wgut import (
-    BufferBuilder,
     get_adapter,
     read_buffer,
-    AutoComputePipeline,
     load_file,
 )
+from wgut.core import get_device, submit_command, write_buffer
 
 
 class Timer:
@@ -52,36 +57,92 @@ with Timer("numpy operation", 100) as rep:
     for _ in range(rep):
         res = numpy_data * numpy_data
 
+with Timer("Get Device"):
+    get_device()
 
 with Timer("Setup Computer"):
-    computer = AutoComputePipeline(
+    shader_source = (
         load_file("compute.wgsl")
         .replace("WORKGROUP_SIZE", str(workgroup_size))
         .replace("Y_STRIDE", str(workgroup_size * dispatch_size) + "u")
     )
 
+    shader_module = get_device().create_shader_module(code=shader_source)
+
+    bind_group_layout = get_device().create_bind_group_layout(
+        entries=[
+            {
+                "binding": 0,
+                "visibility": ShaderStage.COMPUTE,
+                "buffer": {"type": BufferBindingType.read_only_storage},
+            },
+            {
+                "binding": 1,
+                "visibility": ShaderStage.COMPUTE,
+                "buffer": {"type": BufferBindingType.storage},
+            },
+        ]
+    )
+
+    pipeline_layout = get_device().create_pipeline_layout(
+        bind_group_layouts=[bind_group_layout]
+    )
+
+    pipeline = get_device().create_compute_pipeline(
+        layout=pipeline_layout,
+        compute={
+            "module": shader_module,
+            "entry_point": "main",
+        },
+    )
+
 
 with Timer("Create Buffers"):
-    buffer1 = (
-        BufferBuilder()
-        .from_data(numpy_data)
-        .with_usage(wgpu.BufferUsage.STORAGE)
-        .build()
+    buffer0 = get_device().create_buffer(
+        size=numpy_data.nbytes,
+        usage=BufferUsage.STORAGE | BufferUsage.COPY_DST,  # type: ignore
     )
-    buffer2 = (
-        BufferBuilder()
-        .with_size(numpy_data.nbytes)
-        .with_usage(wgpu.BufferUsage.STORAGE | wgpu.BufferUsage.COPY_SRC)
-        .build()
-    )
-    computer.set_buffer(0, 0, buffer1)
-    computer.set_buffer(0, 1, buffer2)
+    write_buffer(buffer0, numpy_data)
 
+    buffer1 = get_device().create_buffer(
+        size=numpy_data.nbytes,
+        usage=BufferUsage.STORAGE | BufferUsage.COPY_DST | BufferUsage.COPY_SRC,  # type: ignore
+    )
+
+    bind_group = get_device().create_bind_group(
+        layout=bind_group_layout,
+        entries=[
+            {
+                "binding": 0,
+                "resource": {
+                    "buffer": buffer0,
+                    "offset": 0,
+                    "size": buffer0.size,
+                },
+            },
+            {
+                "binding": 1,
+                "resource": {
+                    "buffer": buffer1,
+                    "offset": 0,
+                    "size": buffer1.size,
+                },
+            },
+        ],
+    )
 
 with Timer("Computer dispatch", 1000) as rep:
-    for _ in range(rep):
-        computer.dispatch(n // (workgroup_size * mult), mult)
-    out = read_buffer(buffer2)
+    command_encoder: GPUCommandEncoder = get_device().create_command_encoder()
+
+    compute_pass: GPUComputePassEncoder = command_encoder.begin_compute_pass()
+
+    compute_pass.set_pipeline(pipeline)
+    compute_pass.set_bind_group(0, bind_group)
+    compute_pass.dispatch_workgroups(n // (workgroup_size * mult), mult)
+    compute_pass.end()
+
+    submit_command(command_encoder)
+    out = read_buffer(buffer1)
 
 with Timer("Building np.array from memoryview"):
     result = np.frombuffer(out.cast("i"), dtype=np.int32)
