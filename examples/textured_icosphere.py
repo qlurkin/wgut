@@ -31,14 +31,6 @@ from wgut.scene.primitives.icosphere import icosphere_with_uv
 
 
 class MyApp(Window):
-    def on_resize(self):
-        canvas = self.get_canvas()
-        self.depth_texture = get_device().create_texture(
-            size=canvas.get_physical_size(),
-            format=TextureFormat.depth32float,  # type: ignore
-            usage=TextureUsage.RENDER_ATTACHMENT | TextureUsage.TEXTURE_BINDING,  # type: ignore
-        )
-
     def setup(self):
         self.set_title("Hello Icosphere")
 
@@ -157,6 +149,13 @@ class MyApp(Window):
             bind_group_layouts=[camera_bind_group_layout, texture_bind_group_layout]
         )
 
+        canvas = self.get_canvas()
+        self.depth_texture = get_device().create_texture(
+            size=canvas.get_physical_size(),
+            format=TextureFormat.depth32float,  # type: ignore
+            usage=TextureUsage.RENDER_ATTACHMENT | TextureUsage.TEXTURE_BINDING,  # type: ignore
+        )
+
         self.pipeline = get_device().create_render_pipeline(
             layout=pipeline_layout,
             vertex={
@@ -190,9 +189,14 @@ class MyApp(Window):
             },
         )
 
-        self.on_resize()
-
     def render(self, screen: GPUTexture):
+        if screen.size != self.depth_texture.size:
+            self.depth_texture = get_device().create_texture(
+                size=screen.size,
+                format=TextureFormat.depth32float,  # type: ignore
+                usage=TextureUsage.RENDER_ATTACHMENT | TextureUsage.TEXTURE_BINDING,  # type: ignore
+            )
+
         view_matrix, proj_matrix = self.camera.get_matrices(
             screen.width / screen.height
         )
@@ -233,10 +237,7 @@ class MyApp(Window):
         submit_command(command_encoder)
 
     def process_event(self, event):
-        if event["event_type"] == "resize":
-            self.on_resize()
-        else:
-            self.camera.process_event(event)
+        self.camera.process_event(event)
 
 
 MyApp().run()
