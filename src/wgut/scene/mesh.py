@@ -5,57 +5,50 @@ import numpy.typing as npt
 import numpy as np
 
 
-from wgut.builders.vertexbufferdescriptorsbuilder import VertexBufferDescriptorsBuilder
-
-
 def get_vertex_buffer_descriptors():
-    return (
-        VertexBufferDescriptorsBuilder()
-        .with_vertex_descriptor(
-            {
-                "array_stride": 4 * (4 + 4 + 2 + 3 + 3 + 3 + 1),
-                "step_mode": wgpu.VertexStepMode.vertex,
-                "attributes": [
-                    {
-                        "format": wgpu.VertexFormat.float32x4,
-                        "offset": 0,
-                        "shader_location": 0,
-                    },
-                    {
-                        "format": wgpu.VertexFormat.float32x4,
-                        "offset": 4 * 4,
-                        "shader_location": 1,
-                    },
-                    {
-                        "format": wgpu.VertexFormat.float32x2,
-                        "offset": (4 + 4) * 4,
-                        "shader_location": 2,
-                    },
-                    {
-                        "format": wgpu.VertexFormat.float32x3,
-                        "offset": (4 + 4 + 2) * 4,
-                        "shader_location": 3,
-                    },
-                    {
-                        "format": wgpu.VertexFormat.float32x3,
-                        "offset": (4 + 4 + 2 + 3) * 4,
-                        "shader_location": 4,
-                    },
-                    {
-                        "format": wgpu.VertexFormat.float32x3,
-                        "offset": (4 + 4 + 2 + 3 + 3) * 4,
-                        "shader_location": 5,
-                    },
-                    {
-                        "format": wgpu.VertexFormat.float32,
-                        "offset": (4 + 4 + 2 + 3 + 3 + 3) * 4,
-                        "shader_location": 6,
-                    },
-                ],
-            }
-        )
-        .build()
-    )
+    return [
+        {
+            "array_stride": 4 * (4 + 4 + 2 + 3 + 3 + 3 + 1),
+            "step_mode": wgpu.VertexStepMode.vertex,
+            "attributes": [
+                {
+                    "format": wgpu.VertexFormat.float32x4,
+                    "offset": 0,
+                    "shader_location": 0,
+                },
+                {
+                    "format": wgpu.VertexFormat.float32x4,
+                    "offset": 4 * 4,
+                    "shader_location": 1,
+                },
+                {
+                    "format": wgpu.VertexFormat.float32x2,
+                    "offset": (4 + 4) * 4,
+                    "shader_location": 2,
+                },
+                {
+                    "format": wgpu.VertexFormat.float32x3,
+                    "offset": (4 + 4 + 2) * 4,
+                    "shader_location": 3,
+                },
+                {
+                    "format": wgpu.VertexFormat.float32x3,
+                    "offset": (4 + 4 + 2 + 3) * 4,
+                    "shader_location": 4,
+                },
+                {
+                    "format": wgpu.VertexFormat.float32x3,
+                    "offset": (4 + 4 + 2 + 3 + 3) * 4,
+                    "shader_location": 5,
+                },
+                {
+                    "format": wgpu.VertexFormat.float32,
+                    "offset": (4 + 4 + 2 + 3 + 3 + 3) * 4,
+                    "shader_location": 6,
+                },
+            ],
+        }
+    ]
 
 
 def compute_triangle_normal(
