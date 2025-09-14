@@ -15,6 +15,22 @@ class Transform:
         if matrix is None:
             matrix = np.identity(4, dtype=np.float32)
         self.__matrix = np.array(matrix, dtype=np.float32)
+        self.__parent: Self | None = None
+        self.__children: frozenset[Self] = frozenset()
+
+    def add_child(self, child: Self):
+        child.__parent = self
+        self.__children |= frozenset([child])
+
+    def get_parent(self) -> Self | None:
+        return self.__parent
+
+    def remove_child(self, child):
+        child.__parent = None
+        self.__children -= frozenset([child])
+
+    def get_children(self) -> frozenset[Self]:
+        return self.__children
 
     def from_translation_rotation_scale(
         self,
@@ -58,6 +74,8 @@ class Transform:
         return self
 
     def get_matrix(self) -> npt.NDArray:
+        if self.__parent is not None:
+            return self.__parent.get_matrix() @ self.__matrix
         return self.__matrix
 
     def get_translation(self) -> npt.NDArray:

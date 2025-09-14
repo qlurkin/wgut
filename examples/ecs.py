@@ -21,7 +21,9 @@ from wgut.scene.ambiant_light import AmbiantLight
 
 
 # TODO:
-# - redo group and transform parenting
+# - redo group with transform parenting
+#   The group entity should have a Group component and a Transform Component
+#   The group members should have Transforms parented to the Transform of the Group
 # - ECS gui
 # - wireframe
 # - gizmo test
