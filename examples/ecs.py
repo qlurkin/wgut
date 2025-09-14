@@ -6,7 +6,6 @@ from wgut.scene.render_gui_system import render_gui_system
 from wgut.scene.render_system import (
     ActiveCamera,
     CameraComponent,
-    Layer,
     MaterialComponent,
     MeshComponent,
     render_system,
@@ -20,9 +19,9 @@ from wgut.scene.transform import Transform
 from wgut.scene.direction_light import DirectionLight
 from wgut.scene.ambiant_light import AmbiantLight
 
-default_layer = Layer("default")
 
 # TODO:
+# - redo group and transform parenting
 # - ECS gui
 # - wireframe
 # - gizmo test
@@ -52,7 +51,6 @@ def setup(ecs: ECS):
             bunny_mesh,
             MaterialComponent(dummy_material),
             bunny_transform,
-            default_layer,
         ],
         label="Bunny",
     )
@@ -60,18 +58,15 @@ def setup(ecs: ECS):
         [
             MeshComponent(mesh),
             ball_transform,
-            default_layer,
             MaterialComponent(wood_material),
         ],
         label="Ball",
     )
     id = ecs.spawn_group(load_obj("./models/f16_vertex_color/f16.obj"))
     ecs.add_component_to_group(id, Transform())
-    ecs.add_component_to_group(id, default_layer)
 
     id = ecs.spawn_group(load_obj("./models/f16/f16.obj"))
     ecs.add_component_to_group(id, Transform().set_translation([0, 0, 2.5]))
-    ecs.add_component_to_group(id, default_layer)
 
     ecs.spawn(DirectionLight.create((0, 0, -1), (1, 1, 1), 3))
     ecs.spawn(AmbiantLight.create((1, 1, 1), 0.4))
@@ -95,7 +90,6 @@ renderer = Renderer(30000, 150000, 4, 512, 32)
     .do(
         render_system,
         renderer,
-        [default_layer],
     )
     .do(render_gui_system)
     .do(window_system, "Hello ECS")

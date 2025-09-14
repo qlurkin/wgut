@@ -17,7 +17,6 @@ from wgut.scene.render_gui_system import render_gui_system
 from wgut.scene.render_system import (
     ActiveCamera,
     CameraComponent,
-    Layer,
     MaterialComponent,
     MeshComponent,
     render_system,
@@ -30,8 +29,6 @@ from wgut.scene.transform import Transform
 from wgut.scene.ambiant_light import AmbiantLight
 import random
 import numpy as np
-
-default_layer = Layer("default")
 
 
 def create_compute_pipeline() -> tuple[GPUComputePipeline, GPUBindGroupLayout]:
@@ -174,7 +171,6 @@ def setup(ecs: ECS):
             MaterialComponent(material),
             MeshComponent(particle_mesh),
             Transform().set_scale(0.2),
-            default_layer,
         ]
     )
 
@@ -201,7 +197,6 @@ renderer = Renderer(30000, 150000, 2, 1024, 32)
     .do(
         render_system,
         renderer,
-        [default_layer],
     )
     .do(render_gui_system)
     .do(window_system, "Hello Particles")

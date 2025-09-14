@@ -1,4 +1,3 @@
-from collections import defaultdict
 from dataclasses import dataclass
 from wgpu import GPUTexture
 from wgut.camera import Camera
@@ -43,25 +42,14 @@ class MeshComponent:
 
 
 @dataclass
-class RenderStat:
+class RenderStats:
     stats: dict
 
     def __str__(self):
         return "RenderStat"
 
 
-class Layer:
-    def __init__(self, name: str = ""):
-        self.name = name
-
-    def __str__(self):
-        return f"Layer(name={self.name})"
-
-
-def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
-    if len(layers) == 0:
-        raise ValueError("Must have at least one layer")
-
+def render_system(ecs: ECS, renderer: Renderer):
     def render(ecs: ECS, screen: GPUTexture):
         cam_comp: CameraComponent
         cam_comp, _ = ecs.query_one([CameraComponent, ActiveCamera])
@@ -70,12 +58,6 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
 
         camera_position = np.hstack([camera.get_position(), [1.0]]).astype(np.float32)
         camera_matrix = np.array(proj_matrix @ view_matrix, dtype=np.float32)
-
-        layer_content = defaultdict(list)
-        for mesh, material, transform, layer in ecs.query(
-            [MeshComponent, MaterialComponent, Transform, Layer]
-        ):
-            layer_content[layer].append((mesh, transform, material))
 
         lights_data = []
         for light, transform in ecs.query([LightComponent, Transform]):
@@ -88,28 +70,25 @@ def render_system(ecs: ECS, renderer: Renderer, layers: list[Layer]):
         if len(lights_data) != 0:
             lights = np.array(lights_data)
 
-        clear_color = True
-        stats = {}
-        for layer in layers:
-            if clear_color:
-                renderer.clear_color(screen, (0.9, 0.9, 0.9, 1.0))
-            renderer.clear_depth()
-            renderer.begin_frame(
-                screen,
-                camera_matrix,
-                camera_position,
-                lights,
-            )
-            for mesh, transform, material in layer_content[layer]:
-                renderer.add_mesh(mesh.mesh, transform, material.material)
-            renderer.end_frame()
-            clear_color = False
-            stats[layer] = renderer.get_frame_stat()
+        renderer.clear_color(screen, (0.9, 0.9, 0.9, 1.0))
+        renderer.clear_depth()
+        renderer.begin_frame(
+            screen,
+            camera_matrix,
+            camera_position,
+            lights,
+        )
+        for mesh, transform, material in ecs.query(
+            [MeshComponent, Transform, MaterialComponent]
+        ):
+            renderer.add_mesh(mesh.mesh, transform, material.material)
+        renderer.end_frame()
+        stats = renderer.get_frame_stat()
 
         try:
-            render_stat: RenderStat = ecs.query_one(RenderStat)
-            render_stat.stats = stats
+            render_stats: RenderStats = ecs.query_one(RenderStats)
+            render_stats.stats = stats
         except QueryOneWithNoResult:
-            ecs.spawn([RenderStat(stats)])
+            ecs.spawn([RenderStats(stats)])
 
     ecs.on("render", render)
