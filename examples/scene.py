@@ -51,7 +51,6 @@ class MyApp(Window):
         self.frame_time = 0
 
     def update(self, delta_time: float):
-        self.imgui_renderer.backend.io.delta_time = delta_time
         self.frame_time = delta_time
 
     def render(self, screen: GPUTexture):
@@ -84,9 +83,8 @@ class MyApp(Window):
 
         self.imgui_renderer.render()
 
-    def gui(self) -> imgui.ImDrawData:
+    def gui(self):
         stat = self.renderer.get_frame_stat()
-        imgui.new_frame()
         imgui.begin("Scene", None)
         imgui.text(f"Frame Time: {self.frame_time:.5f}s")
         if stat is not None:
@@ -95,9 +93,6 @@ class MyApp(Window):
             imgui.text(f"Triangle count: {stat['triangle']}")
             imgui.text(f"Vertex count: {stat['vertex']}")
         imgui.end()
-        imgui.end_frame()
-        imgui.render()
-        return imgui.get_draw_data()
 
     def process_event(self, event):
         self.camera.process_event(event)

@@ -1,5 +1,6 @@
-from wgpu.gui.glfw import WgpuCanvas, run
+from rendercanvas.glfw import GlfwRenderCanvas, loop
 import wgpu
+from wgpu import GPUCanvasContext
 
 from .core import get_device
 import time
@@ -9,9 +10,12 @@ class Window:
     def __init__(self, size: tuple[int, int] = (800, 600), max_fps: int = 60):
         device = get_device()
 
-        self.canvas = WgpuCanvas(title="WGPU Window", size=size, max_fps=max_fps)
-        self.present_context = self.canvas.get_context("wgpu")
-        self.texture_format = self.present_context.get_preferred_format(device.adapter)
+        self.canvas = GlfwRenderCanvas(title="WGPU Window", size=size, max_fps=max_fps)
+        self.present_context: GPUCanvasContext = self.canvas.get_context("wgpu")  # type: ignore
+        self.texture_format: wgpu.TextureFormat = (
+            self.present_context.get_preferred_format(device.adapter)
+        )  # type: ignore
+
         self.present_context.configure(device=device, format=self.texture_format)
 
         def event_handler(event):
@@ -25,14 +29,14 @@ class Window:
     def set_title(self, title: str):
         self.canvas.set_title(title)
 
-    def get_canvas(self) -> WgpuCanvas:
+    def get_canvas(self) -> GlfwRenderCanvas:
         return self.canvas
 
     def run(self):
         self.setup()
         prev_time = None
 
-        def loop():
+        def main_loop():
             nonlocal prev_time
             current_time = time.perf_counter()
             canvas_texture = self.present_context.get_current_texture()
@@ -45,8 +49,8 @@ class Window:
             self.render(canvas_texture)
             self.canvas.request_draw()  # pyright: ignore
 
-        self.canvas.request_draw(loop)
-        run()
+        self.canvas.request_draw(main_loop)
+        loop.run()
 
     def setup(self):
         pass

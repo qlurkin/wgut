@@ -39,7 +39,7 @@ class MyApp(Window):
             usage=TextureUsage.RENDER_ATTACHMENT | TextureUsage.TEXTURE_BINDING,  # type: ignore
         )
 
-        width, height = canvas.get_physical_size()
+        width, height = canvas.get_physical_size()  # type: ignore
 
         view_matrix = cm.look_at([3, 2, 4], [0, 0, 0], [0, 1, 0])
         proj_matrix = cm.perspective(45, width / height, 0.1, 100)
@@ -208,7 +208,6 @@ class MyApp(Window):
         self.frame_time = 0
 
     def update(self, delta_time: float):
-        self.imgui_renderer.backend.io.delta_time = delta_time
         self.frame_time = delta_time
 
     def render(self, screen: GPUTexture):
@@ -243,14 +242,10 @@ class MyApp(Window):
 
         self.imgui_renderer.render()
 
-    def gui(self) -> imgui.ImDrawData:
-        imgui.new_frame()
+    def gui(self):
         imgui.begin("Hello Imgui", None)
         imgui.text(f"Frame Time: {self.frame_time:.5f}s")
         imgui.end()
-        imgui.end_frame()
-        imgui.render()
-        return imgui.get_draw_data()
 
     def process_event(self, event):
         if event["event_type"] == "resize":

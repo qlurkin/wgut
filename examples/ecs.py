@@ -21,6 +21,7 @@ from wgut.scene.ambiant_light import AmbiantLight
 
 
 # TODO:
+# - docstrings and typing
 # - wireframe
 # - gizmo test
 # - frustum culling

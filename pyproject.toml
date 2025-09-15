@@ -7,13 +7,14 @@ authors = [{ name = "Quentin Lurkin", email = "qlurkin@gmail.com" }]
 requires-python = ">=3.13"
 dependencies = [
   "glfw==2.8.0",
-  "imgui-bundle==1.6.2",
+  "imgui-bundle==1.92.0",
   "numpy>=2.2.1",
   "pillow>=11.1.0",
   "scipy>=1.15.2",
   "tree-sitter==0.24.0",
   "tree-sitter-wgsl-bevy==0.1.3",
-  "wgpu==0.19.3",
+  "wgpu==0.24.0",
+  "rendercanvas==2.2.1"
 ]
 classifiers = ["License :: OSI Approved :: MIT License"]
 
