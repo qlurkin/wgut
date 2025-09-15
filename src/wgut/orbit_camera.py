@@ -92,3 +92,6 @@ class OrbitCamera:
                     self.__phi += 2 * pi
             dirty = True
         return dirty
+
+    def __str__(self):
+        return f"OrbitCamera(target={self.__target}, fovy={self.__fovy}, near={self.__near}, far={self.__far})"

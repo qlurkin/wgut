@@ -11,6 +11,8 @@ from typing import (
     Type,
 )
 
+from wgut.scene.transform import Transform
+
 
 @dataclass
 class Entity:
@@ -48,12 +50,7 @@ class QueryOneWithNoResult(Exception):
 
 @dataclass
 class Group:
-    members: list[int]
-
-
-@dataclass
-class GroupMember:
-    group: int
+    ids: list[int]
 
 
 # TODO:
@@ -89,6 +86,8 @@ class ECS:
             label = f"Group {gid}"
 
         self.__add_component(gid, Entity(gid, label))
+        group_transform = Transform()
+        self.__add_component(gid, group_transform)
 
         ids = []
         for member in members:
@@ -96,28 +95,34 @@ class ECS:
             self.__next_id += 1
             label = f"Entity {id}"
             self.__add_component(id, Entity(id, label))
-            self.__add_component(id, GroupMember(gid))
+            member_transform: None | Transform = None
             for component in member:
                 assert type(component) is not Entity, (
                     "Entity Components are automatically added"
                 )
                 self.__add_component(id, component)
+                if isinstance(component, Transform):
+                    member_transform = component
+            if member_transform is None:
+                member_transform = Transform()
+                self.__add_component(id, member_transform)
+            group_transform.add_child(member_transform)
             ids.append(id)
 
         self.__add_component(gid, Group(ids))
 
         return gid
 
-    def add_component_to_group(self, group_id: int | Entity, component) -> Self:
-        gid = self.__entity_exists(group_id)
-        if Group not in self.__components:
-            raise EntityNotFound(gid)
-        if gid not in self.__components[Group]:
-            raise EntityNotFound(gid)
-        group = self.__components[Group][gid]
-        for id in group.members:
-            self.add_component(id, component)
-        return self
+    # def add_component_to_group(self, group_id: int | Entity, component) -> Self:
+    #     gid = self.__entity_exists(group_id)
+    #     if Group not in self.__components:
+    #         raise EntityNotFound(gid)
+    #     if gid not in self.__components[Group]:
+    #         raise EntityNotFound(gid)
+    #     group = self.__components[Group][gid]
+    #     for id in group.members:
+    #         self.add_component(id, component)
+    #     return self
 
     def add_component(self, id: int | Entity, component) -> Self:
         id = self.__entity_exists(id)
@@ -141,16 +146,16 @@ class ECS:
             self.__components[ty] = {}
         self.__components[ty][id] = component
 
-    def remove_component_from_group(self, group_id: int | Entity, ty: Type) -> Self:
-        gid = self.__entity_exists(group_id)
-        if Group not in self.__components:
-            raise EntityNotFound(gid)
-        if gid not in self.__components[Group]:
-            raise EntityNotFound(gid)
-        group = self.__components[Group][gid]
-        for id in group.members:
-            self.remove_component(id, ty)
-        return self
+    # def remove_component_from_group(self, group_id: int | Entity, ty: Type) -> Self:
+    #     gid = self.__entity_exists(group_id)
+    #     if Group not in self.__components:
+    #         raise EntityNotFound(gid)
+    #     if gid not in self.__components[Group]:
+    #         raise EntityNotFound(gid)
+    #     group = self.__components[Group][gid]
+    #     for id in group.members:
+    #         self.remove_component(id, ty)
+    #     return self
 
     def remove_component(self, id: int | Entity, ty: Type) -> Self:
         id = self.__entity_exists(id)
@@ -169,14 +174,14 @@ class ECS:
                 if len(self.__components[ty]) == 0:
                     self.__components.pop(ty)
 
-    def __getitem__(self, id: int | Entity) -> tuple[list[Any], ...]:
+    def __getitem__(self, id: int | Entity) -> dict[Type, Any]:
         id = self.__entity_exists(id)
 
-        res = []
-        for ty in self.__components.values():
-            if id in ty:
-                res.append(ty[id])
-        return tuple(res)
+        res = {}
+        for ty, comps in self.__components.items():
+            if id in comps:
+                res[ty] = comps[id]
+        return res
 
     def kill(self, id: int | Entity) -> Self:
         id = self.__entity_exists(id)

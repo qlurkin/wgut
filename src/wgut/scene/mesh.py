@@ -4,6 +4,8 @@ import wgpu
 import numpy.typing as npt
 import numpy as np
 
+from wgut.cgmath import normalize
+
 
 def get_vertex_buffer_descriptors():
     return [
@@ -76,10 +78,10 @@ def compute_triangle_tangent(
     tc_1_3 = uv3 - uv1
 
     tangent = tc_1_3[1] * p_1_2 - tc_1_2[1] * p_1_3
-    tangent /= np.linalg.norm(tangent)
+    tangent = normalize(tangent)
 
     bitangent = -tc_1_3[0] * p_1_2 + tc_1_2[0] * p_1_3
-    bitangent /= np.linalg.norm(bitangent)
+    bitangent = normalize(bitangent)
 
     return tangent, bitangent
 

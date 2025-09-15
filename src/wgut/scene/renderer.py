@@ -125,6 +125,14 @@ class Material:
 
         return res
 
+    def __str__(self):
+        albedo_str = ""
+        if self.__albedo_texture == "":
+            albedo_str = str(self.__albedo_value)
+        else:
+            albedo_str = self.__albedo_texture
+        return f"Material(albedo=`{albedo_str}`)"
+
 
 class Renderer:
     def __init__(

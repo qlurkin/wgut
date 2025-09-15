@@ -10,3 +10,6 @@ class Light(Protocol):
 @dataclass
 class LightComponent:
     light: Light
+
+    def __str__(self):
+        return str(self.light)

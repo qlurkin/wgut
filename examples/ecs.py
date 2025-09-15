@@ -21,15 +21,12 @@ from wgut.scene.ambiant_light import AmbiantLight
 
 
 # TODO:
-# - redo group with transform parenting
-#   The group entity should have a Group component and a Transform Component
-#   The group members should have Transforms parented to the Transform of the Group
-# - ECS gui
 # - wireframe
 # - gizmo test
 # - frustum culling
 # - ply, gltf loaders
 # - drop shadow
+# - ECS gui
 
 
 def setup(ecs: ECS):
@@ -65,10 +62,9 @@ def setup(ecs: ECS):
         label="Ball",
     )
     id = ecs.spawn_group(load_obj("./models/f16_vertex_color/f16.obj"))
-    ecs.add_component_to_group(id, Transform())
 
     id = ecs.spawn_group(load_obj("./models/f16/f16.obj"))
-    ecs.add_component_to_group(id, Transform().set_translation([0, 0, 2.5]))
+    print(ecs[id][Transform].set_translation([0, 0, 2.5]))
 
     ecs.spawn(DirectionLight.create((0, 0, -1), (1, 1, 1), 3))
     ecs.spawn(AmbiantLight.create((1, 1, 1), 0.4))

@@ -9,7 +9,7 @@ def ecs_explorer(ecs: ECS):
         imgui.begin("ECS Explorer", None)
         for (entity,) in ecs.query([Entity]):
             if imgui.tree_node(str(entity)):
-                components = ecs[entity]
+                components = tuple(ecs[entity].values())
                 for component in components:
                     if isinstance(component, Entity):
                         continue

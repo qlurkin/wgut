@@ -10,7 +10,8 @@ import numpy as np
 
 
 class ActiveCamera:
-    pass
+    def __str__(self):
+        return "ActiveCamera"
 
 
 @dataclass
