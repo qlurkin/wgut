@@ -1,7 +1,9 @@
-from pyglm.glm import vec2, vec3, vec4, array, int32
+import numpy as np
 from typing import List
 import re
 
+from wgut.cgmath import vec2, vec3, vec4
+from wgut.scene.mesh import vertex
 from wgut.scene.static_mesh import StaticMesh
 
 
@@ -15,7 +17,6 @@ def load_ply(ply_path: str) -> List[List[object]]:
     face_count = 0
     properties = []
     reading_vertex = False
-    reading_face = False
 
     i = 0
     while not header_ended and i < len(lines):
@@ -26,7 +27,6 @@ def load_ply(ply_path: str) -> List[List[object]]:
         elif line.startswith("element face"):
             face_count = int(line.split()[-1])
             reading_vertex = False
-            reading_face = True
         elif line.startswith("property") and reading_vertex:
             properties.append(line.split()[2])  # ex: x, y, z, nx, ny, ...
         elif line.startswith("end_header"):
@@ -83,14 +83,18 @@ def load_ply(ply_path: str) -> List[List[object]]:
             for k in range(1, count - 1):
                 indices += [vertex_indices[0], vertex_indices[k], vertex_indices[k + 1]]
 
+    vertices = vertex(
+        np.array(positions),
+        np.array(colors),
+        np.array(uvs),
+        np.array(normals),
+        np.array(tangents),
+        np.array(bitangents),
+    )
+
     mesh = StaticMesh(
-        array(positions),
-        array(colors),
-        array(uvs),
-        array(normals),
-        array(tangents),
-        array(bitangents),
-        array.from_numbers(int32, *indices),
+        vertices,
+        np.array(indices, dtype=np.int32),
     )
 
     return [[mesh]]
