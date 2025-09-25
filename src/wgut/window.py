@@ -1,4 +1,4 @@
-from rendercanvas.glfw import GlfwRenderCanvas, loop
+from rendercanvas.glfw import GlfwRenderCanvas, loop, BaseRenderCanvas, RenderCanvas
 import wgpu
 from wgpu import GPUCanvasContext
 

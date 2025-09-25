@@ -208,6 +208,7 @@ class MyApp(Window):
         self.frame_time = 0
 
     def update(self, delta_time: float):
+        self.imgui_renderer.backend.io.delta_time = delta_time
         self.frame_time = delta_time
 
     def render(self, screen: GPUTexture):
@@ -242,10 +243,14 @@ class MyApp(Window):
 
         self.imgui_renderer.render()
 
-    def gui(self):
+    def gui(self) -> imgui.ImDrawData:
+        imgui.new_frame()
         imgui.begin("Hello Imgui", None)
         imgui.text(f"Frame Time: {self.frame_time:.5f}s")
         imgui.end()
+        imgui.end_frame()
+        imgui.render()
+        return imgui.get_draw_data()
 
     def process_event(self, event):
         if event["event_type"] == "resize":

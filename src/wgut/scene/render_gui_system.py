@@ -1,3 +1,4 @@
+from imgui_bundle import imgui
 from wgpu import GPUTexture
 from wgpu.utils.imgui import ImguiRenderer
 
@@ -13,6 +14,10 @@ def render_gui_system(ecs: ECS):
         if imgui_renderer is not None:
             imgui_renderer.render()
 
+    def update(_ecs: ECS, delta_time: float):
+        if imgui_renderer is not None:
+            imgui_renderer.backend.io.delta_time = delta_time
+
     def setup(ecs: ECS):
         nonlocal imgui_renderer
         window: WindowSystemApp = ecs.query_one(WindowSystemApp)
@@ -20,11 +25,16 @@ def render_gui_system(ecs: ECS):
             get_device(), window.get_canvas(), window.get_texture_format()
         )
 
-        def gui():
+        def gui() -> imgui.ImDrawData:
+            imgui.new_frame()
             ecs.dispatch("render_gui")
+            imgui.end_frame()
+            imgui.render()
+            return imgui.get_draw_data()
 
         imgui_renderer.set_gui(gui)
 
         ecs.on("after_render", render)
+        ecs.on("update", update)
 
     ecs.on("setup", setup)

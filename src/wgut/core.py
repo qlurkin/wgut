@@ -1,17 +1,24 @@
 import PIL.Image as img
 import wgpu
+import pygfx as gfx
 import numpy.typing as npt
 import numpy as np
 
-_ADAPTER = None
-_DEVICE = None
+
+_SHARED = None
+
+
+def get_shared():
+    global _SHARED
+    if _SHARED is None:
+        gfx.renderers.wgpu.select_power_preference("high-performance")
+        _SHARED = gfx.renderers.wgpu.get_shared()
+        assert _SHARED is not None
+    return _SHARED
 
 
 def get_adapter() -> wgpu.GPUAdapter:
-    global _ADAPTER
-    if _ADAPTER is None:
-        _ADAPTER = wgpu.gpu.request_adapter_sync(power_preference="high-performance")  # type: ignore
-    return _ADAPTER
+    return get_shared().adapter
 
 
 def print_adapter_info():
@@ -34,10 +41,7 @@ def print_adapter_info():
 
 
 def get_device() -> wgpu.GPUDevice:
-    global _DEVICE
-    if _DEVICE is None:
-        _DEVICE = get_adapter().request_device_sync()
-    return _DEVICE
+    return get_shared().device
 
 
 def read_buffer(buffer: wgpu.GPUBuffer) -> memoryview:

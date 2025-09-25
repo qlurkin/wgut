@@ -10,6 +10,7 @@ from wgut.orbit_camera import OrbitCamera
 import numpy as np
 
 
+# TODO: Why lights intensity is so much bigger than in ecs example
 class MyApp(Window):
     def setup(self):
         self.set_title("Hello Scene")
@@ -51,6 +52,7 @@ class MyApp(Window):
         self.frame_time = 0
 
     def update(self, delta_time: float):
+        self.imgui_renderer.backend.io.delta_time = delta_time
         self.frame_time = delta_time
 
     def render(self, screen: GPUTexture):
@@ -83,8 +85,9 @@ class MyApp(Window):
 
         self.imgui_renderer.render()
 
-    def gui(self):
+    def gui(self) -> imgui.ImDrawData:
         stat = self.renderer.get_frame_stat()
+        imgui.new_frame()
         imgui.begin("Scene", None)
         imgui.text(f"Frame Time: {self.frame_time:.5f}s")
         if stat is not None:
@@ -93,6 +96,9 @@ class MyApp(Window):
             imgui.text(f"Triangle count: {stat['triangle']}")
             imgui.text(f"Vertex count: {stat['vertex']}")
         imgui.end()
+        imgui.end_frame()
+        imgui.render()
+        return imgui.get_draw_data()
 
     def process_event(self, event):
         self.camera.process_event(event)

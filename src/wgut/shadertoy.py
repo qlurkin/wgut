@@ -294,7 +294,8 @@ class ShaderToy(Window):
 
         self.is_mouse_up_in_this_frame = False
 
-    def gui(self):
+    def gui(self) -> imgui.ImDrawData:
+        imgui.new_frame()
         imgui.begin("Info", None)
         if self.frame_time != 0:
             imgui.text(f"FPS: {1.0 / self.frame_time:.5f}")
@@ -302,3 +303,6 @@ class ShaderToy(Window):
             imgui.text("FPS: NaN")
         imgui.text(f"i_delta_time: {self.frame_time:.5f}s")
         imgui.end()
+        imgui.end_frame()
+        imgui.render()
+        return imgui.get_draw_data()
