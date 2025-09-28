@@ -7,8 +7,9 @@ authors = [{ name = "Quentin Lurkin", email = "qlurkin@gmail.com" }]
 requires-python = ">=3.13"
 dependencies = [
   "imgui-bundle",
-  "pygfx>=0.13.0",
+  "pygfx",
   "scipy>=1.16.2",
+  "trimesh>=4.8.3",
 ]
 classifiers = ["License :: OSI Approved :: MIT License"]
 
@@ -18,3 +19,6 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 source-include = ["*.wgsl"]
+
+[tool.uv.sources]
+pygfx = { git = "https://github.com/qlurkin/pygfx.git", branch = "typefix" }

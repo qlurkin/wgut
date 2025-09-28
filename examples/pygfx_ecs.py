@@ -1,29 +1,23 @@
-from wgut import (
+from pygfx import (
     PerspectiveCamera,
+    Background,
+    AmbientLight,
+    DirectionalLight,
+    Mesh,
+    MeshStandardMaterial,
+    sphere_geometry,
+    load_mesh,
+)
+
+from wgut import (
     OrbitController,
     ActiveCamera,
     SceneObject,
     render_system,
     window_system,
     ECS,
-    Background,
-    AmbientLight,
-    DirectionalLight,
-    Mesh,
-    box_geometry,
-    MeshPhongMaterial,
-    MeshPhysicalMaterial,
-    MeshBasicMaterial,
-    MeshStandardMaterial,
-    icosahedron_geometry,
-    sphere_geometry,
-    torus_knot_geometry,
-    Geometry,
+    create_texture,
 )
-from wgut.core import create_texture
-
-MeshBasicMaterial()
-Geometry()
 
 
 # TODO:
@@ -47,6 +41,19 @@ def setup(ecs: ECS, _):
         ),
     )
     ecs.spawn([SceneObject(ball)])
+    ball.local.x -= 100
+
+    bunny = load_mesh("./models/bunny.obj")[0]
+
+    bunny.local.x += 100
+    bunny.local.y -= 50
+    bunny.local.scale = 1000
+
+    bunny.material = MeshStandardMaterial(
+        map=create_texture("./textures/texel_checker.png")
+    )
+
+    ecs.spawn([SceneObject(bunny)])
 
     ecs.spawn([SceneObject(Background.from_color((0.9, 0.9, 0.9)))])
 
@@ -54,7 +61,7 @@ def setup(ecs: ECS, _):
     ecs.spawn([SceneObject(DirectionalLight())])
 
     camera = PerspectiveCamera(70, 16 / 9)
-    camera.local.position = (150, 150, 150)
+    camera.local.position = (200, 200, 200)
     camera.look_at((0, 0, 0))
 
     ecs.spawn([SceneObject(camera), ActiveCamera()])
