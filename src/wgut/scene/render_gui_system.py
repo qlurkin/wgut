@@ -5,6 +5,7 @@ from wgpu.utils.imgui import ImguiRenderer
 from wgut.scene.ecs import ECS
 from wgut import get_device
 from wgut.scene.window_system import WindowSystemApp
+from wgut.window import Window
 
 
 def render_gui_system(ecs: ECS):
@@ -18,9 +19,8 @@ def render_gui_system(ecs: ECS):
         if imgui_renderer is not None:
             imgui_renderer.backend.io.delta_time = delta_time
 
-    def setup(ecs: ECS):
+    def setup(ecs: ECS, window: Window):
         nonlocal imgui_renderer
-        window: WindowSystemApp = ecs.query_one(WindowSystemApp)
         imgui_renderer = ImguiRenderer(
             get_device(), window.get_canvas(), window.get_texture_format()
         )

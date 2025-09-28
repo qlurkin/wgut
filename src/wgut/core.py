@@ -91,6 +91,12 @@ def load_image(filename) -> img.Image:
     return img.open(filename)
 
 
+def create_texture(filename: str) -> gfx.Texture:
+    img = load_image(filename)
+    data = np.asarray(img)
+    return gfx.Texture(data, dim=2)
+
+
 def load_file(filename):
     with open(filename) as file:
         content = file.read()

@@ -39,14 +39,14 @@ class Window:
         def main_loop():
             nonlocal prev_time
             current_time = time.perf_counter()
-            canvas_texture = self.present_context.get_current_texture()
+            # canvas_texture = self.present_context.get_current_texture()
             if prev_time is None:
                 frame_time = 0
             else:
                 frame_time = current_time - prev_time
             prev_time = current_time
             self.update(frame_time)
-            self.render(canvas_texture)
+            self.render()
             self.canvas.request_draw()  # pyright: ignore
 
         self.canvas.request_draw(main_loop)
@@ -58,7 +58,7 @@ class Window:
     def update(self, delta_time: float):
         pass
 
-    def render(self, screen: wgpu.GPUTexture):
+    def render(self):
         pass
 
     def process_event(self, event):
