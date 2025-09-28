@@ -11,8 +11,6 @@ from typing import (
     Type,
 )
 
-from wgut.scene.transform import Transform
-
 
 @dataclass
 class Entity:
@@ -55,6 +53,7 @@ class Group:
 
 # TODO:
 # - Support "Not" in Query
+# - Redo Group
 
 
 class ECS:
@@ -79,51 +78,6 @@ class ECS:
 
         return id
 
-    def spawn_group(self, members: list[list], label: str | None = None) -> int:
-        gid = self.__next_id
-        self.__next_id += 1
-        if label is None:
-            label = f"Group {gid}"
-
-        self.__add_component(gid, Entity(gid, label))
-        group_transform = Transform()
-        self.__add_component(gid, group_transform)
-
-        ids = []
-        for member in members:
-            id = self.__next_id
-            self.__next_id += 1
-            label = f"Entity {id}"
-            self.__add_component(id, Entity(id, label))
-            member_transform: None | Transform = None
-            for component in member:
-                assert type(component) is not Entity, (
-                    "Entity Components are automatically added"
-                )
-                self.__add_component(id, component)
-                if isinstance(component, Transform):
-                    member_transform = component
-            if member_transform is None:
-                member_transform = Transform()
-                self.__add_component(id, member_transform)
-            group_transform.add_child(member_transform)
-            ids.append(id)
-
-        self.__add_component(gid, Group(ids))
-
-        return gid
-
-    # def add_component_to_group(self, group_id: int | Entity, component) -> Self:
-    #     gid = self.__entity_exists(group_id)
-    #     if Group not in self.__components:
-    #         raise EntityNotFound(gid)
-    #     if gid not in self.__components[Group]:
-    #         raise EntityNotFound(gid)
-    #     group = self.__components[Group][gid]
-    #     for id in group.members:
-    #         self.add_component(id, component)
-    #     return self
-
     def add_component(self, id: int | Entity, component) -> Self:
         id = self.__entity_exists(id)
         self.__add_component(id, component)
@@ -145,17 +99,6 @@ class ECS:
         if ty not in self.__components:
             self.__components[ty] = {}
         self.__components[ty][id] = component
-
-    # def remove_component_from_group(self, group_id: int | Entity, ty: Type) -> Self:
-    #     gid = self.__entity_exists(group_id)
-    #     if Group not in self.__components:
-    #         raise EntityNotFound(gid)
-    #     if gid not in self.__components[Group]:
-    #         raise EntityNotFound(gid)
-    #     group = self.__components[Group][gid]
-    #     for id in group.members:
-    #         self.remove_component(id, ty)
-    #     return self
 
     def remove_component(self, id: int | Entity, ty: Type) -> Self:
         id = self.__entity_exists(id)
