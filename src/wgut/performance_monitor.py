@@ -1,5 +1,5 @@
 from imgui_bundle import imgui, implot
-from wgut.scene.ecs import ECS
+from wgut.ecs import ECS
 import numpy as np
 
 frame_times = []

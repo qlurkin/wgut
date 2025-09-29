@@ -1,4 +1,4 @@
-from wgut.scene.ecs import ECS
+from wgut.ecs import ECS
 from wgut import Window
 
 

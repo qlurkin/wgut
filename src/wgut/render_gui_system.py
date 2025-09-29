@@ -1,7 +1,7 @@
 from imgui_bundle import imgui
 from wgpu.utils.imgui import ImguiRenderer
 
-from wgut.scene.ecs import ECS
+from wgut.ecs import ECS
 from wgut import get_device
 from wgut.window import Window
 

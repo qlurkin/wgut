@@ -6,7 +6,7 @@ from pygfx import (
     WorldObject,
     Scene,
 )
-from wgut.scene.ecs import ECS
+from wgut.ecs import ECS
 from wgut.window import Window
 from time import perf_counter
 
