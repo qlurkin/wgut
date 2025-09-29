@@ -3,7 +3,7 @@ from numpy.typing import NDArray
 from pygfx import Camera
 from math import pi
 
-from wgut.scene.ecs import ECS
+from wgut.ecs import ECS
 
 
 def cartesian_to_spherical(pos: NDArray) -> tuple[float, float, float]:

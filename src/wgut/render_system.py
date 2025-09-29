@@ -8,6 +8,7 @@ from pygfx import (
 )
 from wgut.scene.ecs import ECS
 from wgut.window import Window
+from time import perf_counter
 
 
 class ActiveCamera:
@@ -24,20 +25,16 @@ class SceneObject:
 
 
 def render_system(ecs: ECS):
-    renderer = None
-    scene = Scene()
     wait_for_renderer = []
 
     def handle(ecs: ECS, fn: Callable[[WgpuRenderer], None]):
-        if renderer is None:
-            wait_for_renderer.append(fn)
-        else:
-            fn(renderer)
+        wait_for_renderer.append(fn)
 
     def setup(ecs: ECS, window: Window):
-        nonlocal renderer
+        scene = Scene()
         canvas = window.get_canvas()
         renderer = WgpuRenderer(target=canvas)
+        stats = {}
 
         def dispatch(event):
             ecs.dispatch("pygfx_event", event)
@@ -60,23 +57,34 @@ def render_system(ecs: ECS):
         for fn in wait_for_renderer:
             fn(renderer)
 
-    def render(ecs: ECS):
-        if renderer is None:
-            return
+        def new_handle(ecs: ECS, fn: Callable[[WgpuRenderer], None]):
+            fn(renderer)
 
-        cam_so: SceneObject
-        cam_so, _ = ecs.query_one([SceneObject, ActiveCamera])
-        camera = cam_so.obj
+        ecs.remove_system("call_with_renderer", handle)
+        ecs.on("call_with_renderer", new_handle)
 
-        assert isinstance(camera, Camera), "The ActiveCamera is not a Camera"
+        def handle_stats(ecs: ECS, fn: Callable[[dict], None]):
+            fn(stats)
 
-        scene.clear()
-        for (so,) in ecs.query([SceneObject]):
-            scene.add(so.obj)
+        ecs.on("call_with_stats", handle_stats)
 
-        renderer.clear(all=True)
-        renderer.render(scene, camera)
+        def render(ecs: ECS):
+            start = perf_counter()
+            cam_so: SceneObject
+            cam_so, _ = ecs.query_one([SceneObject, ActiveCamera])
+            camera = cam_so.obj
 
-    ecs.on("render", render)
+            assert isinstance(camera, Camera), "The ActiveCamera is not a Camera"
+
+            scene.clear()
+            for (so,) in ecs.query([SceneObject]):
+                scene.add(so.obj)
+
+            renderer.clear(all=True)
+            renderer.render(scene, camera)
+            stats["time"] = perf_counter() - start
+
+        ecs.on("render", render)
+
     ecs.on("setup", setup)
     ecs.on("call_with_renderer", handle)
