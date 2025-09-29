@@ -17,17 +17,17 @@ from wgut import (
     window_system,
     ECS,
     create_texture,
+    render_gui_system,
+    performance_monitor,
 )
 
 
 # TODO:
 # - better import paths
 # - docstrings and typing
-# - wireframe
+# - test wireframe
 # - gizmo test
-# - frustum culling
-# - ply, gltf loaders
-# - drop shadow
+# - test drop shadow
 # - ECS gui
 
 
@@ -69,4 +69,11 @@ def setup(ecs: ECS, _):
     OrbitController(ecs, camera, target=(0, 0, 0))
 
 
-(ECS().on("setup", setup).do(render_system).do(window_system, "Hello ECS"))
+(
+    ECS()
+    .on("setup", setup)
+    .do(performance_monitor)
+    .do(render_system)
+    .do(render_gui_system)
+    .do(window_system, "Hello ECS")
+)
