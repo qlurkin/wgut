@@ -20,6 +20,7 @@ class ActiveCamera:
 @dataclass
 class SceneObject:
     obj: WorldObject
+    layer: int = 0
 
     def __str__(self):
         return str(self.obj.__class__.__name__)
@@ -72,10 +73,14 @@ def render_system(ecs: ECS):
         wait_for_renderer.append(fn)
 
     def setup(ecs: ECS, window: Window):
-        scene = Scene()
+        scenes = {0: Scene()}
         canvas = window.get_canvas()
         renderer = WgpuRenderer(target=canvas)
         stats = {}
+
+        def clear():
+            for scn in scenes.values():
+                scn.clear()
 
         def dispatch(event):
             ecs.dispatch("pygfx_event", event)
@@ -117,12 +122,17 @@ def render_system(ecs: ECS):
 
             assert isinstance(camera, Camera), "The ActiveCamera is not a Camera"
 
-            scene.clear()
+            clear()
             for (so,) in ecs.query([SceneObject]):
-                scene.add(so.obj)
+                if so.layer not in scenes:
+                    scenes[so.layer] = Scene()
+                scenes[so.layer].add(so.obj)
 
             renderer.clear(all=True)
-            renderer.render(scene, camera)
+            for layer in sorted(scenes.keys()):
+                renderer.render(scenes[layer], camera, flush=False)
+                renderer.clear(depth=True)
+            renderer.flush()
             stats["time"] = perf_counter() - start
 
         ecs.on("render", render)

@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.typing import NDArray
-from pygfx import Camera
+from pygfx import Camera, WorldObject
 from math import pi
 
 from wgut.ecs import ECS
@@ -39,14 +39,16 @@ class OrbitController:
         self.__move_start = (0.0, 0.0)
         self.__pointer_start = (0.0, 0.0)
 
-        ecs.on("window_event", self.process_event)
+        ecs.on("pygfx_event", self.process_event)
         ecs.on("update", self.update)
 
     def process_event(self, ecs: ECS, event):
-        event_type = event["event_type"]
+        event_type = event.type
+        if event.target is not None:
+            return
 
         if event_type == "wheel":
-            dw = event["dy"]
+            dw = event.dy
             delta_radius = dw * 0.01
             self.__radius += delta_radius
             if self.__radius < 0.1:
@@ -55,14 +57,14 @@ class OrbitController:
         if event_type == "pointer_down":
             self.__moving = True
             self.__move_start = (self.__theta, self.__phi)
-            self.__pointer_start = (event["x"], event["y"])
+            self.__pointer_start = (event.x, event.y)
 
         if self.__moving:
             if event_type == "pointer_up":
                 self.__moving = False
             if event_type == "pointer_move":
-                delta_x = event["x"] - self.__pointer_start[0]
-                delta_y = event["y"] - self.__pointer_start[1]
+                delta_x = event.x - self.__pointer_start[0]
+                delta_y = event.y - self.__pointer_start[1]
                 delta_theta = delta_y * -0.01
                 delta_phi = delta_x * 0.01
                 self.__theta = self.__move_start[0] + delta_theta
