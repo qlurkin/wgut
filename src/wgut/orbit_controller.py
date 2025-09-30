@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.typing import NDArray
-from pygfx import Camera, WorldObject
+from pygfx import Camera
 from math import pi
 
 from wgut.ecs import ECS
