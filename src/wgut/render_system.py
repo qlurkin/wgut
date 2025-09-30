@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Callable
+from imgui_bundle import imgui
 from pygfx import (
     Camera,
     WgpuRenderer,
@@ -21,7 +22,47 @@ class SceneObject:
     obj: WorldObject
 
     def __str__(self):
-        return str(self.obj)
+        return str(self.obj.__class__.__name__)
+
+    def ecs_explorer_gui(self):
+        imgui.push_id("translation")
+        if imgui.collapsing_header("translation"):
+            changed, val = imgui.input_float("x", self.obj.local.x)
+            if changed:
+                self.obj.local.x = val
+            changed, val = imgui.input_float("y", self.obj.local.y)
+            if changed:
+                self.obj.local.y = val
+            changed, val = imgui.input_float("z", self.obj.local.z)
+            if changed:
+                self.obj.local.z = val
+        imgui.pop_id()
+
+        imgui.push_id("rotation")
+        if imgui.collapsing_header("rotation (euler)"):
+            changed, val = imgui.input_float("x", self.obj.local.euler_x)
+            if changed:
+                self.obj.local.euler_x = val
+            changed, val = imgui.input_float("y", self.obj.local.euler_y)
+            if changed:
+                self.obj.local.euler_y = val
+            changed, val = imgui.input_float("z", self.obj.local.euler_z)
+            if changed:
+                self.obj.local.euler_z = val
+        imgui.pop_id()
+
+        imgui.push_id("scale")
+        if imgui.collapsing_header("scale"):
+            changed, val = imgui.input_float("x", self.obj.local.scale_x)
+            if changed:
+                self.obj.local.scale_x = val
+            changed, val = imgui.input_float("y", self.obj.local.scale_y)
+            if changed:
+                self.obj.local.scale_y = val
+            changed, val = imgui.input_float("z", self.obj.local.scale_z)
+            if changed:
+                self.obj.local.scale_z = val
+        imgui.pop_id()
 
 
 def render_system(ecs: ECS):

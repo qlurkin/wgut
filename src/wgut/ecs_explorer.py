@@ -1,7 +1,5 @@
 from imgui_bundle import imgui
-from wgut.scene.ecs import ECS, Entity
-
-frame_times = []
+from wgut.ecs import ECS, Entity
 
 
 def ecs_explorer(ecs: ECS):

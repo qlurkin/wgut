@@ -10,3 +10,4 @@ from wgut.render_gui_system import render_gui_system
 from wgut.window_system import window_system
 from wgut.ecs import ECS
 from wgut.performance_monitor import performance_monitor
+from wgut.ecs_explorer import ecs_explorer
