@@ -1,96 +1,98 @@
-from wgut.orbit_camera import OrbitCamera
-from wgut.scene.ecs_explorer import ecs_explorer
-from wgut.scene.loaders.obj import load_obj
-from wgut.scene.performance_monitor import performance_monitor
-from wgut.scene.render_gui_system import render_gui_system
-from wgut.scene.render_system import (
-    ActiveCamera,
-    CameraComponent,
-    MaterialComponent,
-    MeshComponent,
-    render_system,
+from pygfx import (
+    GridHelper,
+    PerspectiveCamera,
+    Background,
+    AmbientLight,
+    DirectionalLight,
+    Mesh,
+    MeshStandardMaterial,
+    TransformGizmo,
+    WgpuRenderer,
+    sphere_geometry,
+    load_mesh,
+    OrbitController,
 )
-from wgut.scene.renderer import Renderer, Material
-from wgut.scene.window_system import window_system
-from wgut.scene.ecs import ECS
-from wgut.scene.primitives.cube import cube
-from wgut.scene.primitives.icosphere import icosphere
-from wgut.scene.transform import Transform
-from wgut.scene.direction_light import DirectionLight
-from wgut.scene.ambiant_light import AmbiantLight
+
+from wgut import (
+    ActiveCamera,
+    SceneObject,
+    ecs_explorer,
+    render_system,
+    window_system,
+    ECS,
+    create_texture,
+    render_gui_system,
+    performance_monitor,
+    create_canvas,
+)
 
 
 # TODO:
-# - better import paths
 # - docstrings and typing
-# - wireframe
-# - gizmo test
-# - frustum culling
-# - ply, gltf loaders
-# - drop shadow
-# - ECS gui
+# - test wireframe
+# - test drop shadow
 
 
-def setup(ecs: ECS):
-    mesh = cube()
-    mesh = icosphere(3)
-    bunny_mesh = load_obj("./models/bunny.obj")[0][0]
-    wood_material = Material(
-        albedo="./textures/Wood_025_basecolor.jpg",
-        normal="./textures/Wood_025_normal.jpg",
-        roughness="./textures/Wood_025_roughness.jpg",
+canvas = create_canvas(max_fps=60, title="Hello ECS")
+renderer = WgpuRenderer(canvas)
+
+
+def setup(ecs: ECS, _):
+    # Camera
+    camera = PerspectiveCamera(70, 16 / 9)
+    camera.local.position = (2, 2, 2)
+    camera.look_at((0, 0, 0))
+    controller = OrbitController(camera, target=(0, 0, 0))
+    controller.register_events(renderer)
+    ecs.spawn([SceneObject(camera), ActiveCamera()])
+
+    # Ball
+    def test_event(event):
+        print("Ball clicked !!")
+
+    ball = Mesh(
+        sphere_geometry(1),
+        MeshStandardMaterial(
+            map=create_texture("./textures/Wood_025_basecolor.jpg"),
+            normal_map=create_texture("./textures/Wood_025_normal.jpg"),
+            roughness_map=create_texture("./textures/Wood_025_roughness.jpg"),
+            pick_write=True,
+        ),
     )
-    dummy_material = Material(
-        albedo="./textures/texel_checker.png",
-        roughness=0.65,
+    ecs.spawn([SceneObject(ball)], label="Ball")
+    ball.local.x -= 1
+    ball.add_event_handler(test_event, "click")
+
+    # Bunny
+    bunny = load_mesh("./models/bunny.obj")[0]
+    bunny.local.x += 1
+    bunny.local.y -= 0.5
+    bunny.local.scale = 10
+    bunny.material = MeshStandardMaterial(
+        map=create_texture("./textures/texel_checker.png")
     )
-    bunny_transform = Transform().set_translation([-2.5, -1.0, 0]).set_scale(20)
-    ball_transform = Transform().set_translation([2.5, 0, 0])
-    camera = OrbitCamera((0, 4, 6), (0, 0, 0), 45, 0.1, 100)
-    ecs.spawn(
-        [
-            bunny_mesh,
-            MaterialComponent(dummy_material),
-            bunny_transform,
-        ],
-        label="Bunny",
-    )
-    ecs.spawn(
-        [
-            MeshComponent(mesh),
-            ball_transform,
-            MaterialComponent(wood_material),
-        ],
-        label="Ball",
-    )
-    id = ecs.spawn_group(load_obj("./models/f16_vertex_color/f16.obj"))
+    ecs.spawn([SceneObject(bunny)], label="Bunny")
+    gizmo = TransformGizmo(object=bunny)
+    gizmo.add_default_event_handlers(renderer, camera)
+    ecs.spawn([SceneObject(gizmo, layer=1)])
 
-    id = ecs.spawn_group(load_obj("./models/f16/f16.obj"))
-    print(ecs[id][Transform].set_translation([0, 0, 2.5]))
+    # Background
+    ecs.spawn([SceneObject(Background.from_color((0.9, 0.9, 0.9)))])
 
-    ecs.spawn(DirectionLight.create((0, 0, -1), (1, 1, 1), 3))
-    ecs.spawn(AmbiantLight.create((1, 1, 1), 0.4))
-    ecs.spawn([CameraComponent(camera), ActiveCamera()], label="Camera")
+    # Lights
+    ecs.spawn([SceneObject(AmbientLight(intensity=0.6))])
+    ecs.spawn([SceneObject(DirectionalLight())])
 
+    # Grid
+    ecs.spawn([SceneObject(GridHelper())])
 
-def process_event(ecs: ECS, event):
-    cam: CameraComponent = ecs.query_one(CameraComponent)
-    if isinstance(cam.camera, OrbitCamera):
-        cam.camera.process_event(event)
-
-
-renderer = Renderer(30000, 150000, 4, 512, 32)
 
 (
     ECS()
     .on("setup", setup)
-    .on("window_event", process_event)
     .do(performance_monitor)
     .do(ecs_explorer)
-    .do(
-        render_system,
-        renderer,
-    )
+    .do(render_system, renderer)
     .do(render_gui_system)
-    .do(window_system, "Hello ECS")
+    .do(window_system, canvas, "Hello ECS")
 )
