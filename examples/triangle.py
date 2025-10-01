@@ -3,7 +3,6 @@ from wgpu import (
     BufferUsage,
     CullMode,
     FrontFace,
-    GPUTexture,
     LoadOp,
     PrimitiveTopology,
     StoreOp,
@@ -14,10 +13,14 @@ from wgut import (
     print_adapter_info,
     Window,
     load_file,
+    get_device,
+    submit_command,
+    write_buffer,
+    create_canvas,
 )
 import numpy as np
 
-from wgut.core import get_device, submit_command, write_buffer
+canvas = create_canvas()
 
 
 class MyApp(Window):
@@ -91,13 +94,13 @@ class MyApp(Window):
             },
         )
 
-    def render(self, screen: GPUTexture):
+    def render(self):
         command_encoder = get_device().create_command_encoder()
 
         render_pass = command_encoder.begin_render_pass(
             color_attachments=[
                 {
-                    "view": screen.create_view(),
+                    "view": self.get_current_texture().create_view(),
                     "resolve_target": None,
                     "clear_value": (0.9, 0.9, 0.9, 1.0),
                     "load_op": LoadOp.clear,
@@ -114,4 +117,4 @@ class MyApp(Window):
         submit_command(command_encoder)
 
 
-MyApp().run()
+MyApp(canvas).run()
