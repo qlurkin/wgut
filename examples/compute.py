@@ -11,8 +11,17 @@ from wgut import (
     get_adapter,
     read_buffer,
     load_file,
+    get_device,
+    submit_command,
+    write_buffer,
 )
-from wgut.core import get_device, submit_command, write_buffer
+from pygfx import (
+    Buffer,
+)
+
+from pygfx.utils.compute import ComputeShader
+
+from wgut.core import read_pygfx_buffer
 
 
 class Timer:
@@ -60,7 +69,7 @@ with Timer("numpy operation", 100) as rep:
 with Timer("Get Device"):
     get_device()
 
-with Timer("Setup Computer"):
+with Timer("Setup ComputePipeline"):
     shader_source = (
         load_file("compute.wgsl")
         .replace("WORKGROUP_SIZE", str(workgroup_size))
@@ -131,17 +140,20 @@ with Timer("Create Buffers"):
         ],
     )
 
-with Timer("Computer dispatch", 1000) as rep:
-    command_encoder: GPUCommandEncoder = get_device().create_command_encoder()
+with Timer("Computer dispatch", 100) as rep:
+    for _ in range(rep):
+        command_encoder: GPUCommandEncoder = get_device().create_command_encoder()
 
-    compute_pass: GPUComputePassEncoder = command_encoder.begin_compute_pass()
+        compute_pass: GPUComputePassEncoder = command_encoder.begin_compute_pass()
 
-    compute_pass.set_pipeline(pipeline)
-    compute_pass.set_bind_group(0, bind_group)
-    compute_pass.dispatch_workgroups(n // (workgroup_size * mult), mult)
-    compute_pass.end()
+        compute_pass.set_pipeline(pipeline)
+        compute_pass.set_bind_group(0, bind_group)
+        compute_pass.dispatch_workgroups(n // (workgroup_size * mult), mult)
+        compute_pass.end()
 
-    submit_command(command_encoder)
+        submit_command(command_encoder)
+
+with Timer("Get memoryview"):
     out = read_buffer(buffer1)
 
 with Timer("Building np.array from memoryview"):
@@ -151,3 +163,26 @@ with Timer("Building a list from memoryview"):
     result = out.cast("i").tolist()
 
 print("Result is OK:", all(x == 9 for x in result) and len(result) == n)
+
+with Timer("pygfx ComputeShader Setup"):
+    compute_shader = ComputeShader(shader_source)
+
+with Timer("pygfx Buffers Setup"):
+    buffer0 = Buffer(numpy_data, usage=BufferUsage.STORAGE)
+    buffer1 = Buffer(
+        nbytes=numpy_data.nbytes,
+        nitems=numpy_data.size,
+        usage=BufferUsage.STORAGE | BufferUsage.COPY_SRC,
+    )
+    compute_shader.set_resource(0, buffer0)
+    compute_shader.set_resource(1, buffer1)
+
+with Timer("Computer dispatch", 100) as rep:
+    for _ in range(rep):
+        compute_shader.dispatch(n // (workgroup_size * mult), mult)
+
+with Timer("Read pygfx Buffer to np.array"):
+    out = read_pygfx_buffer(buffer1)
+    result = np.frombuffer(out.cast("i"), dtype=np.int32)
+
+print(result)

@@ -49,6 +49,11 @@ def read_buffer(buffer: wgpu.GPUBuffer) -> memoryview:
     return get_device().queue.read_buffer(buffer)
 
 
+def read_pygfx_buffer(buffer: gfx.Buffer) -> memoryview:
+    wgpu_buffer: wgpu.GPUBuffer = buffer._wgpu_object  # type: ignore
+    return read_buffer(wgpu_buffer)
+
+
 def write_buffer(buffer: wgpu.GPUBuffer, data: npt.NDArray | bytes, buffer_offset=0):
     return get_device().queue.write_buffer(
         buffer=buffer, data=memoryview(data), buffer_offset=buffer_offset
