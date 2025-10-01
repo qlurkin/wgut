@@ -10,10 +10,11 @@ from pygfx import (
     WgpuRenderer,
     sphere_geometry,
     load_mesh,
+    OrbitController,
 )
 
 from wgut import (
-    OrbitController,
+    # OrbitController,
     ActiveCamera,
     SceneObject,
     ecs_explorer,
@@ -41,14 +42,17 @@ renderer = WgpuRenderer(canvas)
 
 
 def setup(ecs: ECS, _):
+    # Camera
     camera = PerspectiveCamera(70, 16 / 9)
     camera.local.position = (2, 2, 2)
     camera.look_at((0, 0, 0))
-
+    controller = OrbitController(camera, target=(0, 0, 0))
+    controller.register_events(renderer)
     ecs.spawn([SceneObject(camera), ActiveCamera()])
 
+    # Ball
     def test_event(event):
-        print("EVENT:", event.type)
+        print("Ball clicked !!")
 
     ball = Mesh(
         sphere_geometry(1),
@@ -61,33 +65,30 @@ def setup(ecs: ECS, _):
     )
     ecs.spawn([SceneObject(ball)], label="Ball")
     ball.local.x -= 1
-    ball.add_event_handler(test_event, "pointer_down")
+    ball.add_event_handler(test_event, "click")
 
+    # Bunny
     bunny = load_mesh("./models/bunny.obj")[0]
-
     bunny.local.x += 1
     bunny.local.y -= 0.5
     bunny.local.scale = 10
-
     bunny.material = MeshStandardMaterial(
         map=create_texture("./textures/texel_checker.png")
     )
-
     ecs.spawn([SceneObject(bunny)], label="Bunny")
     gizmo = TransformGizmo(object=bunny)
     gizmo.add_default_event_handlers(renderer, camera)
-
     ecs.spawn([SceneObject(gizmo, layer=1)])
 
+    # Background
     ecs.spawn([SceneObject(Background.from_color((0.9, 0.9, 0.9)))])
 
+    # Lights
     ecs.spawn([SceneObject(AmbientLight(intensity=0.6))])
     ecs.spawn([SceneObject(DirectionalLight())])
 
+    # Grid
     ecs.spawn([SceneObject(GridHelper())])
-
-    controller = OrbitController(ecs, camera, target=(0, 0, 0))
-    controller.add_default_event_handlers(renderer)
 
 
 (
