@@ -9,6 +9,7 @@ from pygfx import (
     TransformGizmo,
     sphere_geometry,
     load_mesh,
+    OrbitController as OC,
 )
 
 from wgut import (
@@ -83,6 +84,11 @@ def setup(ecs: ECS, _):
     ecs.spawn([SceneObject(GridHelper())])
 
     OrbitController(ecs, camera, target=(0, 0, 0))
+
+    def call_renderer(renderer):
+        controller = OC(camera, target=(0, 0, 0), register_events=renderer)
+
+    # ecs.dispatch("call_with_renderer", call_renderer)
 
 
 (
