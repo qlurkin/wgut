@@ -7,10 +7,10 @@ import time
 
 
 class Window:
-    def __init__(self, size: tuple[int, int] = (800, 600), max_fps: int = 60):
+    def __init__(self, canvas: WgpuCanvas):
         device = get_device()
 
-        self.canvas = WgpuCanvas(title="WGPU Window", size=size, max_fps=max_fps)
+        self.canvas = canvas
         self.present_context: GPUCanvasContext = self.canvas.get_context("wgpu")  # type: ignore
         self.texture_format: wgpu.TextureFormat = (
             self.present_context.get_preferred_format(device.adapter)

@@ -1,10 +1,11 @@
+from wgpu.gui.glfw import WgpuCanvas
 from wgut.ecs import ECS
 from wgut import Window
 
 
 class WindowSystemApp(Window):
-    def __init__(self, ecs: ECS):
-        super().__init__()
+    def __init__(self, ecs: ECS, canvas: WgpuCanvas):
+        super().__init__(canvas)
         self.__ecs = ecs
 
     def setup(self):
@@ -24,7 +25,7 @@ class WindowSystemApp(Window):
         return "WindowSystemApp"
 
 
-def window_system(ecs: ECS, title="WGUT Window"):
-    app = WindowSystemApp(ecs)
+def window_system(ecs: ECS, canvas: WgpuCanvas, title="WGUT Window"):
+    app = WindowSystemApp(ecs, canvas)
     app.set_title(title)
     app.run()

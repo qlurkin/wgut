@@ -48,9 +48,7 @@ class OrbitController:
         # ecs.on("pygfx_event", self.process_event)
         ecs.on("update", self.update)
 
-        ecs.dispatch("call_with_renderer", self.register_to_renderer)
-
-    def register_to_renderer(self, renderer: WgpuRenderer):
+    def add_default_event_handlers(self, renderer: WgpuRenderer):
         renderer.add_event_handler(
             self.process_event,
             "pointer_down",

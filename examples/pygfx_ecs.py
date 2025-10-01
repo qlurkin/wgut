@@ -7,9 +7,9 @@ from pygfx import (
     Mesh,
     MeshStandardMaterial,
     TransformGizmo,
+    WgpuRenderer,
     sphere_geometry,
     load_mesh,
-    OrbitController as OC,
 )
 
 from wgut import (
@@ -23,6 +23,7 @@ from wgut import (
     create_texture,
     render_gui_system,
     performance_monitor,
+    create_canvas,
 )
 
 
@@ -35,7 +36,17 @@ from wgut import (
 # - ECS gui
 
 
+canvas = create_canvas(max_fps=60, title="Hello ECS")
+renderer = WgpuRenderer(canvas)
+
+
 def setup(ecs: ECS, _):
+    camera = PerspectiveCamera(70, 16 / 9)
+    camera.local.position = (2, 2, 2)
+    camera.look_at((0, 0, 0))
+
+    ecs.spawn([SceneObject(camera), ActiveCamera()])
+
     def test_event(event):
         print("EVENT:", event.type)
 
@@ -64,11 +75,8 @@ def setup(ecs: ECS, _):
 
     ecs.spawn([SceneObject(bunny)], label="Bunny")
     gizmo = TransformGizmo(object=bunny)
+    gizmo.add_default_event_handlers(renderer, camera)
 
-    def setup_gizmo(renderer):
-        gizmo.add_default_event_handlers(renderer, camera)
-
-    ecs.dispatch("call_with_renderer", setup_gizmo)
     ecs.spawn([SceneObject(gizmo, layer=1)])
 
     ecs.spawn([SceneObject(Background.from_color((0.9, 0.9, 0.9)))])
@@ -76,19 +84,10 @@ def setup(ecs: ECS, _):
     ecs.spawn([SceneObject(AmbientLight(intensity=0.6))])
     ecs.spawn([SceneObject(DirectionalLight())])
 
-    camera = PerspectiveCamera(70, 16 / 9)
-    camera.local.position = (2, 2, 2)
-    camera.look_at((0, 0, 0))
-
-    ecs.spawn([SceneObject(camera), ActiveCamera()])
     ecs.spawn([SceneObject(GridHelper())])
 
-    OrbitController(ecs, camera, target=(0, 0, 0))
-
-    def call_renderer(renderer):
-        controller = OC(camera, target=(0, 0, 0), register_events=renderer)
-
-    # ecs.dispatch("call_with_renderer", call_renderer)
+    controller = OrbitController(ecs, camera, target=(0, 0, 0))
+    controller.add_default_event_handlers(renderer)
 
 
 (
@@ -96,7 +95,7 @@ def setup(ecs: ECS, _):
     .on("setup", setup)
     .do(performance_monitor)
     .do(ecs_explorer)
-    .do(render_system)
+    .do(render_system, renderer)
     .do(render_gui_system)
-    .do(window_system, "Hello ECS")
+    .do(window_system, canvas, "Hello ECS")
 )

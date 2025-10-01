@@ -4,6 +4,7 @@ from imgui_bundle import imgui
 from pygfx import (
     Camera,
     WgpuRenderer,
+    WindowEvent,
     WorldObject,
     Scene,
 )
@@ -66,16 +67,9 @@ class SceneObject:
         imgui.pop_id()
 
 
-def render_system(ecs: ECS):
-    wait_for_renderer = []
-
-    def handle(ecs: ECS, fn: Callable[[WgpuRenderer], None]):
-        wait_for_renderer.append(fn)
-
+def render_system(ecs: ECS, renderer: WgpuRenderer):
     def setup(ecs: ECS, window: Window):
         scenes = {0: Scene()}
-        canvas = window.get_canvas()
-        renderer = WgpuRenderer(target=canvas)
         stats = {}
 
         def clear():
@@ -98,16 +92,9 @@ def render_system(ecs: ECS):
             "wheel",
             "key_down",
             "key_up",
+            "before_render",
+            "after_render",
         )
-
-        for fn in wait_for_renderer:
-            fn(renderer)
-
-        def new_handle(ecs: ECS, fn: Callable[[WgpuRenderer], None]):
-            fn(renderer)
-
-        ecs.remove_system("call_with_renderer", handle)
-        ecs.on("call_with_renderer", new_handle)
 
         def handle_stats(ecs: ECS, fn: Callable[[dict], None]):
             fn(stats)
@@ -133,9 +120,18 @@ def render_system(ecs: ECS):
                 renderer.render(scenes[layer], camera, flush=False)
                 renderer.clear(depth=True)
             renderer.flush()
+            renderer.dispatch_event(
+                WindowEvent(
+                    "after_render",
+                    target=None,
+                    root=renderer,
+                    width=renderer.logical_size[0],
+                    height=renderer.logical_size[1],  # type: ignore
+                    pixel_ratio=renderer.pixel_ratio,
+                )
+            )
             stats["time"] = perf_counter() - start
 
         ecs.on("render", render)
 
     ecs.on("setup", setup)
-    ecs.on("call_with_renderer", handle)

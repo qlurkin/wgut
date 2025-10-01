@@ -3,6 +3,7 @@ import wgpu
 import pygfx as gfx
 import numpy.typing as npt
 import numpy as np
+from wgpu.gui.glfw import WgpuCanvas
 
 
 _SHARED = None
@@ -50,7 +51,7 @@ def read_buffer(buffer: wgpu.GPUBuffer) -> memoryview:
 
 def write_buffer(buffer: wgpu.GPUBuffer, data: npt.NDArray | bytes, buffer_offset=0):
     return get_device().queue.write_buffer(
-        buffer=buffer, data=data, buffer_offset=buffer_offset
+        buffer=buffer, data=memoryview(data), buffer_offset=buffer_offset
     )
 
 
@@ -78,7 +79,7 @@ def write_texture(
             "mip_level": 0,
             "origin": (0, 0, index),
         },
-        data,
+        memoryview(data),
         {
             "offset": 0,
             "bytes_per_row": len(data) // size[1],
@@ -106,3 +107,10 @@ def load_file(filename):
 
 def submit_command(command_encoder: wgpu.GPUCommandEncoder):
     get_device().queue.submit([command_encoder.finish()])
+
+
+def create_canvas(
+    size: tuple[int, int] = (800, 600), title="WGUT Window", max_fps=30, vsync=True
+) -> WgpuCanvas:
+    get_shared()
+    return WgpuCanvas(size=size, title=title, max_fps=max_fps, vsync=vsync)
