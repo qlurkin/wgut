@@ -1,3 +1,9 @@
-from wgut import ShaderToy
+from wgut import (
+    ShaderToy,
+    create_canvas,
+    load_file,
+)
 
-ShaderToy().with_shader("shadertoy.wgsl").run()
+canvas = create_canvas()
+
+ShaderToy(canvas, load_file("./shadertoy.wgsl")).run()

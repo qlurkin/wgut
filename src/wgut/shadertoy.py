@@ -1,5 +1,6 @@
 from imgui_bundle import imgui
 from numpy.typing import NDArray
+from wgpu.gui.glfw import WgpuCanvas
 from wgpu.utils.imgui import ImguiRenderer
 
 from wgut.core import (
@@ -11,7 +12,6 @@ from wgut.window import Window
 import wgpu
 import numpy as np
 from datetime import datetime
-from typing import Self
 
 shader_header = """
 @group(0) @binding(0) var<uniform> i_resolution: vec3<f32>;
@@ -57,17 +57,9 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
 
 class ShaderToy(Window):
-    def with_shader_source(self, source: str) -> Self:
-        super().__init__()
+    def __init__(self, canvas: WgpuCanvas, source: str):
+        super().__init__(canvas)
         self.shader = shader_header + source + shader_footer
-        return self
-
-    def with_shader(self, filename: str) -> Self:
-        with open(filename) as file:
-            source = file.read()
-
-        self.with_shader_source(source)
-        return self
 
     def getIDate(self):
         now = datetime.now()
@@ -266,7 +258,7 @@ class ShaderToy(Window):
         write_buffer(self.iDateBuffer, self.getIDate())
         write_buffer(self.iMouseBuffer, self.getIMouse())
 
-    def render(self, screen: wgpu.GPUTexture):
+    def render(self):
         # command_encoder = CommandBufferBuilder()
         command_encoder = get_device().create_command_encoder()
 
@@ -274,7 +266,7 @@ class ShaderToy(Window):
         render_pass: wgpu.GPURenderPassEncoder = command_encoder.begin_render_pass(
             color_attachments=[
                 {
-                    "view": screen.create_view(),
+                    "view": self.get_current_texture().create_view(),
                     "resolve_target": None,
                     "clear_value": (0.0, 0.0, 0.0, 1.0),
                     "load_op": wgpu.LoadOp.clear,
