@@ -60,6 +60,13 @@ def write_buffer(buffer: wgpu.GPUBuffer, data: npt.NDArray | bytes, buffer_offse
     )
 
 
+def write_pygfx_buffer(
+    buffer: wgpu.GPUBuffer, data: npt.NDArray | bytes, buffer_offset=0
+):
+    wgpu_buffer: wgpu.GPUBuffer = buffer._wgpu_object  # type: ignore
+    write_buffer(wgpu_buffer, data, buffer_offset)
+
+
 def write_texture(
     texture: wgpu.GPUTexture, image: img.Image | bytes | npt.NDArray, index=0
 ):
