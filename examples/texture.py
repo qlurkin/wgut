@@ -5,7 +5,6 @@ from wgpu import (
     FilterMode,
     FrontFace,
     GPURenderPassEncoder,
-    GPUTexture,
     LoadOp,
     MipmapFilterMode,
     PrimitiveTopology,
@@ -19,16 +18,17 @@ from wgpu import (
 from wgut import (
     Window,
     load_file,
-)
-import numpy as np
-
-from wgut.core import (
     get_device,
     load_image,
     submit_command,
     write_buffer,
     write_texture,
+    create_canvas,
 )
+import numpy as np
+
+
+canvas = create_canvas()
 
 
 class MyApp(Window):
@@ -147,13 +147,13 @@ class MyApp(Window):
             ],
         )
 
-    def render(self, screen: GPUTexture):
+    def render(self):
         command_encoder = get_device().create_command_encoder()
 
         render_pass: GPURenderPassEncoder = command_encoder.begin_render_pass(
             color_attachments=[
                 {
-                    "view": screen.create_view(),
+                    "view": self.get_current_texture().create_view(),
                     "resolve_target": None,
                     "clear_value": (0.9, 0.9, 0.9, 1.0),
                     "load_op": LoadOp.clear,
@@ -171,4 +171,4 @@ class MyApp(Window):
         submit_command(command_encoder)
 
 
-MyApp().run()
+MyApp(canvas).run()
