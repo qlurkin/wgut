@@ -26,7 +26,7 @@ from wgut import (
 import numpy as np
 import numpy.typing as npt
 
-from pylinalg import mat_compose, mat_from_translation, mat_perspective, mat_look_at
+from pylinalg import mat_compose
 
 canvas = create_canvas(title="Hello Cube")
 
@@ -90,8 +90,6 @@ class MyApp(Window):
 
         view_matrix = look_at([3, 2, 4], [0, 0, 0], [0, 1, 0])
         proj_matrix = perspective(45, width / height, 0.1, 100)
-
-        print(mat_compose([4, 5, 6], [0, 1, 0, 1], [1, 1, 1]))
 
         # Must send transpose version of matrices, because GPU expect matrices in column major order
         camera_data = np.array([view_matrix.T, proj_matrix.T])
