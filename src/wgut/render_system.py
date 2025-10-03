@@ -68,7 +68,7 @@ class SceneObject:
 
 
 def render_system(ecs: ECS, renderer: WgpuRenderer):
-    def setup(ecs: ECS, window: Window):
+    def setup(ecs: ECS):
         scenes = {0: Scene()}
         stats = {}
 

@@ -1,4 +1,5 @@
 from imgui_bundle import imgui
+from wgpu.gui.glfw import WgpuCanvas
 from wgpu.utils.imgui import ImguiRenderer
 
 from wgut.ecs import ECS
@@ -6,9 +7,9 @@ from wgut import get_device
 from wgut.window import Window
 
 
-def render_gui_system(ecs: ECS):
-    def setup(ecs: ECS, window: Window):
-        imgui_renderer = ImguiRenderer(get_device(), window.get_canvas())
+def render_gui_system(ecs: ECS, canvas: WgpuCanvas):
+    def setup(ecs: ECS):
+        imgui_renderer = ImguiRenderer(get_device(), canvas)
 
         def render(_ecs: ECS):
             imgui_renderer.render()

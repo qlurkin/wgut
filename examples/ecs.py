@@ -37,7 +37,7 @@ canvas = create_canvas(max_fps=60, title="Hello ECS")
 renderer = WgpuRenderer(canvas)
 
 
-def setup(ecs: ECS, _):
+def setup(ecs: ECS):
     # Camera
     camera = PerspectiveCamera(70, 16 / 9)
     camera.local.position = (2, 2, 2)
@@ -93,6 +93,6 @@ def setup(ecs: ECS, _):
     .do(performance_monitor)
     .do(ecs_explorer)
     .do(render_system, renderer)
-    .do(render_gui_system)
+    .do(render_gui_system, canvas)
     .do(window_system, canvas, "Hello ECS")
 )
