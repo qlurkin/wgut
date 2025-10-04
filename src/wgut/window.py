@@ -26,6 +26,10 @@ class Window:
     def get_texture_format(self) -> wgpu.TextureFormat:
         return self.texture_format
 
+    def get_aspect(self) -> float:
+        size = self.get_canvas().get_physical_size()
+        return size[0] / size[1]
+
     def set_title(self, title: str):
         self.canvas.set_title(title)
 

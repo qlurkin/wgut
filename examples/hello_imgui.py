@@ -9,7 +9,6 @@ from wgpu import (
     CullMode,
     FrontFace,
     GPURenderPassEncoder,
-    GPUTexture,
     IndexFormat,
     LoadOp,
     PrimitiveTopology,
