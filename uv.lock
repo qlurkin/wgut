@@ -542,7 +542,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "imgui-bundle" },
+    { name = "imgui-bundle", specifier = ">=1.6.3" },
     { name = "pygfx", git = "https://github.com/qlurkin/pygfx.git?branch=typefix" },
     { name = "scipy", specifier = ">=1.16.2" },
     { name = "trimesh", specifier = ">=4.8.3" },
