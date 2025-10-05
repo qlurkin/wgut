@@ -88,10 +88,8 @@ class MyApp(Window):
             usage=TextureUsage.RENDER_ATTACHMENT | TextureUsage.TEXTURE_BINDING,  # type: ignore
         )
 
-        width, height = canvas.get_physical_size()  # type: ignore
-
         view_matrix = look_at([3, 2, 4], [0, 0, 0], [0, 1, 0])
-        proj_matrix = perspective(45, width / height, 0.1, 100)
+        proj_matrix = perspective(45, self.get_aspect(), 0.1, 100)
 
         # Must send transpose version of matrices, because GPU expect matrices in column major order
         camera_data = np.array([view_matrix.T, proj_matrix.T])

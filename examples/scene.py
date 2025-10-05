@@ -36,18 +36,14 @@ class MyApp(Window):
         )
 
         self.scene.add(icosphere)
+
         self.scene.add(Background.from_color((0.9, 0.9, 0.9)))
 
         self.scene.add(AmbientLight(intensity=0.6))
         self.scene.add(DirectionalLight())
 
-        self.camera = PerspectiveCamera(
-            fov=70,
-            aspect=self.get_aspect(),
-        )
-
+        self.camera = PerspectiveCamera(fov=70)
         self.camera.local.position = (2, 2, 2)
-        self.camera.look_at((0, 0, 0))
         controller = OrbitController(self.camera, target=(0, 0, 0))
         controller.register_events(self.renderer)
 

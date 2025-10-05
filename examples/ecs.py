@@ -39,9 +39,8 @@ renderer = WgpuRenderer(canvas)
 
 def setup(ecs: ECS):
     # Camera
-    camera = PerspectiveCamera(70, 16 / 9)
+    camera = PerspectiveCamera(70)
     camera.local.position = (2, 2, 2)
-    camera.look_at((0, 0, 0))
     controller = OrbitController(camera, target=(0, 0, 0))
     controller.register_events(renderer)
     ecs.spawn([SceneObject(camera), ActiveCamera()])
