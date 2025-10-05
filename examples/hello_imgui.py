@@ -30,7 +30,7 @@ from wgut import (
 import numpy as np
 import numpy.typing as npt
 
-canvas = create_canvas(title="Hello Imgui")
+canvas = create_canvas(title="Hello Imgui", max_fps=60)
 
 
 def look_at(
@@ -252,11 +252,8 @@ class MyApp(Window):
 
         self.imgui_renderer.set_gui(self.gui)
 
-        self.frame_time = 0
-
     def update(self, delta_time: float):
         self.imgui_renderer.backend.io.delta_time = delta_time
-        self.frame_time = delta_time
 
     def render(self):
         command_encoder = get_device().create_command_encoder()
@@ -293,7 +290,9 @@ class MyApp(Window):
     def gui(self) -> imgui.ImDrawData:
         imgui.new_frame()
         imgui.begin("Hello Imgui", None)
-        imgui.text(f"Frame Time: {self.frame_time:.5f}s")
+        imgui.text(f"Frame Time: {self.last_frame_time:.5f}s")
+        imgui.text(f"Update Time: {self.last_update_time:.5f}s")
+        imgui.text(f"Render Time: {self.last_render_time:.5f}s")
         imgui.end()
         imgui.end_frame()
         imgui.render()

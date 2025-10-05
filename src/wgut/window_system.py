@@ -9,7 +9,7 @@ class WindowSystemApp(Window):
         self.__ecs = ecs
 
     def setup(self):
-        self.__ecs.dispatch("setup")
+        self.__ecs.dispatch("setup", self)
 
     def update(self, delta_time: float):
         self.__ecs.dispatch("update", delta_time)

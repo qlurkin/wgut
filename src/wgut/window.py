@@ -10,6 +10,10 @@ class Window:
     def __init__(self, canvas: WgpuCanvas):
         device = get_device()
 
+        self.last_render_time = 0.0
+        self.last_update_time = 0.0
+        self.last_frame_time = 0.0
+
         self.canvas = canvas
         self.present_context: GPUCanvasContext = self.canvas.get_context("wgpu")  # type: ignore
         self.texture_format: wgpu.TextureFormat = (
@@ -46,13 +50,14 @@ class Window:
         def main_loop():
             nonlocal prev_time
             current_time = time.perf_counter()
-            if prev_time is None:
-                frame_time = 0
-            else:
-                frame_time = current_time - prev_time
-            prev_time = current_time
-            self.update(frame_time)
+            if prev_time is not None:
+                self.last_frame_time = current_time - prev_time
+            self.update(self.last_frame_time)
+            mid = time.perf_counter()
+            self.last_update_time = mid - current_time
             self.render()
+            self.last_render_time = time.perf_counter() - mid
+            prev_time = current_time
             self.canvas.request_draw()  # pyright: ignore
 
         self.canvas.request_draw(main_loop)
