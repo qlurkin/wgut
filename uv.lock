@@ -531,13 +531,14 @@ wheels = [
 
 [[package]]
 name = "wgut"
-version = "0.1.6"
+version = "0.1.7"
 source = { editable = "." }
 dependencies = [
     { name = "imgui-bundle" },
     { name = "pygfx" },
     { name = "scipy" },
     { name = "trimesh" },
+    { name = "wgpu" },
 ]
 
 [package.metadata]
@@ -546,4 +547,5 @@ requires-dist = [
     { name = "pygfx", git = "https://github.com/qlurkin/pygfx.git?branch=typefix" },
     { name = "scipy", specifier = ">=1.16.2" },
     { name = "trimesh", specifier = ">=4.8.3" },
+    { name = "wgpu", specifier = ">=0.23.0" },
 ]

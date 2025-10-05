@@ -1,6 +1,6 @@
 [project]
 name = "wgut"
-version = "0.1.6"
+version = "0.1.7"
 description = "WebGPU Utility Toolkit: Play with wgpu"
 readme = "README.md"
 authors = [{ name = "Quentin Lurkin", email = "qlurkin@gmail.com" }]
@@ -10,6 +10,7 @@ dependencies = [
   "pygfx>=0.13.0",
   "scipy>=1.16.2",
   "trimesh>=4.8.3",
+  "wgpu>=0.23.0",
 ]
 classifiers = ["License :: OSI Approved :: MIT License"]
 
