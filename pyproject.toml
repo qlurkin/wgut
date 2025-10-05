@@ -1,6 +1,6 @@
 [project]
 name = "wgut"
-version = "0.1.4"
+version = "0.1.5"
 description = "WebGPU Utility Toolkit: Play with wgpu"
 readme = "README.md"
 authors = [{ name = "Quentin Lurkin", email = "qlurkin@gmail.com" }]
