@@ -1,12 +1,12 @@
 [project]
 name = "wgut"
-version = "0.1.8"
+version = "0.1.9"
 description = "WebGPU Utility Toolkit: Play with wgpu"
 readme = "README.md"
 authors = [{ name = "Quentin Lurkin", email = "qlurkin@gmail.com" }]
 requires-python = ">=3.13"
 dependencies = [
-  "imgui-bundle>=1.6.3",
+  "imgui-bundle==1.6.3",
   "pygfx>=0.13.0",
   "scipy>=1.16.2",
   "trimesh>=4.8.3",
